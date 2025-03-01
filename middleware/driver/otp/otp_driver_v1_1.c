@@ -333,6 +333,52 @@ bk_err_t bk_otp_apb_read(otp1_id_t item, uint8_t* buf, uint32_t size)
 	return BK_OK;
 }
 
+
+bk_err_t bk_otp_apb_read_bak(uint32_t item, uint8_t* buf, uint32_t size)
+{
+	if( bk_otp_apb_read_permission(item) > OTP_READ_ONLY ) {
+		return BK_ERR_NO_READ_PERMISSION;
+	}
+	OTP_ACTIVE(1)
+
+	uint32_t location = 0x3c0 / 4;
+	uint32_t start = 0x3c0 % 4;
+	uint32_t value;
+
+
+	while(size > 0) {
+		value = otp_read_otp(location);
+
+		uint8_t * src_data = (uint8_t *)&value;
+		int       cpy_cnt;
+
+		src_data += start;
+
+		cpy_cnt = (size >= (4 - start)) ? (4 - start) : size;
+
+		switch( cpy_cnt ) {
+			case 4:
+				*buf++ = *src_data++;
+			case 3:
+				*buf++ = *src_data++;
+			case 2:
+				*buf++ = *src_data++;
+			case 1:
+				*buf++ = *src_data++;
+		}
+
+		size -= cpy_cnt;
+		location++;
+		start = 0;
+	}
+	OTP_SLEEP()
+	return BK_OK;
+}
+
+
+
+
+
 /**
  * update APB OTP value in little endian with item ID:
  * 1. allowed start address of item not aligned
