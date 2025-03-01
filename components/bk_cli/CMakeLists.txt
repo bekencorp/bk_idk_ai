@@ -110,6 +110,11 @@ if (CONFIG_I2C)
 	)
 endif()
 
+if (CONFIG_GSENSOR_TEST_EN)
+	list(APPEND srcs
+		cli_gsensor.c
+	)
+endif()
 
 if (CONFIG_FLASH)
 	list(APPEND srcs

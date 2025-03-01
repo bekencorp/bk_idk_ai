@@ -223,9 +223,20 @@ int handle_shell_input(char *inbuf, int in_buf_size, char * outbuf, int out_buf_
                                 (beken_thread_arg_t)(&cmd_par));
 	if (ret != kNoErr)
 	{
-		os_printf("Error: Failed to create shell_handle_thread_handle thread: %d\r\n",ret);
-		BK_ASSERT(0);
-    }
+			os_printf("Error: Failed create shell_handle_thread_handle in SRAM: %d\r\n",ret);
+			//BK_ASSERT(0);
+#if CONFIG_PSRAM_AS_SYS_MEMORY		//try again in PSRAM
+			ret = rtos_create_psram_thread(&shell_handle_thread_handle,
+									4,
+									"shell_handle",
+									(beken_thread_function_t)handle_shell_input_proxy,
+									1024*6,
+									(beken_thread_arg_t)(&cmd_par));
+#endif
+			if (ret != kNoErr)
+				BK_ASSERT(0);
+		}
+
 
 	err = rtos_get_semaphore(&wait_shell_handle_semaphore,BEKEN_WAIT_FOREVER);
 	if(err)
@@ -1444,7 +1455,6 @@ int bk_cli_init(void)
 	cli_scr_init();
 #endif
 
-
 /*-------------BT&MultMedia cli command init begin----------------*/
 #if !CONFIG_CLI_CODE_SIZE_OPTIMIZE_ENABLE
 #if (CLI_CFG_BLE == 1)
@@ -1564,6 +1574,10 @@ int bk_cli_init(void)
 
 #if (CLI_CFG_UID)
 	cli_uid_init();
+#endif
+
+#if CONFIG_GSENSOR_TEST_EN
+	cli_gsensor_init();
 #endif
 
 #if (CONFIG_H264_SW_DECODER_TEST)
