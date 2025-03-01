@@ -13,6 +13,11 @@ menu "GPIO"
 		depends on GPIO_WAKEUP_SUPPORT
 		default n
 
+	config DEFAULT_WAKEUP_SOURCE
+		bool "GPIO_10 as default wakeup source"
+		depends on GPIO_WAKEUP_SUPPORT
+		default y
+
 	config GPIO_DYNAMIC_WAKEUP_SOURCE_MAX_CNT
 		int "how many gpio can dynamic set to wakeup system at low power status"
 		range 0 48
