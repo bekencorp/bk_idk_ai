@@ -55,13 +55,13 @@ extern void bk_ota_confirm_update_partition(ota_confirm_flag ota_confirm_val);
 #endif
 #endif
 
-#if defined(CONFIG_WIFI_AT_ENABLE) && defined(CONFIG_WIFI_ENABLE) 
+#if defined(CONFIG_WIFI_AT_ENABLE) && defined(CONFIG_WIFI_ENABLE)
 #include "wifi_at.h"
 #endif
-#if defined(CONFIG_BT_AT_ENABLE) && defined(CONFIG_BT) 
+#if defined(CONFIG_BT_AT_ENABLE) && defined(CONFIG_BT)
 #include "bk_at_bluetooth.h"
 #endif
-#if defined(CONFIG_NETIF_AT_ENABLE) && defined(CONFIG_WIFI_ENABLE) 
+#if defined(CONFIG_NETIF_AT_ENABLE) && defined(CONFIG_WIFI_ENABLE)
 #include "bk_at_netif.h"
 
 
@@ -142,7 +142,7 @@ static int app_wifi_init(void)
 #if CONFIG_WIFI_AT_ENABLE
 	wifi_at_cmd_init();
 #endif
-#if CONFIG_NETIF_AT_ENABLE 
+#if CONFIG_NETIF_AT_ENABLE
 	netif_at_cmd_init();
 #endif
 
@@ -166,7 +166,7 @@ static int app_bt_init(void)
 	if (!ate_is_enabled())
 		bt_activate(NULL);
 #endif
-#if (CONFIG_BT_AT_ENABLE) 
+#if (CONFIG_BT_AT_ENABLE)
 	bt_at_cmd_init();
 #endif
 
@@ -349,10 +349,10 @@ int bk_init(void)
 #endif //!(CONFIG_SYS_CPU1)
 
 	app_cli_init();
-#if CONFIG_AT 
+#if CONFIG_AT
 	extern int atsvr_app_init(void);
 	if(0 != atsvr_app_init())
-		return -1;	
+		return -1;
 #endif
 
 #if (CONFIG_VAULT_SUPPORT)
@@ -418,6 +418,11 @@ extern int mp_do_startup(int heap_len);
 #endif
 #if CONFIG_USB //&& CONFIG_MENTOR_USB
 	bk_usb_driver_init();
+#endif
+
+#if CONFIG_GSENSOR_ENABLE
+	extern bk_err_t gsensor_demo_init(void);
+	gsensor_demo_init();
 #endif
 
 #if (CONFIG_PSRAM)
