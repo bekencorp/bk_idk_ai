@@ -44,16 +44,6 @@ void bk_configure_key(KeyConfig_t *KeyConfig)
     
     bk_err_t ret;
 
-#if 1
-    if((KeyConfig->short_event == POWER_ON) || (KeyConfig->double_event == POWER_ON) || (KeyConfig->long_event == POWER_ON))
-	{
-		if(KeyConfig->active_level == LOW_LEVEL_TRIGGER)
-			bk_gpio_register_wakeup_source(KeyConfig->gpio_id, GPIO_INT_TYPE_FALLING_EDGE);
-		else
-			bk_gpio_register_wakeup_source(KeyConfig->gpio_id, GPIO_INT_TYPE_RISING_EDGE);
-	}
-#endif
-
     ret = key_item_configure(KeyConfig->gpio_id, 
                                  KeyConfig->active_level, 
                                  short_press_cb, 
