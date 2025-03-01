@@ -201,7 +201,7 @@ bk_err_t gsensor_demo_init(void)
                             3,
                              "gsensor_demo",
                              (beken_thread_function_t)gsensor_demo_thread,
-                             1024,
+                             1536,
                              NULL);
         if(ret != kNoErr) {
             if(s_gsensor_demo_msg_que) {
