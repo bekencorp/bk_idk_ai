@@ -198,7 +198,7 @@ bk_err_t gsensor_demo_init(void)
         }
 
         ret = rtos_create_thread(&s_gsensor_demo_thread_hdl,
-                             5,
+                            3,
                              "gsensor_demo",
                              (beken_thread_function_t)gsensor_demo_thread,
                              1024,
