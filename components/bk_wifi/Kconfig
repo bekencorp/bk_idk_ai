@@ -343,7 +343,7 @@ menu "Bk_Wifi"
 		range 2 10
 		default 2
 
-	config WIFI_AUTO_RECONNECT
+	config WIFI_AUTO_RESTART
 		depends on WIFI_ENABLE
 		bool "Enable auto reconnect Wi-Fi"
 		default n

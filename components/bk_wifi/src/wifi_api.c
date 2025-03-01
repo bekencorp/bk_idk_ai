@@ -14,7 +14,7 @@
 #include <../../lwip_intf_v2_1/lwip-2.1.2/port/net.h>
 #include "wifi_v2.h"
 #include "fhost_msg.h"
-#if CONFIG_WIFI_AUTO_RECONNECT
+#if CONFIG_WIFI_AUTO_RESTART
 #include "event.h"
 #if (CONFIG_EASY_FLASH && CONFIG_EASY_FLASH_V4)
 #include "bk_ef.h"
@@ -548,7 +548,7 @@ void demo_wifi_mem_apply_init(uint8_t module, uint8_t value)
 #endif
 }
 
-#if CONFIG_WIFI_AUTO_RECONNECT
+#if CONFIG_WIFI_AUTO_RESTART
 typedef struct bk_fast_connect_d
 {
 	uint8_t flag;		//to check if ssid/pwd saved in easy flash is valid, default 0x70
@@ -560,7 +560,27 @@ typedef struct bk_fast_connect_d
 	uint8_t ap_channel;
 }BK_FAST_CONNECT_D;
 
-void demo_wifi_fast_connect(void)
+int is_wifi_sta_auto_restart_info_saved(void)
+{
+	BK_FAST_CONNECT_D info = {0};
+#if (CONFIG_EASY_FLASH && CONFIG_EASY_FLASH_V4)
+	bk_get_env_enhance("d_wifi_id", (void *)&info, sizeof(BK_FAST_CONNECT_D));
+#endif
+	if (info.flag == 0x71l || info.flag == 0x73l)
+		return 0;
+	else
+		return 1;
+}
+
+void demo_wifi_erase_auto_restart_info(void)
+{
+	BK_FAST_CONNECT_D info_tmp = {0};
+#if (CONFIG_EASY_FLASH && CONFIG_EASY_FLASH_V4)
+	bk_set_env_enhance("d_wifi_id", (const void *)&info_tmp, sizeof(BK_FAST_CONNECT_D));
+#endif
+}
+
+int demo_wifi_auto_restart(void)
 {
 	BK_FAST_CONNECT_D info = {0};
 #if (CONFIG_EASY_FLASH && CONFIG_EASY_FLASH_V4)
@@ -574,10 +594,10 @@ void demo_wifi_fast_connect(void)
 		demo_sta_app_init((char *)info.sta_ssid, (char *)info.sta_pwd);
 		demo_softap_app_init((char *)info.ap_ssid, (char *)info.ap_pwd, NULL);
 	}
-
+	return info.flag;
 }
 
-int demo_save_wifi_reconnect_info(netif_if_t type, void *val)
+int demo_save_wifi_auto_restart_info(netif_if_t type, void *val)
 {
 	BK_FAST_CONNECT_D info_tmp = {0};
 	__maybe_unused wifi_ap_config_t *ap_config = NULL;
@@ -592,6 +612,8 @@ int demo_save_wifi_reconnect_info(netif_if_t type, void *val)
 			info_tmp.flag = 0x71l;
 		}
 		sta_config = (wifi_sta_config_t *)val;
+		os_memset((char *)info_tmp.sta_ssid, 0x0, 33);
+		os_memset((char *)info_tmp.sta_pwd, 0x0, 65);
 		os_strcpy((char *)info_tmp.sta_ssid, (char *)sta_config->ssid);
 		os_strcpy((char *)info_tmp.sta_pwd, (char *)sta_config->password);
 	} else if (type == NETIF_IF_AP) {
@@ -600,6 +622,8 @@ int demo_save_wifi_reconnect_info(netif_if_t type, void *val)
 		else
 			info_tmp.flag = 0x72l;
 		ap_config = (wifi_ap_config_t *)val;
+		os_memset((char *)info_tmp.ap_ssid, 0x0, 33);
+		os_memset((char *)info_tmp.ap_pwd, 0x0, 65);
 		os_strcpy((char *)info_tmp.ap_ssid, (char *)ap_config->ssid);
 		os_strcpy((char *)info_tmp.ap_pwd, (char *)ap_config->password);
 	} else
