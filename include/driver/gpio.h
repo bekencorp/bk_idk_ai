@@ -310,6 +310,24 @@ bk_err_t bk_gpio_register_isr(gpio_id_t id, gpio_isr_t isr);
  */
 bk_err_t bk_gpio_unregister_isr(gpio_id_t id);
 
+/**
+ * @brief using the gpio to control the external ldo
+ *
+ * control the external ldo,multi modules power on use one gpio control
+ *
+ * @attention
+ * - This API is used to use the specific gpio(define in  GPIO_CTRL_LDO_MAP in gpio_map.h) control the external ldo(multi modules power on use one gpio control)
+ *
+ * @param
+ * -module:gpio ctrl ldo module name
+ * -gpio_id:gpio id
+ * -value:gpio output state 
+ * @return
+ *  - BK_OK: succeed
+ *  - others: other errors.
+ */
+bk_err_t bk_gpio_ctrl_external_ldo(gpio_ctrl_ldo_module_e module,gpio_id_t gpio_id,gpio_output_state_e value);
+
 #if CONFIG_GPIO_DYNAMIC_WAKEUP_SUPPORT
 /**
  * @brief     Register the GPIO channel to wakeup source with select int type.
@@ -385,24 +403,6 @@ bk_err_t bk_gpio_register_lowpower_keep_status(gpio_id_t gpio_id, const gpio_con
  *    - others: other errors.
  */
 bk_err_t bk_gpio_unregister_lowpower_keep_status(gpio_id_t gpio_id);
-
-/**
- * @brief using the gpio to control the external ldo
- *
- * control the external ldo,multi modules power on use one gpio control
- *
- * @attention
- * - This API is used to use the specific gpio(define in  GPIO_CTRL_LDO_MAP in gpio_map.h) control the external ldo(multi modules power on use one gpio control)
- *
- * @param
- * -module:gpio ctrl ldo module name
- * -gpio_id:gpio id
- * -value:gpio output state 
- * @return
- *  - BK_OK: succeed
- *  - others: other errors.
- */
-bk_err_t bk_gpio_ctrl_external_ldo(gpio_ctrl_ldo_module_e module,gpio_id_t gpio_id,gpio_output_state_e value);
 
 #else
 /**
