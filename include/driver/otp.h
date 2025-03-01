@@ -186,6 +186,8 @@ bk_err_t bk_otp_apb_write_mask(otp1_id_t item, otp_privilege_t permission);
  *    - BK_FAIL: error
 */
 bk_err_t bk_otp_read_random_number(uint32_t* buf, uint32_t size);
+#else
+#define bk_otp_apb_read(item, buf, size) (-1)
 #endif
 /**
  * @}
