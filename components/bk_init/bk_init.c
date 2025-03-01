@@ -423,6 +423,8 @@ extern int mp_do_startup(int heap_len);
 #if CONFIG_GSENSOR_ENABLE
 	extern bk_err_t gsensor_demo_init(void);
 	gsensor_demo_init();
+	extern bk_err_t gsensor_demo_open();
+    gsensor_demo_open();
 #endif
 
 #if (CONFIG_PSRAM)
