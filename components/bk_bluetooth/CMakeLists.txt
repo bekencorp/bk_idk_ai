@@ -52,6 +52,7 @@ endif()#CONFIG_AT
             api/bt_hidd_export_api.c
             api/bt_hidh_export_api.c
             api/bk_hfp_api.c
+            api/bk_pan_api.c
         )
     endif()
 
