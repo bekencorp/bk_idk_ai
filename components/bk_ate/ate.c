@@ -110,6 +110,11 @@ bool ate_is_enabled(void)
 {
 	return false;
 }
+
+bool cp_is_enabled(void)
+{
+    return false;
+}
 #endif
 
 
