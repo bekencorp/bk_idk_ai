@@ -34,4 +34,10 @@ menu "AUDIO"
 		depends on I2S
 		bool "Enable audio codec chip ES8311 driver"
 		default n
+
+    config MIC1_ANA_GAIN_VALUE
+        int "Config Mic1 Analog Gain value"
+		range 0 15
+		default 0
+
 endmenu
