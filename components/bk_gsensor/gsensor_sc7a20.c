@@ -612,9 +612,9 @@ static int sc7a20_open(void)
         sc7a20_i2c_write(SL_SC7A20_CTRL_REG5,0x00);
         sc7a20_i2c_write(SL_SC7A20_CTRL_REG6,0x02);
         sc7a20_i2c_write(SL_SC7A20_SDOI2C_PU_CFG,0xc);
-        sc7a20_i2c_write(SL_SC7A20_INT1_CFG,0x2a);
-        sc7a20_i2c_write(SL_SC7A20_INT1_THS,0x01);
-        sc7a20_i2c_write(SL_SC7A20_INT1_DURATION,0x01);
+        sc7a20_i2c_write(SL_SC7A20_INT1_CFG,0xaa);//Draw an similar S-shaped gesture to wake up
+        sc7a20_i2c_write(SL_SC7A20_INT1_THS,0x03);
+        sc7a20_i2c_write(SL_SC7A20_INT1_DURATION,0x02);
         bk_gpio_enable_interrupt(GSENSOR_G_INT_PIN);
     }
     is_running = 1;
