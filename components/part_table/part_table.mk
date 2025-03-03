@@ -48,7 +48,7 @@ bk7258xx_supported_projects := $(bk7258xx_supported_projects) wifi/repeater
 bk7258xx_supported_projects := $(bk7258xx_supported_projects) at
 bk7258xx_supported_projects := $(bk7258xx_supported_projects) customization/config_ab thirdparty/doorbell_cs2_ab_4M
 bk7258xx_supported_projects := $(bk7258xx_supported_projects) matter
-bk7258xx_supported_projects := $(bk7258xx_supported_projects) thirdparty/agora agora_ai agora_wanson_ai beken_genie ai_dashboard agora_wenwen_ai ai_dialog_free
+bk7258xx_supported_projects := $(bk7258xx_supported_projects) thirdparty/agora agora_ai agora_wanson_ai beken_genie  beken_genie_ab ai_dashboard agora_wenwen_ai ai_dialog_free
 ############################################################
 #        Create supported projects list for bk7234         #
 ############################################################

@@ -132,6 +132,7 @@ list(APPEND bk7258xx_supported_projects
 	"agora_wanson_ai"
 	"agora_wenwen_ai"
 	"beken_genie"
+	"beken_genie_ab"
     "ai_dashboard"
     "ai_dialog_free"
 	"phy/cert_test"
