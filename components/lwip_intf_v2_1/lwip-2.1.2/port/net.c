@@ -1173,7 +1173,7 @@ void pan_netif_notify_got_ip(void)
 	netif_event_got_ip4_t event_data = {0};
 	event_data.netif_if = NETIF_IF_PAN;
 
-	BK_LOG_ON_ERR(bk_event_post(EVENT_MOD_NETIF, EVENT_PAN_NETIF_GOT_IP4,
+	BK_LOG_ON_ERR(bk_event_post(EVENT_MOD_NETIF, EVENT_NETIF_GOT_IP4,
 								&event_data, sizeof(event_data), BEKEN_NEVER_TIMEOUT));
 }
 #endif
