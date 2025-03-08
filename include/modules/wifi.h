@@ -1244,6 +1244,18 @@ bk_err_t bk_wifi_set_bcn_recv_win(uint8_t default_win, uint8_t max_win, uint8_t 
 bk_err_t bk_wifi_get_support_wifi_mode(uint8_t* support_mode);
 
 /**
+ * @brief  set station connection delay time.
+ *
+ * @param conn_delay_time: delay time of starting station connection (in ms).
+ *
+ * @return
+ * 	-BK_OK: on success
+ * 	-others:real error, used for future.
+ *
+ */
+bk_err_t bk_wifi_set_conn_delay_time(uint8_t conn_delay_time);
+
+/**
  * @brief  configure arp reply.
  *
  * flag: indicates whether to send arp reply actively,but not respond to arp request,or use default value
