@@ -13,6 +13,13 @@ extern "C" {
 #endif
 
 #include <stdint.h>
+#include <driver/hal/hal_gpio_types.h>
+
+#define KEY_GPIO_13   GPIO_13
+#define KEY_GPIO_12   GPIO_12
+#define KEY_GPIO_8    GPIO_8
+
+#define LONG_RRESS_TIMR 1500  //long press wake up time
 
 typedef enum {
     EVENT_NONE = 0,
