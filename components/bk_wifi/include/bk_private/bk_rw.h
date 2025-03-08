@@ -337,6 +337,7 @@ extern int rw_msg_send_bcn_recv_win_req(uint8_t vif_idx, uint8_t default_win,uin
 extern int rw_msg_send_bcn_miss_time_req(uint8_t vif_idx, uint8_t bcnmiss_time);
 extern int rw_msg_get_support_mode_req(uint8_t vif_idx, void *cfm);
 extern int rw_msg_send_arp_reply_config_req(uint8_t vif_idx, uint8_t flag, uint8_t arp_period);
+extern int rw_msg_send_conn_delay_time_ind(uint8_t vif_idx, uint8_t conn_delay_time);
 extern void rw_msg_send_psdebug_req(uint8_t index);
 extern int rw_msg_send_td_interval_req(uint8_t interval, uint8_t max_pnk);
 extern int rw_msg_send_td_mask_req();

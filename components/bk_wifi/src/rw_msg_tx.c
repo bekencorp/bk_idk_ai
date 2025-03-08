@@ -1583,6 +1583,23 @@ int rw_msg_send_arp_reply_config_req(uint8_t vif_idx, uint8_t flag, uint8_t arp_
 	return rw_msg_send(req, 1, MM_SET_ARP_REPLY_CONFIG_CFM, NULL);
 }
 
+int rw_msg_send_conn_delay_time_ind(uint8_t vif_idx, uint8_t conn_delay_time)
+{
+	struct sm_conn_delay_time_ind *ind;
+	/* Build the SM_CONN_DELAY_TIME_IND message */
+	ind = ke_msg_alloc(SM_CONN_DELAY_TIME_IND, TASK_SM, TASK_API,
+                          sizeof(struct sm_conn_delay_time_ind));
+	if (!ind)
+		return -ENOMEM;
+
+	/* Set parameters */
+	ind->vif_idx = vif_idx;
+	ind->conn_delay_time = conn_delay_time;
+
+	/* Send the SM_CONN_DELAY_TIME_IND message to LMAC FW */
+	return rw_msg_send(ind, 0, 0, NULL);
+}
+
 int rw_msg_send_psdebug_interval_req(uint8_t interval)
 {
     struct mm_set_psdebug_interval_req *req;

@@ -1009,6 +1009,27 @@ static int at_wlan_set_arp_config(int sync,int argc, char **argv)
 	}
 }
 
+static int at_wlan_set_conn_delay_time(int sync,int argc, char **argv)
+{
+
+	if(argc != 1){
+		atsvr_cmd_rsp_error();
+		return -1;
+	}
+
+	u8 conn_delay_time = 0;
+	conn_delay_time = atoi(argv[0]);
+
+	if(bk_wifi_set_conn_delay_time(conn_delay_time) == BK_OK){
+		BK_LOGI(TAG,"set conn delay %d\r\n",conn_delay_time);
+		atsvr_cmd_rsp_ok();
+		return 0;
+	}else{
+		atsvr_cmd_rsp_error();
+		return -1;
+	}
+}
+
 #include "conv_utf8_pub.h"
 static int at_wlan_softap_start(int sync, int argc, char **argv)
 {
@@ -1402,6 +1423,9 @@ const struct _atsvr_command wifi_cmds_table[] = {
 	ATSVR_CMD_HADLER("ATW?","Get Station and SoftAP info",NULL,
 					at_wlan_atw_cmd,false,0,0,NULL,false),
 #endif
+	ATSVR_CMD_HADLER("AT+SETCONNDELAY","SETCONNDELAY",NULL,
+					at_wlan_set_conn_delay_time,false,0,0,NULL,false),
+
 	/*SAP*/
 	ATSVR_CMD_HADLER("AT+SAPSTART","AT+SAPSTART=SSID,PWD",
 					NULL,at_wlan_softap_start,false,AT_WLAN_SAP_TIMEOUT_MS,true,NULL,true),

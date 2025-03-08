@@ -3899,6 +3899,22 @@ bk_err_t bk_wifi_set_arp_reply_config(uint8_t flag, uint8_t arp_period) {
 	return rw_msg_send_arp_reply_config_req(vif_idx, flag, arp_period);
 }
 
+bk_err_t bk_wifi_set_conn_delay_time(uint8_t conn_delay_time)
+{
+
+	uint8_t vif_idx = 0;
+	vif_idx = wifi_netif_mac_to_vifid((uint8_t*)&g_sta_param_ptr->own_mac);
+
+#if NX_P2P
+	VIF_INF_PTR vif = rwm_mgmt_vif_idx2ptr(vif_idx);
+	if (vif->p2p)
+		return BK_FAIL;
+#endif
+	WIFI_LOGI("conn_delay_time %d\r\n",conn_delay_time);
+
+	return rw_msg_send_conn_delay_time_ind(vif_idx, conn_delay_time);
+}
+
 bk_err_t bk_wifi_get_rx_crc_error(uint32_t *ulRxCRCErrorCount)
 {
 	int ret;
