@@ -174,14 +174,6 @@ DSTATUS disk_initialize (
 
 	case DEV_SD :
 #if (CONFIG_SDCARD)
-#if (CONFIG_USBD_MSC && CONFIG_USB_DEVICE)
-		if(bk_sd_card_get_owner() & (1 << SD_CARD_OWNER_USB_DEVICE)) {
-			FATFS_LOGI("sd card is owned by usb device\r\n");
-			return STA_NOINIT;
-		}
-
-		bk_sd_card_vote_owner(SD_CARD_OWNER_LOCAL_FS);
-#endif
 		sdcard_ldo_power_enable(1);
 		stat = bk_sd_card_init();
 #if CONFIG_SDCARD_POWER_GPIO_CTRL_AUTO_POWERDOWN_WHEN_IDLE
@@ -235,13 +227,6 @@ DRESULT disk_read (
 
 	case DEV_SD :
 #if (CONFIG_SDCARD)
-#if (CONFIG_USBD_MSC && CONFIG_USB_DEVICE)
-		if(bk_sd_card_get_owner() & (1 << SD_CARD_OWNER_USB_DEVICE)) {
-			FATFS_LOGI("sd card is owned by usb device\r\n");
-			return STA_NOINIT;
-		}
-#endif
-
 		sdcard_operation_timing_reload();
 		res = bk_sd_card_read_blocks((uint8_t *)buff, sector, count);
 		if(res != RES_OK) {
@@ -318,13 +303,6 @@ DRESULT disk_write (
 
 	case DEV_SD :
 #if (CONFIG_SDCARD)
-#if (CONFIG_USBD_MSC && CONFIG_USB_DEVICE)
-		if(bk_sd_card_get_owner() & (1 << SD_CARD_OWNER_USB_DEVICE)) {
-			FATFS_LOGI("sd card is owned by usb device\r\n");
-			return STA_NOINIT;
-		}
-#endif
-
 		sdcard_operation_timing_reload();
 		res = bk_sd_card_write_blocks((uint8_t *)buff, sector, count);
 		if(res != RES_OK) {
@@ -372,12 +350,6 @@ DRESULT disk_ioctl (
 	switch (pdrv) {
 	case DEV_SD :
 #if (CONFIG_SDCARD)
-#if (CONFIG_USBD_MSC && CONFIG_USB_DEVICE)
-		if(bk_sd_card_get_owner() & (1 << SD_CARD_OWNER_USB_DEVICE)) {
-			FATFS_LOGI("sd card is owned by usb device\r\n");
-			return STA_NOINIT;
-		}
-#endif
 		sdcard_operation_timing_reload();
 		// Process of the command for the MMC/SD card
 		switch(cmd)
@@ -497,9 +469,6 @@ DSTATUS disk_uninitialize ( BYTE pdrv/* Physical drive nmuber to identify the dr
 	sdcard_ldo_power_enable(0);
 	stat = RES_OK;
 
-#if (CONFIG_USBD_MSC && CONFIG_USB_DEVICE)
-	bk_sd_card_clear_owner(SD_CARD_OWNER_LOCAL_FS);
-#endif
 #endif
 		break;
 
