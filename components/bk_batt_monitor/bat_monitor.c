@@ -659,7 +659,7 @@ static bk_err_t prvBatteryMonitorTaskInit( void )
                                        4,
                                        "battery_monitor",
                                        (beken_thread_function_t)prvBatteryMonitorTaskMain,
-                                       1024,
+                                       1536,
                                        (beken_thread_arg_t)NULL );
 
     if( ret != BK_OK )
