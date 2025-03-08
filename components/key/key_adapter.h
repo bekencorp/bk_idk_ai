@@ -19,7 +19,7 @@ extern "C" {
 #define KEY_GPIO_12   GPIO_12
 #define KEY_GPIO_8    GPIO_8
 
-#define LONG_RRESS_TIMR 1500  //long press wake up time
+#define LONG_RRESS_TIMR 3000  //long press wake up time
 
 typedef enum {
     EVENT_NONE = 0,
