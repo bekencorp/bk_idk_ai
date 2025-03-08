@@ -587,6 +587,11 @@ static void prvBatteryMonitorTaskMain( void )
     {
         /* Check charging status */
         prvCheckChargeStatus( xGlobalHandle );
+        if (pxInfo->xBatteryStatus == eBatteryCharging)
+        {
+            app_event_send_msg(APP_EVT_CHARGING, 0);
+            bLowVoltageTriggered = false;
+        }
 
         {
             uint16_t usVoltage   = 0;
@@ -604,7 +609,7 @@ static void prvBatteryMonitorTaskMain( void )
             if( iot_battery_chargeLevel( xGlobalHandle, &ucCharge ) == IOT_BATTERY_SUCCESS )
             {
                 /* Low battery detection logic */
-                if (ucCharge <= LOW_CAPACITY_THRESHOLD)
+                if ((ucCharge <= LOW_CAPACITY_THRESHOLD) && (pxInfo->xBatteryStatus != eBatteryCharging))
                 {
                     if (!bLowVoltageTriggered) // Only when the value decreases from above 20% to below 20% will it trigger
                     {
