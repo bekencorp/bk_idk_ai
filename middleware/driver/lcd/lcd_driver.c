@@ -1179,6 +1179,7 @@ bk_err_t lcd_driver_deinit(void)
 			ret = BK_FAIL;
 			goto out;
 		}
+		bk_lcd_rgb_io_deinit();
 	}
 	else if (s_lcd.device.type == LCD_TYPE_MCU8080)
 	{
@@ -1199,7 +1200,6 @@ bk_err_t lcd_driver_deinit(void)
 
 	out:
 	bk_lcd_driver_deinit();
-	bk_lcd_rgb_io_deinit();
 	bk_pm_clock_ctrl(PM_CLK_ID_DISP, CLK_PWR_CTRL_PWR_DOWN);
 	bk_pm_module_vote_power_ctrl(PM_POWER_SUB_MODULE_NAME_VIDP_LCD, PM_POWER_MODULE_STATE_OFF);
 	bk_pm_module_vote_cpu_freq(PM_DEV_ID_DISP, PM_CPU_FRQ_DEFAULT);
