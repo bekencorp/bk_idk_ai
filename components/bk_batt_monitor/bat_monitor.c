@@ -17,6 +17,7 @@
 #include "iot_adc.h"
 #include "bk_saradc.h"
 #include <bat_monitor.h>
+#include "app_event.h"
 
 #if CONFIG_PM_ENABLE
 #include <modules/pm.h>
@@ -314,7 +315,7 @@ int32_t iot_battery_voltage( IotBatteryHandle_t const pxBatteryHandle,
 	float practic_voltage = (float)(s_raw_voltage_data[0] - saradc_val.low);
     practic_voltage = (practic_voltage / (float)(saradc_val.high - saradc_val.low)) + 1;
 	#endif
-    BAT_MONITOR_PRT("pusVoltage = %d, practic_voltage = %d.\r\n",*pusVoltage, practic_voltage);
+    //BAT_MONITOR_PRT("pusVoltage = %d, practic_voltage = %d.\r\n",*pusVoltage, practic_voltage);
 
     *pusVoltage = practic_voltage;
 
@@ -511,7 +512,7 @@ static bk_err_t prvStartBatteryAdcOneTime( uint16_t * vol )
     }
 
     *vol = prvCalculateVoltage();
-    printf("ADC VALUE: %d .\r\n", *vol);
+    //BAT_MONITOR_PRT("ADC VALUE: %d .\r\n", *vol);
 
 ADC_EXIT:
     BK_LOG_ON_ERR( bk_adc_stop() );
@@ -561,6 +562,7 @@ static void prvCheckChargeStatus( IotBatteryHandle_t xHandle )
  */
 static void prvBatteryMonitorTaskMain( void )
 {
+    static bool bLowVoltageTriggered = false;  // Low Battery Status Indicator
 
     IotBatteryHandle_t xGlobalHandle = iot_battery_open( 0 );
     if( xGlobalHandle == NULL )
@@ -601,6 +603,20 @@ static void prvBatteryMonitorTaskMain( void )
             }
             if( iot_battery_chargeLevel( xGlobalHandle, &ucCharge ) == IOT_BATTERY_SUCCESS )
             {
+                /* Low battery detection logic */
+                if (ucCharge <= LOW_CAPACITY_THRESHOLD)
+                {
+                    if (!bLowVoltageTriggered) // Only when the value decreases from above 20% to below 20% will it trigger
+                    {
+                        app_event_send_msg(APP_EVT_LOW_VOLTAGE, 0);
+                        BAT_MONITOR_WPRT("Low voltage event triggered!\r\n");
+                        bLowVoltageTriggered = true;
+                    }
+                }
+                else
+                {
+                    bLowVoltageTriggered = false;  // When charging resumes, reset the flag
+                }
                 BAT_MONITOR_PRT("Battery level: %u%%\r\n", ucCharge);
             }
         }
