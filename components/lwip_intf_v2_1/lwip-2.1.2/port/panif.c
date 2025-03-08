@@ -52,7 +52,7 @@ static err_t pan_low_level_output(struct netif *netif, struct pbuf *p)
     return ERR_OK;
 }
 
-void 
+void
 panif_input(struct netif *netif, struct pbuf *p)
 {
     struct eth_hdr *ethhdr;
@@ -62,9 +62,8 @@ panif_input(struct netif *netif, struct pbuf *p)
     }
 
     netif = net_get_pan_handle();
-    if(!netif) {
-        //LWIP_LOGI("ethernetif_input no netif found %d\r\n", iface);
-        pbuf_free(p);
+    if(netif == NULL) {
+        LWIP_DEBUGF(NETIF_DEBUG, ("panif_input no netif found\r\n"));
         goto free_pbuf;
     }
 
@@ -73,7 +72,7 @@ panif_input(struct netif *netif, struct pbuf *p)
 
     if( (os_memcmp(netif->hwaddr,ethhdr->src.addr,NETIF_MAX_HWADDR_LEN)==0) && (htons(ethhdr->type) !=ETHTYPE_ARP) )
     {
-        LWIP_DEBUGF(NETIF_DEBUG ,("ethernet_input frame is my send,drop it\r\n"));
+        LWIP_DEBUGF(NETIF_DEBUG ,("panif_input frame is my send,drop it\r\n"));
         goto free_pbuf;
     }
 
@@ -92,9 +91,9 @@ panif_input(struct netif *netif, struct pbuf *p)
     case ETHTYPE_PPPOE:
 #endif /* PPPOE_SUPPORT */
         /* full packet send to tcpip_thread to process */
-        if (netif->input(p, netif) != ERR_OK)	 // ethernet_input
+        if (netif->input(p, netif) != ERR_OK)    // ethernet_input
         {
-            LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_input: IP input error\r\n"));
+            LWIP_DEBUGF(NETIF_DEBUG, ("panif_input: IP input error\r\n"));
             pbuf_free(p);
             p = NULL;
         }
@@ -109,8 +108,9 @@ panif_input(struct netif *netif, struct pbuf *p)
         break;
     }
 free_pbuf:
-     pbuf_free(p);
-
+     if(p != NULL) {
+        pbuf_free(p);
+     }
 }
 
 err_t

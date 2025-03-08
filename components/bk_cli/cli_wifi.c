@@ -1409,9 +1409,6 @@ int cli_netif_event_cb(void *arg, event_module_t event_module,
 		}
 		got_ip = (netif_event_got_ip4_t *)event_data;
 		CLI_LOGW("%s got ip\n", got_ip->netif_if == NETIF_IF_STA ? "BK STA" : "BK PAN");
-#if CONFIG_NET_PAN
-		pan_set_ip_start_flag(true);
-#endif
 		break;
 	default:
 		CLI_LOGW("rx event <%d %d>\n", event_module, event_id);

@@ -630,6 +630,19 @@ void pan_set_default_netif(void)
 {
 	netifapi_netif_set_default(net_get_pan_handle());
 }
+
+void pan_ip_down(void)
+{
+	if (pan_ip_start_flag) {
+		LWIP_LOGI("bt_pan ip down\r\n");
+
+		pan_ip_start_flag = false;
+
+		netif_set_status_callback(&g_pan.netif, NULL);
+		netifapi_dhcp_stop(&g_pan.netif);
+		netifapi_netif_set_down(&g_pan.netif);
+	}
+}
 #endif
 
 void sta_set_default_netif(void)
