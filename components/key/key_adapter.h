@@ -30,6 +30,7 @@ typedef enum {
     CONFIG_NETWORK,
     BRIGHTNESS_ADD,
     AI_AGENT_CONFIG,
+    FACTORY_RESET,
 } key_event_t;
 
 typedef enum{
