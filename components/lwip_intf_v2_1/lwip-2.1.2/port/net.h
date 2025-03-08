@@ -44,6 +44,7 @@ extern void pan_ip_start(void);
 extern void pan_set_ip_start_flag(bool enable);
 extern uint32_t pan_ip_is_start(void);
 bk_err_t bk_pan_get_mac(uint8_t *mac);
+void pan_netif_notify_got_ip(void);
 #endif
 
 #ifdef __cplusplus

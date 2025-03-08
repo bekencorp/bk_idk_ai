@@ -1410,6 +1410,13 @@ int cli_netif_event_cb(void *arg, event_module_t event_module,
 		got_ip = (netif_event_got_ip4_t *)event_data;
 		CLI_LOGW("%s got ip\n", got_ip->netif_if == NETIF_IF_STA ? "BK STA" : "unknown netif");
 		break;
+#if CONFIG_NET_PAN
+	case EVENT_PAN_NETIF_GOT_IP4:
+		got_ip = (netif_event_got_ip4_t *)event_data;
+		CLI_LOGW("%s got ip\n", got_ip->netif_if == NETIF_IF_PAN ? "BK PAN" : "unknown netif");
+		pan_set_ip_start_flag(true);
+		break;
+#endif
 	default:
 		CLI_LOGW("rx event <%d %d>\n", event_module, event_id);
 		break;

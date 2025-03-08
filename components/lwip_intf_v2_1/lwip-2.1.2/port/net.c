@@ -40,6 +40,7 @@
 #endif
 #if CONFIG_NET_PAN
 #include "panif.h"
+#include <components/event.h>
 #endif
 
 /* forward declaration */
@@ -407,6 +408,11 @@ static void wm_netif_status_callback(struct netif *n)
 #endif
 				}
 #endif // CONFIG_WIFI_ENABLE
+#ifdef CONFIG_NET_PAN
+				 else if (n == &g_pan.netif) {
+					pan_netif_notify_got_ip();
+				}
+#endif
 #ifdef CONFIG_ETH
 			} else if (n == &g_mlan.netif) {
 				// Ethernet DHCP handler, clear ps prevent
@@ -1159,6 +1165,16 @@ int net_pan_add_netif(uint8_t *mac)
 	NETIF_SET_CHECKSUM_CTRL(&pan_if->netif, NETIF_CHECKSUM_DISABLE_ALL);
 
 	return ERR_OK;
+}
+
+void pan_netif_notify_got_ip(void)
+{
+	/* post event PAN_GOT_IP4 */
+	netif_event_got_ip4_t event_data = {0};
+	event_data.netif_if = NETIF_IF_PAN;
+
+	BK_LOG_ON_ERR(bk_event_post(EVENT_MOD_NETIF, EVENT_PAN_NETIF_GOT_IP4,
+								&event_data, sizeof(event_data), BEKEN_NEVER_TIMEOUT));
 }
 #endif
 
