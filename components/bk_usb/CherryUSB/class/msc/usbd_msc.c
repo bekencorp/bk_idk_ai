@@ -222,8 +222,9 @@ static int msc_storage_class_interface_request_handler(struct usb_setup_packet *
 void msc_storage_notify_handler(uint8_t event, void *arg)
 {
     switch (event) {
+        case USBD_EVENT_ERROR:
         case USBD_EVENT_RESET:
-            USB_LOG_INFO("%s ,line:%d,USBD_EVENT_RESET\r\n",__FILE__,__LINE__);
+            USB_LOG_DBG("%s ,line:%d,USBD_EVENT_RESET\r\n",__FILE__,__LINE__);
 #if (CONFIG_SDCARD)
             if(bk_sd_card_get_owner() & (1 << SD_CARD_OWNER_LOCAL_FS)) {
                 USB_LOG_INFO("sd card is owned by fatfs\r\n");
@@ -240,7 +241,7 @@ void msc_storage_notify_handler(uint8_t event, void *arg)
             usbd_ep_start_read(mass_ep_data[MSD_OUT_EP_IDX].ep_addr, (uint8_t *)&usbd_msc_cfg.cbw, USB_SIZEOF_MSC_CBW);
             break;
         case USBD_EVENT_SUSPEND:
-            USB_LOG_INFO("%s ,line:%d,USBD_EVENT_SUSPEND\r\n",__FILE__,__LINE__);
+            USB_LOG_DBG("%s ,line:%d,USBD_EVENT_SUSPEND\r\n",__FILE__,__LINE__);
 #if (CONFIG_SDCARD)
             bk_sd_card_clear_owner(SD_CARD_OWNER_USB_DEVICE);
 #endif
@@ -1152,6 +1153,12 @@ int usbd_msc_sector_write(uint32_t sector, uint8_t *buffer, uint32_t length)
 
 void msc_storage_init(void)
 {
+#if CONFIG_SDIO_HOST
+    bk_gpio_ctrl_external_ldo(GPIO_CTRL_LDO_MODULE_SDIO, SDCARD_LDO_CTRL_GPIO, GPIO_OUTPUT_STATE_HIGH);
+    extern bk_err_t bk_sd_card_init(void);
+    bk_sd_card_init();
+#endif
+
     if(!s_msc_storage_init)
     {
         usbd_desc_register(msc_storage_descriptor);
@@ -1165,11 +1172,7 @@ void msc_storage_init(void)
         USB_LOG_INFO(" errr, %s ,line:%d, inited\r\n",__FILE__,__LINE__);
         return ;
     }
-#if CONFIG_SDIO_HOST
-    bk_gpio_ctrl_external_ldo(GPIO_CTRL_LDO_MODULE_SDIO, SDCARD_LDO_CTRL_GPIO, GPIO_OUTPUT_STATE_HIGH);
-    extern bk_err_t bk_sd_card_init(void);
-    bk_sd_card_init();
-#endif
+
 }
 void msc_storage_deinit(void)
 {
