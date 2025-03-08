@@ -79,6 +79,12 @@ if (CONFIG_BRIDGE)
 	)
 endif()
 
+if (CONFIG_NET_PAN)
+	list(APPEND srcs
+	lwip-2.1.2/port/panif.c
+	)
+endif()
+
 else()
 
 if (CONFIG_SYS_CPU1)

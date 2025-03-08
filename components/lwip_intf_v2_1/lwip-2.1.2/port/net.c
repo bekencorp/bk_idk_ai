@@ -38,6 +38,9 @@
 #if CONFIG_EASY_FLASH_FAST_DHCP
 #include "bk_ef.h"
 #endif
+#if CONFIG_NET_PAN
+#include "panif.h"
+#endif
 
 /* forward declaration */
 FUNC_1PARAM_PTR bk_wlan_get_status_cb(void);
@@ -86,6 +89,17 @@ struct ipv4_config br_ip_settings = {
 };
 #endif
 
+#if CONFIG_NET_PAN
+struct ipv4_config pan_ip_settings = {
+	.addr_type = ADDR_TYPE_DHCP,
+	.address = 0,
+	.gw = 0,
+	.netmask = 0,
+	.dns1 = 0,
+	.dns2 = 0,
+};
+#endif
+
 static char up_iface;
 static bool sta_ip_start_flag = false;
 bool uap_ip_start_flag = false;
@@ -94,6 +108,9 @@ static bool eth_ip_start_flag = false;
 #endif
 #if CONFIG_BRIDGE
 static bool bridge_ip_start_flag = false;
+#endif
+#if CONFIG_NET_PAN
+static bool pan_ip_start_flag = false;
 #endif
 
 #ifdef CONFIG_IPV6
@@ -128,6 +145,10 @@ static struct iface g_eth = {{0}, .name = "eth"};
 #if CONFIG_BRIDGE
 static struct iface g_br = {{0}, .name = "br"};
 #endif
+#if CONFIG_NET_PAN
+static struct iface g_pan = {{0}, .name = "pan"};
+#endif
+
 net_sta_ipup_cb_fn sta_ipup_cb = NULL;
 
 extern void *net_get_sta_handle(void);
@@ -141,7 +162,9 @@ extern int dhcp_server_start(void *intrfc_handle);
 extern void dhcp_server_stop(void);
 extern void net_configure_dns(struct iface *, struct wlan_ip_config *ip);
 bk_err_t bk_wifi_get_ip_status(IPStatusTypedef *outNetpara, WiFi_Interface inInterface);
-
+#if CONFIG_NET_PAN
+int net_pan_add_netif(uint8_t *mac);
+#endif
 
 #ifdef CONFIG_IPV6
 char *ipv6_addr_state_to_desc(unsigned char addr_state)
@@ -233,6 +256,25 @@ void net_wlan_init(void)
 	return;
 }
 
+#if CONFIG_NET_PAN
+bk_err_t bk_pan_get_mac(uint8_t *mac)
+{
+	if (!mac)
+		return BK_ERR_NULL_PARAM;
+
+	bk_get_mac(mac, MAC_TYPE_BLUETOOTH);
+	return BK_OK;
+}
+
+void net_pan_init(void)
+{
+	uint8_t pan_mac[ETH_ALEN];
+
+	bk_pan_get_mac((uint8_t *)pan_mac);
+	net_pan_add_netif(pan_mac);
+}
+#endif
+
 void net_set_sta_ipup_callback(void *fn)
 {
 	sta_ipup_cb = (net_sta_ipup_cb_fn)fn;
@@ -315,6 +357,9 @@ static void wm_netif_status_callback(struct netif *n)
 		if (dhcp != NULL) {
 			/* dhcp success*/
 			if (dhcp->state == DHCP_STATE_BOUND) {
+#if CONFIG_NET_PAN
+				LWIP_LOGI("pan_ip_addr: "BK_IP4_FORMAT" \r\n", BK_IP4_STR(ip_addr_get_ip4_u32(&n->ip_addr)));
+#endif
 				/*
 				LWIP_LOGI("ip_addr: "BK_IP4_FORMAT" \r\n", BK_IP4_STR(ip_addr_get_ip4_u32(&n->ip_addr)));
 				sta_tick.sta_ip_tick = rtos_get_time();
@@ -447,6 +492,13 @@ void *net_get_br_handle(void)
 }
 #endif
 
+#if CONFIG_NET_PAN
+void *net_get_pan_handle(void)
+{
+	return &g_pan.netif;
+}
+#endif
+
 void *net_get_netif_handle(uint8_t iface)
 {
 	return NULL;
@@ -544,6 +596,33 @@ void bridge_ip_stop(void)
 uint32_t bridge_ip_is_start(void)
 {
 	return bridge_ip_start_flag;
+}
+#endif
+
+#if CONFIG_NET_PAN
+void pan_set_ip_start_flag(bool enable)
+{
+	pan_ip_start_flag = enable;
+}
+
+void pan_ip_start(void)
+{
+	if(!pan_ip_start_flag) {
+		LWIP_LOGI("bt_pan ip start \r\n");
+		pan_ip_start_flag = true;
+		net_configure_address(&pan_ip_settings, net_get_pan_handle());
+		return;
+	}
+}
+
+uint32_t pan_ip_is_start(void)
+{
+	return pan_ip_start_flag;
+}
+
+void pan_set_default_netif(void)
+{
+	netifapi_netif_set_default(net_get_pan_handle());
 }
 #endif
 
@@ -817,6 +896,11 @@ int net_configure_address(struct ipv4_config *addr, void *intrfc_handle)
 #ifdef CONFIG_ETH
 	} else if (if_handle == &g_eth) {
 #endif
+#ifdef CONFIG_NET_PAN
+	} else if (if_handle == &g_pan) {
+		up_iface = 1;
+		pan_set_default_netif();
+#endif
 	} else {
 		// softap IP up, start dhcp server;
 		dhcp_server_start(net_get_uap_handle());
@@ -841,6 +925,9 @@ int net_get_if_addr(struct wlan_ip_config *addr, void *intrfc_handle)
 		if (if_handle == &g_mlan
 #ifdef CONFIG_ETH
 			|| if_handle == &g_eth
+#endif
+#ifdef CONFIG_NET_PAN
+			|| if_handle == &g_pan
 #endif
 			) {
 			/* STA or ETH Mode */
@@ -1047,6 +1134,33 @@ int net_wlan_remove_netif(uint8_t *mac)
 	LWIP_LOGI("remove vif%d\n", vifid);
 	return ERR_OK;
 }
+
+#if CONFIG_NET_PAN
+int net_pan_add_netif(uint8_t *mac)
+{
+	struct iface *pan_if = &g_pan;
+	err_t err;
+
+	ip_addr_set_ip4_u32(&pan_if->ipaddr, INADDR_ANY);
+	err = netifapi_netif_add(&pan_if->netif,
+		ip_2_ip4(&pan_if->ipaddr),
+		ip_2_ip4(&pan_if->ipaddr),
+		ip_2_ip4(&pan_if->ipaddr),
+		NULL,
+		pan_netif_init,
+		tcpip_input);
+
+	if (err) {
+		LWIP_LOGE("net_wlan_add_netif failed(%d)\n", err);
+		return err;
+	}
+
+	/* disable SW checksum calculation ? */
+	NETIF_SET_CHECKSUM_CTRL(&pan_if->netif, NETIF_CHECKSUM_DISABLE_ALL);
+
+	return ERR_OK;
+}
+#endif
 
 #if CONFIG_WIFI6_CODE_STACK
 bool etharp_tmr_flag = false;
