@@ -5,6 +5,15 @@
 #include <driver/gpio.h>
 #include <gpio_driver.h>
 
+#include <components/log.h>
+
+#define TAG "key"
+
+#define LOGI(...) BK_LOGI(TAG, ##__VA_ARGS__)
+#define LOGW(...) BK_LOGW(TAG, ##__VA_ARGS__)
+#define LOGE(...) BK_LOGE(TAG, ##__VA_ARGS__)
+#define LOGD(...) BK_LOGD(TAG, ##__VA_ARGS__)
+
 #define KEY_MSG_QUEUE_NAME "key_queue"
 #define KEY_MSG_QUEUE_COUNT (10)
 static beken_queue_t s_key_msgqueue = NULL;
@@ -53,7 +62,7 @@ void bk_configure_key(KeyConfig_t *KeyConfig)
     
     if (ret != BK_OK)
     {
-        os_printf("key_config failed\r\n");
+        LOGI("key_config failed\r\n");
         return;
     }
 }
@@ -79,7 +88,7 @@ void bk_key_driver_init(KeyConfig_t* configs, uint8_t num_keys) {
 
 	if (kNoErr != ret)
 	{
-		os_printf("init queue ret=%d", ret);
+		LOGI("init queue ret=%d", ret);
         goto err_exit;
 	}
 
@@ -95,7 +104,7 @@ void bk_key_driver_init(KeyConfig_t* configs, uint8_t num_keys) {
 
     if (kNoErr != ret)
 	{
-		os_printf("init thread ret=%d", ret);
+		LOGI("init thread ret=%d", ret);
 		goto err_exit;
 	}
     
@@ -171,8 +180,9 @@ static void key_thread(void *param){
     while (1)
     {
         if(rtos_pop_from_queue(&s_key_msgqueue, &rec_msg, BEKEN_WAIT_FOREVER) == kNoErr){
-
+            LOGI("start processing key enevt\r\n");
             process_key_event(rec_msg.gpio_id, rec_msg.action);
+            LOGI("end processing key enevt\r\n");
         }
     }
     
@@ -180,6 +190,7 @@ static void key_thread(void *param){
 
 void short_press_cb(void *param) {
 
+    LOGI("enter short press cb\r\n");
     bk_err_t ret;
 
     BUTTON_S * handle = (BUTTON_S *)param;
@@ -194,14 +205,14 @@ void short_press_cb(void *param) {
    ret = rtos_push_to_queue(&s_key_msgqueue, &msg, 1000);
 
     if (kNoErr != ret){
-		os_printf("key send msg failed");
+		LOGI("key send msg failed");
 	}
 
    
 }
 
 void double_press_cb(void *param) {
-
+    LOGI("enter double press cb\r\n");
     bk_err_t ret;
 
     BUTTON_S * handle = (BUTTON_S *)param;
@@ -215,14 +226,14 @@ void double_press_cb(void *param) {
     ret = rtos_push_to_queue(&s_key_msgqueue, &msg, 1000);
 
     if (kNoErr != ret){
-		os_printf("key send msg failed");
+		LOGI("key send msg failed");
 	}
 
      
 }
 
 void long_press_cb(void *param) {
-
+    LOGI("enter long press cb\r\n");
     bk_err_t ret;
 
     BUTTON_S * handle = (BUTTON_S *)param;
@@ -236,7 +247,7 @@ void long_press_cb(void *param) {
     ret = rtos_push_to_queue(&s_key_msgqueue, &msg, 1000);
 
     if (kNoErr != ret){
-		os_printf("key send msg failed");
+		LOGI("key send msg failed");
 	}
     
    
