@@ -48,6 +48,9 @@ extern void pan_netif_notify_got_ip(void);
 extern void pan_ip_down(void);
 int net_pan_remove_netif(void);
 #endif
+#if LWIP_NETIF_LOOPBACK
+void bk_netif_trigger_loopnetif_msg(void);
+#endif
 
 #ifdef __cplusplus
 }
