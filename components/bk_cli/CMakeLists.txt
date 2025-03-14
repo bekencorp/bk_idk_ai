@@ -187,7 +187,7 @@ if (CONFIG_VAULT_SUPPORT)
 		list(APPEND srcs "cli_securityip.c")
 	endif()
 
-	if (CONFIG_OTP AND CONFIG_OTP_TEST) 
+	if (CONFIG_OTP AND CONFIG_OTP_TEST)
 		list(APPEND srcs "cli_otp.c")
 	endif()
 ENDIF()
@@ -338,6 +338,10 @@ endif()
 
 if (CONFIG_PSRAM_TEST)
 	list(APPEND srcs cli_psram.c)
+endif()
+
+if (CONFIG_BATTERY_TEST)
+	list(APPEND srcs cli_battery.c)
 endif()
 
 if (CONFIG_GET_UID_TEST)

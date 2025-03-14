@@ -159,7 +159,7 @@ static void handle_shell_input_proxy(beken_thread_arg_t arg)
 int handle_shell_input(char *inbuf, int in_buf_size, char * outbuf, int out_buf_size)
 {
     int		ret = 0;
-	
+
 #if CONFIG_AT
 	extern _at_svr_ctrl_env_t _at_svr_env;
 	_at_svr_ctrl_env_t* penv = &_at_svr_env;
@@ -179,7 +179,7 @@ int handle_shell_input(char *inbuf, int in_buf_size, char * outbuf, int out_buf_
 		inbuf++;
 		in_buf_size--;
 	}
-	
+
     cmd_par.rsp_buff = outbuf;
 	cmd_par.cmd_buff = inbuf;
 	cmd_par.cmd_data_len = in_buf_size;
@@ -199,7 +199,7 @@ int handle_shell_input(char *inbuf, int in_buf_size, char * outbuf, int out_buf_
 		/* "cpux " */
 		inbuf += 4;
 		in_buf_size -= 4;
-		
+
 		cmd_par.cmd_buff = inbuf;
 		cmd_par.cmd_data_len = in_buf_size;
 	}
@@ -1076,7 +1076,7 @@ void cli_log_statist(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **
 	{
 		os_printf("Buffer[%d] run out count: %d.\r\n", i - 2, log_statist[i]);
 	}
-	
+
 	print_dynamic_log_info();
 
 	return;
@@ -1580,6 +1580,10 @@ int bk_cli_init(void)
 	cli_gsensor_init();
 #endif
 
+#if CONFIG_BATTERY_TEST
+	cli_battery_init();
+#endif
+
 #if (CONFIG_H264_SW_DECODER_TEST)
     cli_h264_sw_dec_init();
 #endif
@@ -1613,7 +1617,7 @@ int bk_cli_init(void)
 #if ((CONFIG_SOC_BK7236XX) && (CLI_CFG_DWT == 1))
 	cli_dwt_init();
 #endif
-    
+
 #if (CLI_CFG_TIMER == 1)
 	cli_timer_init();
 #endif
@@ -1810,7 +1814,7 @@ int bk_cli_init(void)
 
 #if CONFIG_TRAP_TEST
 	{
-		extern int cli_trap_test_init(void); 
+		extern int cli_trap_test_init(void);
 		cli_trap_test_init();
 	}
 #endif

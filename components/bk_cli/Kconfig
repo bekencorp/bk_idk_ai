@@ -46,12 +46,12 @@ menu "Bk_cli"
 			depends on CLI && WIFI_ENABLE
 			bool "Enable Iperf Test"
 			default y
-			
+
 		config WIFI_CLI_ENABLE
 			depends on CLI && WIFI_ENABLE
 			bool "Enable Wifi Cli Enable"
 			default y
-			
+
 		config TCP_SERVER_TEST
 			depends on CLI
 			bool "Enable Tcp Server Test"
@@ -123,7 +123,7 @@ menu "Bk_cli"
 			default n
 			help
 				Enable Shell and Async log optimize
-				
+
 		config DYM_LOG_MEM_MAX
 			depends on SHELL_ASYNCLOG
 			hex "Limit Of Log Dynamic Memory"
@@ -156,6 +156,11 @@ menu "Bk_cli"
 		config PSRAM_TEST
 			depends on CLI && PSRAM
 			bool "Enable Psram Test"
+			default n
+
+		config BATTERY_TEST
+			depends on CLI && BAT_MONITOR
+			bool "Enable Battery Test"
 			default n
 
 		config DVP_CAMERA_TEST
@@ -284,7 +289,7 @@ menu "Bk_cli"
 			depends on SLCD
 			bool "Enable SLCD Test"
 			default n
-		
+
 		config OTP_TEST
 			depends on OTP
 			bool "Enable OTP Test"
