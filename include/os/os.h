@@ -574,8 +574,6 @@ bk_err_t rtos_lock_mutex_timeout( beken_mutex_t* mutex, uint32_t timeout_ms);
 
 /** @brief    Creates a new recursive mutex type semaphore instance
   *
-  * @Details  This API relies on marco CONFIG_FREERTOS_USE_RECURSIVE_MUTEXES
-  *
   * @param    mutex : a pointer to the new recursive mutex handle
   *
   * @return   kNoErr        : on success.
@@ -588,8 +586,6 @@ bk_err_t rtos_init_recursive_mutex( beken_mutex_t* mutex );
   * 
   * @note     do not call this API when interrupts are disabled (may cause the 
   *           system to enter a deadlock or abnormal status)
-  *
-  * @Details  This API relies on marco CONFIG_FREERTOS_USE_RECURSIVE_MUTEXES
   *
   * @param    mutex : a pointer to the new recursive mutex handle
   *
@@ -604,8 +600,6 @@ bk_err_t rtos_lock_recursive_mutex( beken_mutex_t* mutex );
   * @note     do not call this API when interrupts are disabled (may cause the 
   *           system to enter a deadlock or abnormal status)
   *
-  * @Details  This API relies on marco CONFIG_FREERTOS_USE_RECURSIVE_MUTEXES
-  *
   * @param    mutex : a pointer to the new recursive mutex handle
   *
   * @return   kNoErr        : on success.
@@ -616,7 +610,6 @@ bk_err_t rtos_unlock_recursive_mutex( beken_mutex_t* mutex );
 /** @brief    De-initialise a recursive mutex
   *
   * @Details  Deletes a mutex created with @ref rtos_init_recursive_mutex
-  *           This API relies on marco CONFIG_FREERTOS_USE_RECURSIVE_MUTEXES
   *
   * @param    mutex : a pointer to the recursive mutex handle
   *
