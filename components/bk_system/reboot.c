@@ -28,7 +28,34 @@
 
 #define TAG "sys"
 
+#if CONFIG_SYS_CPU0
+#define REBOOT_CALLBACK_FUNC_MAX  8
+static reboot_callback_func s_reboot_cb[REBOOT_CALLBACK_FUNC_MAX] = {NULL};
+#endif
 
+static void bk_reboot_callback_exe(void)
+{
+#if CONFIG_SYS_CPU0
+	for (size_t i = 0; i < REBOOT_CALLBACK_FUNC_MAX; i++) {
+		if (s_reboot_cb[i] != NULL) {
+			s_reboot_cb[i]();
+		}
+	}
+#endif
+}
+
+void bk_reboot_callback_register(reboot_callback_func func)
+{
+#if CONFIG_SYS_CPU0
+	for (size_t i = 0; i < REBOOT_CALLBACK_FUNC_MAX; i++) {
+		if (s_reboot_cb[i] == NULL) {
+			s_reboot_cb[i] = func;
+			return;
+		}
+	}
+	BK_LOGE(TAG, "number of reboot callback function is up to max.\r\n");
+#endif
+}
 
 #if (CONFIG_SOC_BK7256XX)
 static uint32_t bk_get_return_address_value()
@@ -68,7 +95,7 @@ void bk_reboot_ex(uint32_t reset_reason)
 			aon_rtc_enter_reboot();
 		}
 #endif
-
+		bk_reboot_callback_exe();
 		BK_LOGI(TAG, "wdt reboot\r\n");
 		rtos_disable_int();
 		if (reset_reason < RESET_SOURCE_UNKNOWN) {
