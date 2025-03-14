@@ -475,6 +475,14 @@ struct {\
 #define SDCARD_LDO_CTRL_ACTIVE_LEVEL       (1)
 #endif
 
+#if CONFIG_LDO3V3_CTRL_GPIO
+#define MOTOR_LDO_CTRL_GPIO                  (CONFIG_LDO3V3_CTRL_GPIO)
+#define MOTOR_LDO_CTRL_ACTIVE_LEVEL          (1)
+#else
+#define MOTOR_LDO_CTRL_GPIO                  (GPIO_13)
+#define MOTOR_LDO_CTRL_ACTIVE_LEVEL          (1)
+#endif
+
 // LCD BACKLIGHT CTRL
 #define LCD_BACKLIGHT_CTRL_ACTIVE_LEVEL    (1)
 
@@ -483,6 +491,7 @@ struct {\
 {\
 	{GPIO_13,  GPIO_OUTPUT_STATE_LOW},\
 	{GPIO_28,  GPIO_OUTPUT_STATE_LOW},\
+	{GPIO_52,  GPIO_OUTPUT_STATE_LOW},\
 }
 
 #if CONFIG_GPIO_WAKEUP_SUPPORT
