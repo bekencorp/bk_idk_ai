@@ -489,6 +489,7 @@ typedef enum
 {
 	GPIO_CTRL_LDO_MODULE_SDIO = 0, // 0
 	GPIO_CTRL_LDO_MODULE_LCD,      // 1
+	GPIO_CTRL_LDO_MODULE_MOTOR,
 
 	GPIO_CTRL_LDO_MODULE_MAX
 }gpio_ctrl_ldo_module_e;
