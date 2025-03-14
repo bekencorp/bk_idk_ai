@@ -310,6 +310,7 @@ static void aon_rtc_get_timeofday(struct timeval *time_p)
 bk_err_t aon_rtc_enter_reboot(void)
 {
 	struct timeval rtc_keep_time = {0, 0};
+	uint32_t int_level = 0;
 
 	AON_RTC_LOGD("%s[+]\r\n", __func__);
 
@@ -320,8 +321,21 @@ bk_err_t aon_rtc_enter_reboot(void)
 	s_boot_time_us = ((uint64_t)rtc_keep_time.tv_sec)*1000000LL+rtc_keep_time.tv_usec;
 	aon_rtc_bake_timeofday();
 
+	int_level = rtc_enter_critical();
+
 	aon_rtc_hal_reset_counter(&s_aon_rtc[AONRTC_GET_SET_TIME_RTC_ID].hal);
 	aon_rtc_hal_clear_reset_counter(&s_aon_rtc[AONRTC_GET_SET_TIME_RTC_ID].hal);
+
+	//Avoid RTC tick counter is cleared, but system still uses elder base time
+#if (CONFIG_FREERTOS_V10)
+{
+	extern void rtos_init_base_time(void);
+	rtos_init_base_time();
+}
+#endif
+
+	rtc_exit_critical(int_level);
+
 
 	return BK_OK;
 }
