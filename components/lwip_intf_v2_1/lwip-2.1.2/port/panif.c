@@ -57,14 +57,16 @@ panif_input(struct netif *netif, struct pbuf *p)
 {
     struct eth_hdr *ethhdr;
     if (p->len <= SIZEOF_ETH_HDR) {
-        goto free_pbuf;
-
+        pbuf_free(p);
+        return;
     }
 
     netif = net_get_pan_handle();
-    if(netif == NULL) {
+    if(!netif) {
         LWIP_DEBUGF(NETIF_DEBUG, ("panif_input no netif found\r\n"));
-        goto free_pbuf;
+        pbuf_free(p);
+        p = NULL;
+        return;
     }
 
     /* points to packet payload, which starts with an Ethernet header */
@@ -73,7 +75,8 @@ panif_input(struct netif *netif, struct pbuf *p)
     if( (os_memcmp(netif->hwaddr,ethhdr->src.addr,NETIF_MAX_HWADDR_LEN)==0) && (htons(ethhdr->type) !=ETHTYPE_ARP) )
     {
         LWIP_DEBUGF(NETIF_DEBUG ,("panif_input frame is my send,drop it\r\n"));
-        goto free_pbuf;
+        pbuf_free(p);
+        return;
     }
 
     switch (htons(ethhdr->type))
@@ -101,16 +104,17 @@ panif_input(struct netif *netif, struct pbuf *p)
 
     case ETHTYPE_EAPOL:
         LWIP_DEBUGF(NETIF_DEBUG, ("panif_input: EAPOL frame dropped\r\n"));
+        pbuf_free(p);
+        p = NULL;
         break;
 
     default:
-        LWIP_DEBUGF(NETIF_DEBUG, ("panif_input: unsupported frame type: 0x%04x\r\n", htons(ethhdr->type)));
+        if (p != NULL) {
+            pbuf_free(p);
+        }
         break;
     }
-free_pbuf:
-     if(p != NULL) {
-        pbuf_free(p);
-     }
+
 }
 
 err_t
