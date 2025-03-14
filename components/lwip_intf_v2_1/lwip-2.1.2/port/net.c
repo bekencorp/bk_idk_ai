@@ -1180,6 +1180,18 @@ int net_pan_add_netif(uint8_t *mac)
 	return ERR_OK;
 }
 
+int net_pan_remove_netif(void)
+{
+	err_t err = netifapi_netif_remove(&g_pan.netif);
+
+	if (err != ERR_OK) {
+		LWIP_LOGE("remove pan netif, failed(%d)\n", err);
+		return err;
+	}
+
+	return ERR_OK;
+}
+
 void pan_netif_notify_got_ip(void)
 {
 	/* post event PAN_GOT_IP4 */

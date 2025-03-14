@@ -46,6 +46,7 @@ extern uint32_t pan_ip_is_start(void);
 extern bk_err_t bk_pan_get_mac(uint8_t *mac);
 extern void pan_netif_notify_got_ip(void);
 extern void pan_ip_down(void);
+int net_pan_remove_netif(void);
 #endif
 
 #ifdef __cplusplus
