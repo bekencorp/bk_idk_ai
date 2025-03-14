@@ -112,10 +112,11 @@ int bk_vfs_mount(const char *source, const char *target,
 	if (!impl->fs_ops->mount) {
 		return -1;
 	}
-
+	bk_vfs_lock();
 	ret = bk_vfs_check_repeat_mount(target, fs_type, impl, data);
 	if (ret == VFS_REPEAT_MOUNT) {
 		BK_LOGI("vfs", "fs extra count +1\r\n");
+		bk_vfs_unlock();
 		return 0;
 	}
 
@@ -127,6 +128,7 @@ int bk_vfs_mount(const char *source, const char *target,
 	}
 
 	if (!fs) {
+		bk_vfs_unlock();
 		return -1;
 	}
 
@@ -138,8 +140,10 @@ int bk_vfs_mount(const char *source, const char *target,
 	if (ret) {
 		os_free(fs->mount_point);
 		fs->mount_point = NULL;
+		bk_vfs_unlock();
 		return -1;
 	} else {
+		bk_vfs_unlock();
 		return 0;
 	}
 }
@@ -148,7 +152,7 @@ int bk_vfs_umount(const char *target) {
 	struct bk_filesystem *fs = NULL;
 	int ret = -1;
 	int i;
-
+	bk_vfs_lock();
 	for (i = 0; i < MAX_FS_MOUNTS; i++) {
 		if (g_filesystem_table[i].mount_point != NULL) {
 			if (strcmp(g_filesystem_table[i].mount_point, target) == 0) {
@@ -159,12 +163,14 @@ int bk_vfs_umount(const char *target) {
 	}
 
 	if (!fs) {
+		bk_vfs_unlock();
 		return -1;
 	}
 
 	if (fs->extra_ref_count) {
 		fs->extra_ref_count--;
 		BK_LOGI("vfs", "fs extra count -1\r\n");
+		bk_vfs_unlock();
 		return 0;
 	}
 
@@ -174,7 +180,7 @@ int bk_vfs_umount(const char *target) {
 	
 	os_free(fs->mount_point);
 	fs->mount_point = NULL;
-
+	bk_vfs_unlock();
 	return ret;
 }
 
@@ -182,7 +188,7 @@ int bk_vfs_umount2(const char *target, int flags) {
 	struct bk_filesystem *fs = NULL;
 	int ret = -1;
 	int i;
-
+	bk_vfs_lock();
 	for (i = 0; i < MAX_FS_MOUNTS; i++) {
 		if (g_filesystem_table[i].mount_point != NULL) {
 			if (strcmp(g_filesystem_table[i].mount_point, target) == 0) {
@@ -193,12 +199,14 @@ int bk_vfs_umount2(const char *target, int flags) {
 	}
 
 	if (!fs) {
+		bk_vfs_unlock();
 		return -1;
 	}
 
 	if (fs->extra_ref_count) {
 		BK_LOGI("vfs", "fs extra count -1\r\n");
 		fs->extra_ref_count--;
+		bk_vfs_unlock();
 		return 0;
 	}
 
@@ -208,7 +216,7 @@ int bk_vfs_umount2(const char *target, int flags) {
 	
 	os_free(fs->mount_point);
 	fs->mount_point = NULL;
-
+	bk_vfs_unlock();
 	return ret;
 }
 

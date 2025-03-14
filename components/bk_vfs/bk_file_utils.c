@@ -13,10 +13,15 @@
 #include "littlefs_adapter.h"
 #include "fatfs_adapter.h"
 
-static int bk_lock_init(void) {
-	static int mutex = -1;	//TODO	//recursive ???
+static beken_mutex_t s_vfs_mutex = NULL;
 
-	mutex = mutex;
+static int bk_lock_init(void) {
+	bk_err_t ret;
+
+	ret = rtos_init_recursive_mutex(&s_vfs_mutex);
+	if (ret != BK_OK) {
+		BK_LOGE("vfs", "create vfs mutex fail!\r\n");
+	}
 
 	return 0;
 }
@@ -54,10 +59,15 @@ int bk_vfs_init(void) {
 }
 
 int bk_vfs_lock(void) {
-	return 0;
+	bk_err_t ret = 0;
+	if (s_vfs_mutex)
+		ret = rtos_lock_recursive_mutex(&s_vfs_mutex);
+	return ret;
 }
 
 void bk_vfs_unlock(void) {
+	if (s_vfs_mutex)
+		rtos_unlock_recursive_mutex(&s_vfs_mutex);
 }
 
 char *bk_normalize_path(const char *path) {
