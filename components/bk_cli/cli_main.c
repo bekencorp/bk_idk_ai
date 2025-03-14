@@ -1592,6 +1592,10 @@ int bk_cli_init(void)
     cli_jpeg_sw_enc_init();
 #endif
 
+#if(CONFIG_NFC_TEST_EN)
+	extern int cli_nfc_init(void);
+	cli_nfc_init();
+#endif
 /*--------------BT&MultMedia cli command init end------------------*/
 
 
