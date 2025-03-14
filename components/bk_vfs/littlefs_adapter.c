@@ -224,13 +224,17 @@ static int _bk_lfs_mount(struct bk_filesystem *fs, unsigned long mount_flags, co
 	int ret;
 
 	part = (const struct bk_little_fs_partition *)data;
-	lfs = (lfs_t *)os_malloc(sizeof(lfs_t) + 8 + sizeof(struct lfs_config));
+	lfs = (lfs_t *)os_malloc(sizeof(lfs_t) + 8 + sizeof(struct lfs_config) + sizeof(struct bk_little_fs_partition));
 	if (!lfs)
 		return -1;
+
 
 	memset(lfs, 0, sizeof(lfs_t));
 	config = (struct lfs_config *)(lfs + 1);
 	memset(config, 0, sizeof(struct lfs_config));
+	struct bk_little_fs_partition *config_backup = (struct bk_little_fs_partition *)((uint32_t)(lfs) +
+				sizeof(lfs_t) + 8 + sizeof(struct lfs_config));
+	memcpy(config_backup, data, sizeof(struct bk_little_fs_partition));
 
 	ret = setup_lfs_config(config, part);
 	if (ret) {
@@ -286,10 +290,51 @@ static int _bk_lfs_statfs(struct bk_filesystem *fs, struct statfs *buf) {
 	return 0;
 }
 
+
+static int _lfs_compare_config(const struct bk_little_fs_partition *mounted_fs, const struct bk_little_fs_partition *cur_fs)
+{
+	if (mounted_fs->part_type != cur_fs->part_type) {
+		BK_LOGE("vfs", "lfs mounted type: %d, cur type: %d\r\n", mounted_fs->part_type, cur_fs->part_type);
+		return 1;
+	}
+	if (mounted_fs->part_type == LFS_FILE) {
+		if (strcmp(mounted_fs->part_file.file_path, cur_fs->part_file.file_path) != 0) {
+			BK_LOGE("vfs", "lfs mounted file_path: %s\r\n", mounted_fs->part_file.file_path);
+			BK_LOGE("vfs", "current mount fs file_path: %s\r\n", cur_fs->part_file.file_path);
+			return 1;
+		}
+	} else {
+		if (mounted_fs->part_flash.start_addr != cur_fs->part_flash.start_addr ||
+			mounted_fs->part_flash.size != cur_fs->part_flash.size) {
+			BK_LOGE("vfs", "lfs mounted info: path: %s, addr: %p, size: %x\r\n", mounted_fs->mount_path,
+				 mounted_fs->part_flash.start_addr, mounted_fs->part_flash.size);
+			BK_LOGE("vfs", "current mount fs info:path: %s, addr: %p, size: %x\r\n", cur_fs->mount_path,
+				 cur_fs->part_flash.start_addr, cur_fs->part_flash.size);
+			return 1;
+		}
+	}
+	return 0;
+}
+
+static int _bk_lfs_check_repeat_mount(struct bk_filesystem *fs, const void *data)
+{
+	struct bk_little_fs_partition *mounted_fs = (struct bk_little_fs_partition *)((uint32_t)(fs->fs_data) +
+				sizeof(lfs_t) + 8 + sizeof(struct lfs_config));
+	struct bk_little_fs_partition *cur_fs = (struct bk_little_fs_partition *)data;
+	if (strcmp(mounted_fs->mount_path, cur_fs->mount_path)) {
+		return VFS_DIFFERENT_MOUNT;
+	}
+	if (_lfs_compare_config(mounted_fs, cur_fs) != 0) {
+		return VFS_EXCEPTION_MOUNT;
+	}
+	return VFS_REPEAT_MOUNT;
+}
+
 static struct bk_filesystem_ops g_lfs_fs_ops = {
 	.mount = _bk_lfs_mount,
 	.unmount = _bk_lfs_unmount,
 	.unmount2 = _bk_lfs_unmount2,
+	.check_repeat_mount = _bk_lfs_check_repeat_mount,
 	.mkfs = _bk_lfs_mkfs,
 	.statfs = _bk_lfs_statfs,
 };

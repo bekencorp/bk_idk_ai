@@ -55,10 +55,13 @@ static int _bk_fatfs_mount(struct bk_filesystem *fs, unsigned long mount_flags, 
 	if (idx < 0)
 		return -1;
 
-	bk_ffs = (BK_FATFS *)os_malloc(sizeof(BK_FATFS));
+	bk_ffs = (BK_FATFS *)os_malloc(sizeof(BK_FATFS) + sizeof(struct bk_fatfs_partition));
 	if (!bk_ffs)
 		return -1;
 	ffs = (FATFS *)bk_ffs;
+
+	struct bk_fatfs_partition *config_backup = (struct bk_fatfs_partition *)((uint32_t)bk_ffs + sizeof(BK_FATFS));
+	memcpy(config_backup, data, sizeof(struct bk_fatfs_partition));
 
 	bk_ffs->vol_str[0] = idx + '0';
 	bk_ffs->vol_str[1] = ':';
@@ -145,10 +148,50 @@ static int _bk_fatfs_statfs(struct bk_filesystem *fs, struct statfs *buf) {
 	return 0;
 }
 
+static int _fatfs_compare_config(const struct bk_fatfs_partition *mounted_fs, const struct bk_fatfs_partition *cur_fs)
+{
+	if (mounted_fs->part_type != cur_fs->part_type) {
+		BK_LOGE("vfs", "fatfs mounted type: %d, cur type: %d\r\n", mounted_fs->part_type, cur_fs->part_type);
+		return 1;
+	}
+
+	if (mounted_fs->part_type == FATFS_RAM) {
+		if (mounted_fs->part_ram.start_addr != cur_fs->part_ram.start_addr ||
+			mounted_fs->part_ram.size != cur_fs->part_ram.size) {
+			BK_LOGE("vfs", "fatfs mounted fs info: addr %p, size: %x\r\n", mounted_fs->part_ram.start_addr,
+							mounted_fs->part_ram.size);
+			BK_LOGE("vfs", "fatfs cur fs info: addr %p, size: %x\r\n", cur_fs->part_ram.start_addr,
+							cur_fs->part_ram.size);
+			return 1;
+		}
+	} else if (mounted_fs->part_type == FATFS_DEVICE || mounted_fs->part_type == FATFS_FILE) {
+		if (strcmp(mounted_fs->part_dev.device_name, cur_fs->part_dev.device_name) != 0) {
+			BK_LOGE("vfs", "fatfs mounted fs dev: %s, cur fs dev: %s\r\n", mounted_fs->part_dev.device_name,
+							cur_fs->part_dev.device_name);
+			return 1;
+		}
+	}
+	return 0;
+}
+
+static int _bk_fatfs_check_repeat_mount(struct bk_filesystem *fs, const void *data)
+{
+	struct bk_fatfs_partition *mounted_fs = (struct bk_fatfs_partition *)((uint32_t)(fs->fs_data) + sizeof(BK_FATFS));
+	struct bk_fatfs_partition *cur_fs = (struct bk_fatfs_partition *)data;
+	if (strcmp(mounted_fs->mount_path, cur_fs->mount_path)) {
+		return VFS_DIFFERENT_MOUNT;
+	}
+	if (_fatfs_compare_config(mounted_fs, cur_fs) != 0) {
+		return VFS_EXCEPTION_MOUNT;
+	}
+	return VFS_REPEAT_MOUNT;
+}
+
 static struct bk_filesystem_ops g_fatfs_fs_ops = {
 	.mount = _bk_fatfs_mount,
 	.unmount = _bk_fatfs_unmount,
 	.unmount2 = _bk_fatfs_unmount2,
+	.check_repeat_mount = _bk_fatfs_check_repeat_mount,
 	.mkfs = _bk_fatfs_mkfs,
 	.statfs = _bk_fatfs_statfs,
 };

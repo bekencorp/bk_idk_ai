@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "os/os.h"
 #include "bk_filesystem.h"
 #include "bk_fdtable.h"
 #include "bk_file_utils.h"
@@ -65,6 +66,32 @@ static struct filesystem_proto *bk_find_filesystem_impl(const char *fs_type) {
 	return NULL;
 }
 
+static int bk_vfs_check_repeat_mount(const char *target, const char *fs_type, struct filesystem_proto *target_impl, const void *data)
+{
+	for (size_t i = 0; i < MAX_FS_MOUNTS; i++) {
+		if (g_filesystem_table[i].mount_point == NULL) {
+			continue;
+		}
+		if (strcmp(target, g_filesystem_table[i].mount_point)) {
+			continue;
+		}
+		// if mount points are same, but fs type not same, trigger assert.
+		if (g_filesystem_table[i].f_ops != target_impl->f_ops) {
+			BK_ASSERT_EX(0, "current file system of mount point %s already mounted, now wants to mount %s fs.\r\n",
+							target, fs_type);
+		}
+
+		if (g_filesystem_table[i].fs_ops->check_repeat_mount != NULL) {
+			if (g_filesystem_table[i].fs_ops->check_repeat_mount(&g_filesystem_table[i], data) == VFS_EXCEPTION_MOUNT) {
+				BK_ASSERT(0);
+			}
+		}
+		g_filesystem_table[i].extra_ref_count++;
+		return VFS_REPEAT_MOUNT;
+	}
+	return VFS_DIFFERENT_MOUNT;
+}
+
 int bk_vfs_mount(const char *source, const char *target,
                  const char *fs_type, unsigned long mount_flags,
                  const void *data) {
@@ -84,6 +111,12 @@ int bk_vfs_mount(const char *source, const char *target,
 
 	if (!impl->fs_ops->mount) {
 		return -1;
+	}
+
+	ret = bk_vfs_check_repeat_mount(target, fs_type, impl, data);
+	if (ret == VFS_REPEAT_MOUNT) {
+		BK_LOGI("vfs", "fs extra count +1\r\n");
+		return 0;
 	}
 
 	for (i = 0; i < MAX_FS_MOUNTS; i++) {
@@ -129,6 +162,12 @@ int bk_vfs_umount(const char *target) {
 		return -1;
 	}
 
+	if (fs->extra_ref_count) {
+		fs->extra_ref_count--;
+		BK_LOGI("vfs", "fs extra count -1\r\n");
+		return 0;
+	}
+
 	if (fs->fs_ops->unmount) {
 		ret = fs->fs_ops->unmount(fs);
 	}
@@ -155,6 +194,12 @@ int bk_vfs_umount2(const char *target, int flags) {
 
 	if (!fs) {
 		return -1;
+	}
+
+	if (fs->extra_ref_count) {
+		BK_LOGI("vfs", "fs extra count -1\r\n");
+		fs->extra_ref_count--;
+		return 0;
 	}
 
 	if (fs->fs_ops->unmount2) {
