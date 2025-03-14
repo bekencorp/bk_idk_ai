@@ -154,6 +154,38 @@ int32_t battery_get_current(uint16_t *pCurrent);
 int32_t battery_get_charge_level(uint8_t *pLevel);
 
 /**
+ * @brief  Reads the battery charging-related GPIO pins and returns the current battery status.
+ *
+ * @note   This function internally checks the GPIO_CHARGE and GPIO_FULL pins to determine
+ *         whether the battery is charging, full, or discharging.
+ *
+ * @return
+ *   - eBatteryCharging    The battery is charging.
+ *   - eBatteryChargeFull  The battery is fully charged.
+ *   - eBatteryDischarging The battery is discharging/not charging.
+ *   - eBatteryUnknown     If the global handle xGlobalHandle is uninitialized or the status cannot be determined.
+ */
+static inline IotBatteryStatus_t battery_get_status_from_gpio(void);
+
+/**
+ * @brief  Determines if the battery is currently in the "charging" state.
+ *
+ * @return
+ *   - true  The battery is charging.
+ *   - false The battery is not charging or the global handle is not initialized.
+ */
+bool battery_if_is_charging(void);
+
+/**
+ * @brief  Retrieves the pointer to the battery information structure.
+ *
+ * @return
+ *   - A valid pointer to IotBatteryInfo_t if available.
+ *   - NULL if the global handle xGlobalHandle is not available or uninitialized.
+ */
+IotBatteryInfo_t * battery_if_get_info(void);
+
+/**
  * @brief Opens the Battery and Charging driver.
  *
  * This function initializes the battery driver for the given instance.
@@ -265,7 +297,7 @@ void battery_monitor_deinit( void );
 
 /* The system only supports one instance globally, but it is scalable. */
 #define BATTERY_MAX_INSTANCE   1
-static IotBatteryDescriptor_t gxBatteryDescriptor[BATTERY_MAX_INSTANCE] = { 0 };
+extern IotBatteryDescriptor_t gxBatteryDescriptor[BATTERY_MAX_INSTANCE];
 
 
 

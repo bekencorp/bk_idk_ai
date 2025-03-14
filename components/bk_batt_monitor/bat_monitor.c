@@ -60,24 +60,28 @@ typedef struct
 } BatteryLUT_t;
 
 /*
- * Example: Define several sampling points between 3.50V (3500mV) and 4.20V (4200mV).
+ * Example: Define several sampling points between 3.00V (3000mV) and 4.10V (4100mV).
  * !!!!The percentages mentioned here are for demonstration purposes only and may not represent real curves.!!!!
  * !!!!Please adjust according to your specific battery characteristics!!!!
+ * !!!!Full charge state is determined by the external GPIO of the charging module.!!!!
+ * !!!!Here, it is suggested to set the maximum percentage in the table to 99, while the fully charged state
+ * is determined by the charging module.!!!!
+ *
  */
+
 static const BatteryLUT_t s_chargeLUT[] =
 {
-    {3500,   0},   /* 3.50V ~ 0%   */
-    {3700,   5},   /* 3.70V ~ 5%   */
-    {3750,  10},   /* 3.75V ~ 10%  */
-    {3800,  20},   /* 3.80V ~ 20%  */
-    {3850,  30},   /* 3.85V ~ 30%  */
-    {3900,  40},   /* 3.90V ~ 40%  */
-    {3950,  50},   /* 3.95V ~ 50%  */
-    {4000,  60},   /* 4.00V ~ 60%  */
-    {4050,  70},   /* 4.05V ~ 70%  */
-    {4100,  80},   /* 4.10V ~ 80%  */
-    {4150,  90},   /* 4.15V ~ 90%  */
-    {4200, 100},   /* 4.20V ~ 100% */
+    {3000,   0},   /* 3.00V ->   0% */
+    {3400,  10},   /* 3.40V ->  10% */
+    {3450,  20},   /* 3.45V ->  20% */
+    {3500,  30},   /* 3.50V ->  30% */
+    {3550,  40},   /* 3.55V ->  40% */
+    {3590,  50},   /* 3.59V ->  50% */
+    {3650,  60},   /* 3.65V ->  60% */
+    {3750,  70},   /* 3.75V ->  70% */
+    {3880,  80},   /* 3.88V ->  80% */
+    {3980,  90},   /* 3.98V ->  90% */
+    {4100,  99},   /* 4.10V ->  99% */
 };
 
 #if CONFIG_BAT_MONITOR
@@ -85,6 +89,7 @@ static const BatteryLUT_t s_chargeLUT[] =
 static bool s_charging_init_status_flag = false;
 static beken_thread_t battery_monitor_thread_hdl = NULL;
 static IotBatteryHandle_t xGlobalHandle = NULL;
+IotBatteryDescriptor_t gxBatteryDescriptor[BATTERY_MAX_INSTANCE] = { 0 };
 
 static uint16_t * s_raw_voltage_data = NULL;
 
@@ -123,6 +128,53 @@ int32_t battery_get_charge_level(uint8_t *pLevel)
     }
 
     return iot_battery_chargeLevel(xGlobalHandle, pLevel);
+}
+
+static inline IotBatteryStatus_t battery_get_status_from_gpio(void)
+{
+    if(!xGlobalHandle)
+    {
+        return eBatteryUnknown;
+    }
+
+    int charge_state = bk_gpio_get_input(GPIO_CHARGE);
+    int full_state   = bk_gpio_get_input(GPIO_FULL);
+
+    if (charge_state == 1)
+    {
+        if (full_state == 1)
+        {
+            return eBatteryCharging;
+        }
+        else
+        {
+            return eBatteryChargeFull;
+        }
+    }
+    else
+    {
+        return eBatteryDischarging;
+    }
+}
+
+bool battery_if_is_charging(void)
+{
+    if (!xGlobalHandle)
+    {
+        return false;
+    }
+
+    IotBatteryStatus_t status = battery_get_status_from_gpio();
+    return (status == eBatteryCharging);
+}
+
+IotBatteryInfo_t * battery_if_get_info(void)
+{
+    if (!xGlobalHandle)
+    {
+        return NULL;
+    }
+    return iot_battery_getInfo(xGlobalHandle);
 }
 
 static int hardware_read_voltage( uint16_t * pusVoltage )
@@ -203,7 +255,7 @@ IotBatteryHandle_t iot_battery_open( int32_t lBatteryInstance )
     /* Set default battery information */
     pxDesc->xBatteryInfo.xBatteryType     = eBatteryChargeable;
     pxDesc->xBatteryInfo.usMinVoltage     = 3000;   /* mV */
-    pxDesc->xBatteryInfo.usMaxVoltage     = 4200;   /* mV */
+    pxDesc->xBatteryInfo.usMaxVoltage     = 4100;   /* mV */
     pxDesc->xBatteryInfo.sMinTemperature  = 0;
     pxDesc->xBatteryInfo.lMaxTemperature  = 50;
     pxDesc->xBatteryInfo.usMaxCapacity    = 100;    /* Calculate based on 100% */
@@ -309,8 +361,8 @@ int32_t iot_battery_voltage( IotBatteryHandle_t const pxBatteryHandle,
 
 	//CONVERT TO REAL VOL
 	#if 1
-    uint32_t temp = (uint32_t)(*pusVoltage) * 398;
-	uint16_t practic_voltage = (uint16_t)((temp / 1000) + 1434);
+    uint32_t temp = (uint32_t)(*pusVoltage) * 667;
+	uint16_t practic_voltage = (uint16_t)((temp / 1000) + 40);
 	#else
 	float practic_voltage = (float)(s_raw_voltage_data[0] - saradc_val.low);
     practic_voltage = (practic_voltage / (float)(saradc_val.high - saradc_val.low)) + 1;
@@ -414,6 +466,20 @@ int32_t iot_battery_chargeLevel( IotBatteryHandle_t const pxBatteryHandle,
 
         /* Call the interpolation function to convert voltageMV to percentage. */
         uint8_t batteryPercent = battery_voltage_to_percent(voltageMV);
+
+        IotBatteryDescriptor_t *pxDesc = (IotBatteryDescriptor_t *) pxBatteryHandle;
+        if (pxDesc->xBatteryInfo.xBatteryStatus == eBatteryCharging) {
+            bool isReallyFull = (pxDesc->xBatteryInfo.xBatteryStatus == eBatteryChargeFull);
+            if (!isReallyFull) {
+                if (batteryPercent >= 99) {
+                    batteryPercent = 99;
+                }
+            }
+        }
+
+        if (pxDesc->xBatteryInfo.xBatteryStatus == eBatteryChargeFull) {
+            batteryPercent = 100;
+        }
 
         /* update chargeLevel */
         pxDesc->ucChargeLevel = batteryPercent;
@@ -538,22 +604,46 @@ static void prvCheckChargeStatus( IotBatteryHandle_t xHandle )
     int charge_state = bk_gpio_get_input( GPIO_CHARGE );
     int full_state   = bk_gpio_get_input( GPIO_FULL );
 
-    if( ( charge_state == 1 ) && ( full_state == 1 ) )
+    //printf("charge_state = %d,full_state = %d.\r\n",charge_state,full_state);
+
+    if( charge_state == 1 )
     {
-        pxDesc->xBatteryInfo.xBatteryStatus = eBatteryCharging;
-        BAT_MONITOR_PRT("Device is charging...\r\n");
-    }
-    else if( ( charge_state == 1 ) && ( full_state == 0 ) )
-    {
-        pxDesc->xBatteryInfo.xBatteryStatus = eBatteryChargeFull;
-        BAT_MONITOR_PRT("Battery is full.\r\n");
+        if(full_state == 1)
+        {
+            pxDesc->xBatteryInfo.xBatteryStatus = eBatteryCharging;
+            BAT_MONITOR_PRT("Device is charging...\r\n");
+        }
+        else
+        {
+            pxDesc->xBatteryInfo.xBatteryStatus = eBatteryChargeFull;
+            BAT_MONITOR_PRT("Battery is full.\r\n");
+        }
     }
     else
     {
         pxDesc->xBatteryInfo.xBatteryStatus = eBatteryDischarging;
-        BAT_MONITOR_PRT("No power input.\r\n");
+        BAT_MONITOR_PRT("Battery powered.\r\n");
     }
 
+}
+
+int32_t iot_battery_close(IotBatteryHandle_t pxBatteryHandle)
+{
+    if(pxBatteryHandle == NULL)
+    {
+        return IOT_BATTERY_INVALID_VALUE;
+    }
+
+    IotBatteryDescriptor_t *pxDesc = (IotBatteryDescriptor_t *)pxBatteryHandle;
+
+    if(!pxDesc->bIsOpen)
+    {
+        // Already closed or not opened
+        return IOT_BATTERY_INVALID_VALUE;
+    }
+
+    pxDesc->bIsOpen = false;
+    return IOT_BATTERY_SUCCESS;
 }
 
 
@@ -564,7 +654,7 @@ static void prvBatteryMonitorTaskMain( void )
 {
     static bool bLowVoltageTriggered = false;  // Low Battery Status Indicator
 
-    IotBatteryHandle_t xGlobalHandle = iot_battery_open( 0 );
+    xGlobalHandle = iot_battery_open( 0 );
     if( xGlobalHandle == NULL )
     {
         BAT_MONITOR_WPRT("Failed to open battery driver!\r\n");
@@ -600,7 +690,10 @@ static void prvBatteryMonitorTaskMain( void )
 
             if( iot_battery_voltage( xGlobalHandle, &usVoltage ) == IOT_BATTERY_SUCCESS )
             {
-                BAT_MONITOR_PRT("Battery voltage: %u mV\r\n", usVoltage);
+                if(pxInfo->xBatteryStatus == eBatteryCharging)
+                    BAT_MONITOR_PRT("Supply voltage: %u mV\r\n", usVoltage);
+                else
+                    BAT_MONITOR_PRT("Battery voltage: %u mV\r\n", usVoltage);
             }
             if( iot_battery_current( xGlobalHandle, &usCurrent ) == IOT_BATTERY_SUCCESS )
             {
@@ -622,7 +715,8 @@ static void prvBatteryMonitorTaskMain( void )
                 {
                     bLowVoltageTriggered = false;  // When charging resumes, reset the flag
                 }
-                BAT_MONITOR_PRT("Battery level: %u%%\r\n", ucCharge);
+                if(pxInfo->xBatteryStatus != eBatteryCharging)
+                    BAT_MONITOR_PRT("Battery level: %u%%\r\n", ucCharge);
             }
         }
 
@@ -630,6 +724,11 @@ static void prvBatteryMonitorTaskMain( void )
     }
 
 TASK_EXIT:
+
+    if (xGlobalHandle) {
+        iot_battery_close(xGlobalHandle);
+        xGlobalHandle = NULL;
+    }
 
     if( s_raw_voltage_data )
     {
@@ -698,19 +797,28 @@ void battery_monitor_init( void )
     BAT_MONITOR_PRT("Battery monitor initialized.\n");
 }
 
-void battery_monitor_deinit( void )
+void battery_monitor_deinit(void)
 {
-    if( !s_charging_init_status_flag )
-    {
+    if (!s_charging_init_status_flag) {
         BAT_MONITOR_PRT("Battery monitor already deinitialized.\n");
         return;
     }
 
     s_charging_init_status_flag = false;
-    if( battery_monitor_thread_hdl )
-    {
-        rtos_delete_thread( &battery_monitor_thread_hdl );
+
+    if (battery_monitor_thread_hdl) {
+        rtos_delete_thread(&battery_monitor_thread_hdl);
         battery_monitor_thread_hdl = NULL;
+    }
+
+    if (xGlobalHandle) {
+        iot_battery_close(xGlobalHandle);
+        xGlobalHandle = NULL;
+    }
+
+    if (s_raw_voltage_data) {
+        os_free(s_raw_voltage_data);
+        s_raw_voltage_data = NULL;
     }
 
     BAT_MONITOR_PRT("Battery monitor deinitialized.\n");
