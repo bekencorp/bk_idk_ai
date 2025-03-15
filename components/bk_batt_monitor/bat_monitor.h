@@ -13,7 +13,7 @@
 #define BAT_MONITOR_PRT                 os_null_printf
 #define BAT_MONITOR_WPRT                os_null_printf
 #endif
-
+#define LOW_VOLTAGE_BLINK_TIME          30000
 /* Battery return values */
 #define IOT_BATTERY_SUCCESS                   ( 0 )
 #define IOT_BATTERY_INVALID_VALUE             ( 1 )
