@@ -13,6 +13,7 @@
 #include <driver/gpio.h>
 #include "gpio_map.h"
 #include "driver/sd_card.h"
+#include "driver/pwr_clk.h"
 
 #define MSC_THREAD_OP_READ_MEM   1
 #define MSC_THREAD_OP_WRITE_MEM  2
@@ -1154,7 +1155,7 @@ int usbd_msc_sector_write(uint32_t sector, uint8_t *buffer, uint32_t length)
 void msc_storage_init(void)
 {
 #if CONFIG_SDIO_HOST
-    bk_gpio_ctrl_external_ldo(GPIO_CTRL_LDO_MODULE_SDIO, SDCARD_LDO_CTRL_GPIO, GPIO_OUTPUT_STATE_HIGH);
+    bk_pm_module_vote_ctrl_external_ldo(GPIO_CTRL_LDO_MODULE_SDIO, SDCARD_LDO_CTRL_GPIO, GPIO_OUTPUT_STATE_HIGH);
     extern bk_err_t bk_sd_card_init(void);
     bk_sd_card_init();
 #endif
@@ -1190,7 +1191,7 @@ void msc_storage_deinit(void)
 #if CONFIG_SDIO_HOST
     extern bk_err_t bk_sd_card_deinit(void);
     bk_sd_card_deinit();
-    bk_gpio_ctrl_external_ldo(GPIO_CTRL_LDO_MODULE_SDIO, SDCARD_LDO_CTRL_GPIO, GPIO_OUTPUT_STATE_LOW);
+    bk_pm_module_vote_ctrl_external_ldo(GPIO_CTRL_LDO_MODULE_SDIO, SDCARD_LDO_CTRL_GPIO, GPIO_OUTPUT_STATE_LOW);
 #endif
 }
 

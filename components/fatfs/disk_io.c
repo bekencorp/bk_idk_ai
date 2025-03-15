@@ -29,7 +29,7 @@
 #if CONFIG_SDCARD_POWER_GPIO_CTRL
 #include <driver/gpio.h>
 #include "gpio_map.h"
-
+#include "driver/pwr_clk.h"
 #define SDCARD_LDO_POWER_CONTROL_WAIT_TIME_MS  10000
 
 #if CONFIG_SDCARD_POWER_GPIO_CTRL_AUTO_POWERDOWN_WHEN_IDLE
@@ -45,10 +45,10 @@ static bk_err_t sdcard_ldo_power_enable(uint8_t enable)
 {
 #if (CONFIG_SDCARD_POWER_GPIO_CTRL)
 	if (enable) {
-		bk_gpio_ctrl_external_ldo(GPIO_CTRL_LDO_MODULE_SDIO, SDCARD_LDO_CTRL_GPIO, GPIO_OUTPUT_STATE_HIGH);
+		bk_pm_module_vote_ctrl_external_ldo(GPIO_CTRL_LDO_MODULE_SDIO, SDCARD_LDO_CTRL_GPIO, GPIO_OUTPUT_STATE_HIGH);
 		s_disk_io_sdcard_ldo_power_flag = 1;
 	} else {
-		bk_gpio_ctrl_external_ldo(GPIO_CTRL_LDO_MODULE_SDIO, SDCARD_LDO_CTRL_GPIO, GPIO_OUTPUT_STATE_LOW);
+		bk_pm_module_vote_ctrl_external_ldo(GPIO_CTRL_LDO_MODULE_SDIO, SDCARD_LDO_CTRL_GPIO, GPIO_OUTPUT_STATE_LOW);
 		s_disk_io_sdcard_ldo_power_flag = 0;
 	}
 #endif
