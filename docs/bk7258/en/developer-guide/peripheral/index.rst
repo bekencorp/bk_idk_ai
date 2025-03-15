@@ -17,4 +17,5 @@ Peripherals
    I2C <bk_i2c>
    USB <bk_usb>
    I2S <bk_i2s>
-   Nfc <bk_nfc_brief_introduction>
+   NFC <bk_nfc_brief_introduction>
+   GSENSOR <bk_gsensor>
