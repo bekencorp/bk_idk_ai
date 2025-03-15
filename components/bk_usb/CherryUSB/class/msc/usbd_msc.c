@@ -14,11 +14,13 @@
 #include "gpio_map.h"
 #include "driver/sd_card.h"
 #include "driver/pwr_clk.h"
+#include "usb_vfs.h"
 
 #define MSC_THREAD_OP_READ_MEM   1
 #define MSC_THREAD_OP_WRITE_MEM  2
 #define MSC_THREAD_OP_WRITE_DONE 3
 #define MSC_THREAD_OP_RESET      4
+#define MSC_THREAD_OP_SUSPEND    5
 
 
 #define MSD_OUT_EP_IDX 0
@@ -226,13 +228,6 @@ void msc_storage_notify_handler(uint8_t event, void *arg)
         case USBD_EVENT_ERROR:
         case USBD_EVENT_RESET:
             USB_LOG_DBG("%s ,line:%d,USBD_EVENT_RESET\r\n",__FILE__,__LINE__);
-#if (CONFIG_SDCARD)
-            if(bk_sd_card_get_owner() & (1 << SD_CARD_OWNER_LOCAL_FS)) {
-                USB_LOG_INFO("sd card is owned by fatfs\r\n");
-                bk_sd_card_clear_owner(SD_CARD_OWNER_LOCAL_FS);
-            }
-            bk_sd_card_vote_owner(SD_CARD_OWNER_USB_DEVICE);
-#endif
             usbd_msc_reset();
             thread_op = MSC_THREAD_OP_RESET;
             usb_osal_sem_give(msc_sem);
@@ -246,8 +241,11 @@ void msc_storage_notify_handler(uint8_t event, void *arg)
 #if (CONFIG_SDCARD)
             bk_sd_card_clear_owner(SD_CARD_OWNER_USB_DEVICE);
 #endif
+            thread_op = MSC_THREAD_OP_SUSPEND;
+            usb_osal_sem_give(msc_sem);
             break;
         case USBD_EVENT_RESUME:
+
             USB_LOG_DBG("%s ,line:%d,USBD_EVENT_RESUME\r\n",__FILE__,__LINE__);
             break;
         default:
@@ -1040,6 +1038,10 @@ void mass_storage_bulk_in(uint8_t ep, uint32_t nbytes)
 static void usbd_msc_thread(void *argument)
 {
     uint32_t data_len = 0;
+#if CONFIG_VFS
+    uint32_t flag_vfs_init = 0;
+#endif
+
     while (1) {
         usb_osal_sem_take(msc_sem, 0xffffffff);
 
@@ -1059,8 +1061,27 @@ static void usbd_msc_thread(void *argument)
                 usbd_msc_thread_memory_write_done();
                 break;
             case MSC_THREAD_OP_RESET:
-                usbd_set_status(1);
+#if CONFIG_VFS
+		#if CONFIG_SDIO_HOST
+		    bk_pm_module_vote_ctrl_external_ldo(GPIO_CTRL_LDO_MODULE_SDIO, SDCARD_LDO_CTRL_GPIO, GPIO_OUTPUT_STATE_HIGH);
+		    extern bk_err_t bk_sd_card_init(void);
+		    bk_sd_card_init();
+		#endif
+		if(flag_vfs_init == 0) {
+			flag_vfs_init = 1;
+			lv_vfs_init();
+		}
+#endif
+            usbd_set_status(1);
                 usbd_msc_get_cap(0, &usbd_msc_cfg.scsi_blk_nbr, &usbd_msc_cfg.scsi_blk_size);
+                break;
+            case MSC_THREAD_OP_SUSPEND:
+#if CONFIG_VFS
+		if(flag_vfs_init == 1) {
+			lv_vfs_deinit();
+			flag_vfs_init = 0;
+		}
+#endif
                 break;
             default:
                 break;
