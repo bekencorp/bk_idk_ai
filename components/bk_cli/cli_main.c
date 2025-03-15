@@ -1006,6 +1006,17 @@ static void log_setting_cmd(char *pcWriteBuffer, int xWriteBufferLen, int argc, 
 
 }
 
+#if (CONFIG_SYS_CPU2)
+void log_switch_command(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **argv)
+{
+	static uint8_t curr_log_status = 1;
+	uint8_t log_status = 1 - curr_log_status;
+	BK_DUMP_OUT("set log enable status: %u\r\n", log_status);
+	bk_set_printf_enable(log_status);
+	curr_log_status = log_status;
+}
+#endif
+
 #if (CONFIG_SHELL_ASYNCLOG && CONFIG_SYS_CPU0 && CONFIG_MAILBOX)
 #ifndef CONFIG_FREERTOS_SMP
 /* it is a new implementation of the cli_cpu1_command, combine cpu1 cmd & paramters into argv[0] buffer. */
@@ -1183,7 +1194,9 @@ void bkreg_cmd_handle_input(char *inbuf, int len)
 static const struct cli_command built_ins[] = {
 	{"help", NULL, help_command},
 	{"log", "log [echo(0,1)] [level(0~5)] [sync(0,1)] [Whitelist(0,1)]", log_setting_cmd},
-
+#if (CONFIG_SYS_CPU2)
+	{"logswtich", "logswtich", log_switch_command},
+#endif
 #if !CONFIG_RELEASE_VERSION
 	{"debug", "debug cmd [param] (ex:debug help)", cli_debug_command},
 #endif
