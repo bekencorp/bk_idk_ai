@@ -9,7 +9,7 @@
 #include <components/bk_gsensor.h>
 #include <components/log.h>
 #include <modules/pm.h>
-
+#include <components/bk_gsensor_arithmetic_demo_public.h>
 
 #define GSENSOR_D_TAG "gsensor_demo"
 #define GSENSOR_D_LOGI(...) BK_LOGI(GSENSOR_D_TAG, ##__VA_ARGS__)
@@ -18,23 +18,6 @@
 #define GSENSOR_D_LOGD(...) BK_LOGD(GSENSOR_D_TAG, ##__VA_ARGS__)
 
 static void *gsensor_handle;
-
-/*
-    gsensor module opcode define
-*/
-typedef enum{
-    /* Send */
-    GSENSOR_OPCODE_INIT,
-    GSENSOR_OPCODE_SET_NORMAL_MODE,
-    GSENSOR_OPCODE_SET_WAKEUP_MODE,
-    GSENSOR_OPCODE_CLOSE,
-
-    /* Notify */
-    GSENSOR_OPCODE_NTF_DATA,
-    GSENSOR_OPCODE_WAKEUP,
-
-    GSENSOR_OPCODE_LOWPOWER_WAKEUP,
-}gsensor_module_opcode_t;
 
 static const uint16_t _sp_opcode[] = {
     GSENSOR_OPCODE_INIT,
@@ -96,6 +79,10 @@ static void gsensor_demo_thread(beken_thread_arg_t arg)
 {
     bk_err_t ret = kNoErr;
 
+    rtos_delay_milliseconds(500);
+    gsensor_demo_open();
+    gsensor_demo_set_normal();
+
     while(1) {
         gsensor_demo_msg_t msg;
         ret = rtos_pop_from_queue(&s_gsensor_demo_msg_que, &msg, BEKEN_WAIT_FOREVER);
@@ -105,21 +92,23 @@ static void gsensor_demo_thread(beken_thread_arg_t arg)
     }
 }
 
+static void gsensor_data_send_to_arithemtic_module(gsensor_notify_data_ctx_t *ctx)
+{
+#if CONFIG_GSENSOR_ARITHEMTIC_DEMO_EN
+    arithmetic_module_copy_data_send_msg(ctx);
+#endif
+}
+
 static void gsensor_callback(void *handle,gsensor_data_t *data)
 {
     if(data->count != 0)
     {
-#if 0
         gsensor_notify_data_ctx_t *ctx = data;
-        module_communicate_notify(GSENSOR_MODULE_ID,GSENSOR_OPCODE_NTF_DATA,ctx,sizeof(gsensor_xyz_t)*ctx->count+sizeof(gsensor_notify_data_ctx_t));
-#else
-        GSENSOR_D_LOGI("gsensor_callback data->count:%d GSENSOR_OPCODE_NTF_DATA:%d\r\n", data->count, GSENSOR_OPCODE_NTF_DATA);
-#endif
+        gsensor_data_send_to_arithemtic_module(ctx);
     }
     else
     {
         GSENSOR_D_LOGI("gsensor_callback GSENSOR_OPCODE_WAKEUP:%d\r\n", GSENSOR_OPCODE_WAKEUP);
-        //module_communicate_notify(GSENSOR_MODULE_ID,GSENSOR_OPCODE_WAKEUP,NULL,0);
     }
 }
 
@@ -210,6 +199,10 @@ bk_err_t gsensor_demo_init(void)
             }
         }
     }
+
+#if CONFIG_GSENSOR_ARITHEMTIC_DEMO_EN
+	arithmetic_module_init();
+#endif
     return ret;
 }
 
@@ -224,6 +217,10 @@ void gsensor_demo_deinit(void)
         rtos_deinit_queue(&s_gsensor_demo_msg_que);
         s_gsensor_demo_msg_que = NULL;
     }
+
+#if CONFIG_GSENSOR_ARITHEMTIC_DEMO_EN
+	arithmetic_module_deinit();
+#endif
 }
 bk_err_t gsensor_demo_open()
 {

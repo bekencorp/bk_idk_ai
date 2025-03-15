@@ -42,6 +42,13 @@
 #include <components/usb.h>
 #endif
 
+#if CONFIG_GSENSOR_ENABLE
+#include <components/bk_gsensor.h>
+#if CONFIG_GSENSOR_DEMO_EN
+#include <components/bk_gsensor_arithmetic_demo_public.h>
+#endif
+#endif
+
 #if (CONFIG_OTA_UPDATE_DEFAULT_PARTITION && CONFIG_HTTP_AB_PARTITION)
 #include <modules/ota.h>
 extern void bk_ota_confirm_update_partition(ota_confirm_flag ota_confirm_val);
@@ -420,11 +427,8 @@ extern int mp_do_startup(int heap_len);
 	bk_usb_driver_init();
 #endif
 
-#if CONFIG_GSENSOR_ENABLE
-	extern bk_err_t gsensor_demo_init(void);
-	gsensor_demo_init();
-	extern bk_err_t gsensor_demo_open();
-    gsensor_demo_open();
+#if CONFIG_GSENSOR_ENABLE && CONFIG_GSENSOR_DEMO_EN
+    gsensor_demo_init();
 #endif
 
 #if (CONFIG_PSRAM)

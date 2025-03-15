@@ -1,6 +1,22 @@
 #ifndef __BSP_GSENSOR_H__
 #define __BSP_GSENSOR_H__
 
+/*
+    gsensor module opcode define
+*/
+typedef enum{
+    /* Send */
+    GSENSOR_OPCODE_INIT,
+    GSENSOR_OPCODE_SET_NORMAL_MODE,
+    GSENSOR_OPCODE_SET_WAKEUP_MODE,
+    GSENSOR_OPCODE_CLOSE,
+
+    /* Notify */
+    GSENSOR_OPCODE_NTF_DATA,
+    GSENSOR_OPCODE_WAKEUP,
+
+    GSENSOR_OPCODE_LOWPOWER_WAKEUP,
+}gsensor_module_opcode_t;
 
 typedef enum{
     GSENSOR_DR_1HZ,

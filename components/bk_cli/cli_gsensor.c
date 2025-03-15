@@ -1,19 +1,13 @@
 #include <stdlib.h>
 #include "cli.h"
 #include <components/bk_gsensor.h>
+#include <components/bk_gsensor_arithmetic_demo_public.h>
 
 static void cli_gsensor_help(void)
 {
 	CLI_LOGI("gsensor [init/deinit/open/close/set_normal/set_wakeup] \r\n");
+	CLI_LOGI("gsensor [set_shake_param] [shake_threshold_v][stability_threshold_v][shake_check_number][shake_time_limit_ms] \r\n");
 }
-
-extern bk_err_t gsensor_demo_init(void);
-extern void gsensor_demo_deinit(void);
-extern bk_err_t gsensor_demo_open();
-extern bk_err_t gsensor_demo_close();
-extern bk_err_t gsensor_demo_set_normal();
-extern bk_err_t gsensor_demo_set_wakeup();
-extern bk_err_t gsensor_demo_lowpower_wakeup();
 
 static void cli_gsensor_ops_cmd(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **argv)
 {
@@ -37,6 +31,13 @@ static void cli_gsensor_ops_cmd(char *pcWriteBuffer, int xWriteBufferLen, int ar
 		BK_LOG_ON_ERR(gsensor_demo_set_wakeup());
 	} else if(os_strcmp(argv[1], "set_lowpower") == 0) {
 		BK_LOG_ON_ERR(gsensor_demo_lowpower_wakeup());
+	} else if(os_strcmp(argv[1], "set_shake_param") == 0) {
+		shake_recognition_alg_param_t shake_alg_p;
+		shake_alg_p.shake_threshold_v = os_strtoul(argv[2], NULL, 10);
+		shake_alg_p.stability_threshold_v = os_strtoul(argv[3], NULL, 10);
+		shake_alg_p.shake_check_number = os_strtoul(argv[4], NULL, 10);
+		shake_alg_p.shake_time_limit_ms = os_strtoul(argv[5], NULL, 10);
+		shake_arithmetic_set_parameter(&shake_alg_p);
 	} else {
 		cli_gsensor_help();
 		return;

@@ -23,5 +23,11 @@ if (CONFIG_GSENSOR_DEMO_EN)
 	)
 endif()
 
+if (CONFIG_GSENSOR_ARITHEMTIC_DEMO_EN)
+	list(APPEND srcs
+		arithmetic_module.c
+	)
+endif()
+
 armino_component_register(SRCS "${srcs}" INCLUDE_DIRS "${incs}" PRIV_REQUIRES bk_common)
 

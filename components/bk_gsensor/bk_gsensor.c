@@ -23,9 +23,6 @@ void* bk_gsensor_init(const char *devname) {
     return NULL;
 }
 
-
-
-
 void bk_gsensor_deinit(void *handle)
 {
     if(handle == 0) return;

@@ -13,9 +13,15 @@ menu "bk_gsensor"
 		depends on GSENSOR_ENABLE
 		bool "Enable gsensor demo"
 		default n
+		
+	config GSENSOR_ARITHEMTIC_DEMO_EN
+		depends on GSENSOR_ENABLE
+		bool "Enable gsensor demo"
+		default n
 
 	config GSENSOR_SC7A20_ENABLE
 		depends on GSENSOR_ENABLE
 		bool "Enable gsensor IP"
 		default n
+		
 endmenu
