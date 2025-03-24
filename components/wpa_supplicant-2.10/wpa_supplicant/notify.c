@@ -121,19 +121,15 @@ uint8_t s_tk[16];
 // #endif
 void wlan_store_fci(struct wpa_supplicant *wpa_s)
 {
+#if CONFIG_WIFI_FAST_CONNECT
 	struct wlan_fast_connect_info fci;
 	char temp[4];
-	int i;
+	int i, ssid_len;
 	unsigned char *psk;
+	uint8_t current_channel;
 	struct wpa_bss *bss;
 	struct wpa_ssid *ssid;
-	struct wlan_fast_connect_info pre_fci = {0};
-	// #if CONFIG_WIFI_MFP_CONNECT_DEAUTH
 	uint8_t pmf = 0;
-	// #endif
-
-	if (!bk_feature_fast_connect_enable())
-		goto out;
 
 	if (unlikely(!wpa_s || !wpa_s->current_ssid || !wpa_s->current_bss))
 		goto out;
@@ -145,13 +141,18 @@ void wlan_store_fci(struct wpa_supplicant *wpa_s)
 
 	//read the static ip param that obtained
 #if CONFIG_EASY_FLASH_FAST_CONNECT
-	bk_get_env_enhance("fast_connect_id", (void *)&pre_fci, sizeof(struct wlan_fast_connect_info));
+	bk_get_env_enhance("fast_connect_id", (void *)&fci, sizeof(struct wlan_fast_connect_info));
 #endif
+	ssid_len = os_strlen((char *)fci.ssid);
+	ieee80211_freq_to_chan(wpa_s->current_bss->freq, &current_channel);
+	if((ssid_len == wpa_s->current_ssid->ssid_len && os_memcmp(wpa_s->current_ssid->ssid, fci.ssid, ssid_len) == 0) &&
+		(wpa_s->pairwise_cipher == WPA_CIPHER_NONE || os_strcmp(wpa_s->current_ssid->passphrase, (char *)fci.pwd) == 0) &&
+		(current_channel == fci.channel)){
+			WPA_LOGI("the same ssid content, skip!\r\n");
+			return;
+	}
 
-	os_memcpy(fci.ip_addr, pre_fci.ip_addr, sizeof(pre_fci.ip_addr));
-	os_memcpy(fci.netmask, pre_fci.netmask, sizeof(pre_fci.netmask));
-	os_memcpy(fci.gw, pre_fci.gw, sizeof(pre_fci.gw));
-	os_memcpy(fci.dns1, pre_fci.dns1, sizeof(pre_fci.dns1));
+	os_memset(&fci, 0, sizeof(fci));
 	os_memcpy(fci.ssid, bss->ssid, ssid->ssid_len);
 	os_memcpy(fci.bssid, bss->bssid, ETH_ALEN);
 	ieee80211_freq_to_chan(bss->freq, &fci.channel);
@@ -218,8 +219,8 @@ void wlan_store_fci(struct wpa_supplicant *wpa_s)
 #if CONFIG_EASY_FLASH_FAST_CONNECT
 	bk_set_env_enhance("fast_connect_id", (void *)&fci, sizeof(struct wlan_fast_connect_info));
 #endif
-
 out:
+#endif
 	// #if CONFIG_WIFI_MFP_CONNECT_DEAUTH
 	/* clear TK */
 	os_memset(s_tk, 0, sizeof(s_tk));
