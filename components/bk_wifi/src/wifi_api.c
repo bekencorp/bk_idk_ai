@@ -154,6 +154,11 @@ int demo_sta_app_init(char *oob_ssid, char *connect_key)
 	os_strcpy(sta_config.ssid, oob_ssid);
 	os_strcpy(sta_config.password, connect_key);
 
+#if CONFIG_STA_AUTO_RECONNECT
+	sta_config.auto_reconnect_count = 3;
+	sta_config.disable_auto_reconnect_after_disconnect = true;
+#endif
+
 	BK_LOGW(TAG, "ssid:%s key:%s\r\n", sta_config.ssid, sta_config.password);
 	BK_LOG_ON_ERR(bk_wifi_sta_set_config(&sta_config));
 	BK_LOG_ON_ERR(bk_wifi_sta_start());
