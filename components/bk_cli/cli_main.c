@@ -1195,7 +1195,7 @@ static const struct cli_command built_ins[] = {
 	{"help", NULL, help_command},
 	{"log", "log [echo(0,1)] [level(0~5)] [sync(0,1)] [Whitelist(0,1)]", log_setting_cmd},
 #if (CONFIG_SYS_CPU2)
-	{"logswtich", "logswtich", log_switch_command},
+	{"logswitch", "logswitch", log_switch_command},
 #endif
 #if !CONFIG_RELEASE_VERSION
 	{"debug", "debug cmd [param] (ex:debug help)", cli_debug_command},
