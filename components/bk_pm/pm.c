@@ -2099,8 +2099,22 @@ bk_err_t pm_core_bus_clock_ctrl(uint32_t cksel_core, uint32_t ckdiv_core, uint32
 	return BK_OK;
 }
 
-pm_cpu_freq_e bk_pm_current_max_cpu_freq_get()
+pm_cpu_freq_e bk_pm_current_max_cpu_freq_get(pm_dev_id_e *module)
 {
+	uint32_t freq_max = 0;
+	uint32_t i = 0;
+	uint32_t freq_max_index = 0;
+	/*get the max cpu freq*/
+	freq_max = s_pm_cpu_freq[0];
+	for (i = 1; i < PM_DEV_ID_MAX; i++)
+	{
+		if (freq_max < s_pm_cpu_freq[i])
+		{
+			freq_max = s_pm_cpu_freq[i];
+			freq_max_index = i;
+		}
+	}
+	*module = freq_max_index;
 	return s_pm_current_cpu_freq;
 }
 
@@ -2471,7 +2485,10 @@ void pm_debug_ctrl(uint32_t debug_en)
 		os_printf("pm power,pmu[0x%x][0x%x][%d],[0x%x][0x%x][0x%x],[0x%x][0x%x][0x%x]\r\n",REG_READ(PM_DEBUG_SYS_REG_BASE+0x10*4),REG_READ(PM_DEBUG_PMU_REG_BASE+0x41*4),s_pm_exit_low_vol_wakeup_source,
 																	s_before_low_vol_pd,s_before_low_vol_lpo,s_before_low_vol_psram,
 																	s_after_low_vol_pd,s_after_low_vol_lpo,s_after_low_vol_psram);
-
+		pm_cpu_freq_e current_max_freq = 0;
+		pm_dev_id_e dev_id = 0;
+		current_max_freq = bk_pm_current_max_cpu_freq_get(&dev_id);
+		os_printf("pm freq[%d][0x%x]\r\n",dev_id,current_max_freq);
 		if(s_pm_ahpb_pm_state > 0)
 		{
 			os_printf("Ahbp not PD[module:0x%x]\r\n",s_pm_ahpb_pm_state);
