@@ -327,7 +327,23 @@ bk_err_t bk_gpio_unregister_isr(gpio_id_t id);
  *  - others: other errors.
  */
 bk_err_t bk_gpio_ctrl_external_ldo(gpio_ctrl_ldo_module_e module,gpio_id_t gpio_id,gpio_output_state_e value);
-
+/**
+ * @brief debug the external ldo
+ *
+ * debug the external ldo
+ *
+ * @attention
+ * - This API is used to debug the external ldo
+ *
+ * @param
+ * void
+ *
+ *
+ * @return
+ *  - BK_OK: succeed
+ *  - others: other errors.
+ */
+bk_err_t bk_gpio_ctrl_external_ldo_debug();
 #if CONFIG_GPIO_DYNAMIC_WAKEUP_SUPPORT
 /**
  * @brief     Register the GPIO channel to wakeup source with select int type.

@@ -858,12 +858,12 @@ pm_cpu_freq_e bk_pm_module_current_cpu_freq_get(pm_dev_id_e module);
  * - This API is used to get the current max and used cpu frequency
  *
  * @param
- * -void
+ * -output:module:the current max and used cpu frequency module
  * @return
  *  - get the current max and used cpu frequency
  *
  */
-pm_cpu_freq_e bk_pm_current_max_cpu_freq_get();
+pm_cpu_freq_e bk_pm_current_max_cpu_freq_get(pm_dev_id_e *module);
 /**
  * @brief vote cpu frequency
  *
