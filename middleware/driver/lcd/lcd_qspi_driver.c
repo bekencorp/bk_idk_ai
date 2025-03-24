@@ -37,21 +37,6 @@
 #define LCD_QSPI_LOGD(...) BK_LOGD(LCD_QSPI_TAG, ##__VA_ARGS__)
 
 
-#if CONFIG_SOC_BK7256XX
-#define LCD_QSPI_DATA_ADDR      0x68000000
-#define LCD_QSPI_RESET_PIN      GPIO_47
-#endif
-
-#if CONFIG_SOC_BK7236XX
-#define LCD_QSPI0_DATA_ADDR     0x64000000
-#define LCD_QSPI1_DATA_ADDR     0x68000000
-#ifdef CONFIG_LCD_QSPI_RESET_PIN
-#define LCD_QSPI_RESET_PIN      CONFIG_LCD_QSPI_RESET_PIN
-#else
-#define LCD_QSPI_RESET_PIN      GPIO_40
-#endif
-#endif
-
 static qspi_driver_t s_lcd_qspi[SOC_QSPI_UNIT_NUM] = {
 	{
 		.hal.hw = (qspi_hw_t *)(SOC_QSPI0_REG_BASE),
@@ -524,7 +509,7 @@ bk_err_t lcd_qspi_get_dma_repeat_once_len(const lcd_device_t *device)
     uint32_t value = 0;
     uint8_t i = 0;
 
-    for (i = 4; i < 13; i++) {
+    for (i = 4; i < 20; i++) {
         len = device->qspi->frame_len / i;
         if (len <= 0x10000) {
             value = device->qspi->frame_len % i;

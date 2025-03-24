@@ -210,6 +210,7 @@ typedef struct
 	lcd_qspi_clk_t clk;
 	const lcd_qspi_init_cmd_t *init_cmd;
 	uint32_t device_init_cmd_len;
+	uint32_t frame_len;
 } lcd_spi_t;
 
 typedef struct
