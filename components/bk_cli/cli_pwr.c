@@ -327,6 +327,7 @@ static void cli_pm_debug(char *pcWriteBuffer, int xWriteBufferLen, int argc, cha
 	if(pm_debug == PM_DEBUG_CTRL_STATE)
 	{
 		#if CONFIG_SYS_CPU0
+		bk_gpio_ctrl_external_ldo_debug();
 		pm_debug_pwr_clk_state();
 		pm_debug_lv_state();
 		#endif
@@ -452,6 +453,7 @@ static void cli_pm_freq(char *pcWriteBuffer, int xWriteBufferLen, int argc, char
 	UINT32 pm_module_id  = 0;
 	pm_cpu_freq_e module_freq = 0;
 	pm_cpu_freq_e current_max_freq = 0;
+	pm_dev_id_e dev_id = 0;
 	if (argc != 3)
 	{
 		os_printf("set pm freq parameter invalid %d\r\n",argc);
@@ -470,9 +472,9 @@ static void cli_pm_freq(char *pcWriteBuffer, int xWriteBufferLen, int argc, char
 
 	module_freq =  bk_pm_module_current_cpu_freq_get(pm_module_id);
 
-	current_max_freq = bk_pm_current_max_cpu_freq_get();
+	current_max_freq = bk_pm_current_max_cpu_freq_get(&dev_id);
 
-	os_printf("pm cpu freq test id: %d; freq: %d; current max cpu freq: %d;\r\n",pm_module_id,module_freq,current_max_freq);
+	os_printf("pm cpu freq test id: %d; freq: %d; current max cpu freq: %d,\r\n",pm_module_id,module_freq,current_max_freq,dev_id);
 
 }
 static void cli_pm_lpo(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **argv)
