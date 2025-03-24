@@ -79,9 +79,7 @@ static void gsensor_demo_thread(beken_thread_arg_t arg)
 {
     bk_err_t ret = kNoErr;
 
-    rtos_delay_milliseconds(500);
     gsensor_demo_open();
-    gsensor_demo_set_normal();
 
     while(1) {
         gsensor_demo_msg_t msg;
