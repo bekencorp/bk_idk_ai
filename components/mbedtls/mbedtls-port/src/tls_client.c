@@ -143,7 +143,7 @@ int mbedtls_client_context(MbedTLSSession *session)
     }
 
 #if defined(MBEDTLS_SSL_MAX_FRAGMENT_LENGTH)
-	mfl_code = MBEDTLS_SSL_MAX_FRAG_LEN_NONE;///MBEDTLS_SSL_MAX_FRAG_LEN_512;
+	mfl_code = MBEDTLS_SSL_MAX_FRAG_LEN_4096;
 	if( ( ret = mbedtls_ssl_conf_max_frag_len( &session->conf, mfl_code ) ) != 0 )
 	{
 		tls_printf( "[AM]failed\n  ! mbedtls_ssl_conf_max_frag_len returned %d\n\n", ret );
