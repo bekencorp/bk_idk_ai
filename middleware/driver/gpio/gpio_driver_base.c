@@ -468,6 +468,15 @@ bk_err_t bk_gpio_ctrl_external_ldo(gpio_ctrl_ldo_module_e module,gpio_id_t gpio_
 
 	return BK_OK;
 }
+bk_err_t bk_gpio_ctrl_external_ldo_debug()
+{
+	uint32_t i = 0;
+	for(i = 0; i < sizeof(s_gpio_ctrl_ldo_output)/sizeof(gpio_ctrl_ldo_t); i++)
+	{
+		GPIO_LOGI("pm ldo[%d][0x%x]\r\n", s_gpio_ctrl_ldo_output[i].gpio_id,s_gpio_ctrl_ldo_output[i].ldo_state);
+	}
+	return BK_OK;
+}
 #if CONFIG_GPIO_WAKEUP_SUPPORT
 
 static void gpio_dump_baked_regs(bool configs, bool int_type_status, bool int_en_status)
