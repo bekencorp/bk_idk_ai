@@ -117,7 +117,19 @@ void gsensor_lowpower_gpio_wakeup_callback(gpio_id_t gpio_id)
     GSENSOR_D_LOGI("%s[%d]\r\n", __func__, gpio_id);
     gsensor_demo_set_normal();
 }
-
+bk_err_t gsensor_enter_sleep_config()
+{
+	bk_gsensor_setMode(gsensor_handle,GSENSOR_MODE_WAKEUP);
+	bk_gsensor_open(gsensor_handle);
+#if CONFIG_GPIO_WAKEUP_SUPPORT
+	gpio_dev_unmap(GSENSOR_G_INT1_PIN);
+	GSENSOR_D_LOGI("gsensor set WAKEUP SUCCESS!\r\n");
+	bk_gpio_register_isr(GSENSOR_G_INT1_PIN, gsensor_lowpower_gpio_wakeup_callback);
+	bk_gpio_register_wakeup_source(GSENSOR_G_INT1_PIN,GPIO_INT_TYPE_FALLING_EDGE);
+	bk_pm_wakeup_source_set(PM_WAKEUP_SOURCE_INT_GPIO, NULL);
+#endif //CONFIG_GPIO_WAKEUP_SUPPORT
+	return 0;
+}
 static int gsensor_demo_msg(gsensor_module_opcode_t op_code)
 {
     GSENSOR_D_LOGI("%s ok op_code:%d\r\n", __func__, op_code);
@@ -155,16 +167,7 @@ static int gsensor_demo_msg(gsensor_module_opcode_t op_code)
         }break;
         case GSENSOR_OPCODE_LOWPOWER_WAKEUP:
         {
-            bk_gsensor_setMode(gsensor_handle,GSENSOR_MODE_WAKEUP);
-            bk_gsensor_open(gsensor_handle);
-#if CONFIG_GPIO_WAKEUP_SUPPORT
-            gpio_dev_unmap(GSENSOR_G_INT1_PIN);
-            GSENSOR_D_LOGI("gsensor set WAKEUP SUCCESS!\r\n");
-            bk_gpio_register_isr(GSENSOR_G_INT1_PIN, gsensor_lowpower_gpio_wakeup_callback);
-            bk_gpio_register_wakeup_source(GSENSOR_G_INT1_PIN,GPIO_INT_TYPE_FALLING_EDGE);
-            bk_pm_wakeup_source_set(PM_WAKEUP_SOURCE_INT_GPIO, NULL);
-#endif //CONFIG_GPIO_WAKEUP_SUPPORT
-
+			gsensor_enter_sleep_config();
         }break;
         default:break;
     }
