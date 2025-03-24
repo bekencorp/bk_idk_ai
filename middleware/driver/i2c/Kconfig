@@ -18,6 +18,18 @@ menu "I2C"
 		bool "Enable GPIO Simulate I2C"
 		default n
 
+    config SIM_I2C_SDA_GPIO
+        depends on SIM_I2C
+        int "Simulate I2C SDA GPIO"
+        range 0 255
+        default 1
+
+    config SIM_I2C_SCL_GPIO
+        depends on SIM_I2C
+        int "Simulate I2C SCL GPIO"
+        range 0 255
+        default 0
+
 	config I2C_PM_CB_SUPPORT
 		bool "i2c pm support"
 		depends on I2C

@@ -23,6 +23,12 @@ menu "CAMERA"
 		int "the gpio id control camera power"
 		default 9
 
+    config CAMERA_CTRL_RESET_GPIO_CTRL
+        depends on CAMERA_POWER_GPIO_CTRL
+        int "the gpio id control camera reset pin, -1 means not used"
+        range -1 255
+        default -1
+
 	config ENCODE_BUF_DYNAMIC
 		bool "Enable encode buffer dynamic malloc"
 		default n

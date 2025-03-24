@@ -616,10 +616,39 @@ bk_err_t bk_video_power_on(uint8_t gpio, uint8_t activ_level)
 	BK_LOG_ON_ERR(bk_gpio_disable_input(gpio));
 	BK_LOG_ON_ERR(bk_gpio_enable_output(gpio));
 
+#ifdef CONFIG_CAMERA_CTRL_RESET_GPIO_CTRL
+    int8_t reset_gpio = CONFIG_CAMERA_CTRL_RESET_GPIO_CTRL;
+#else
+    int8_t reset_gpio = -1;
+#endif
+
+    LOGI("%s reset_gpio %d\n", __func__, reset_gpio);
+
+	if(reset_gpio >= 0)
+	{
+        gpio_dev_unmap(reset_gpio);
+        bk_gpio_set_capacity(reset_gpio, 0);
+        BK_LOG_ON_ERR(bk_gpio_disable_input(reset_gpio));
+        BK_LOG_ON_ERR(bk_gpio_enable_output(reset_gpio));
+
+        if (activ_level)
+        {
+            bk_gpio_set_output_high(reset_gpio);
+        }
+        else
+        {
+            bk_gpio_set_output_low(reset_gpio);
+        }
+	}
+
 	if (activ_level)
+    {
 		bk_gpio_set_output_high(gpio); // high active
+    }
 	else
+    {
 		bk_gpio_set_output_low(gpio); // low active
+    }
 
 	delay_ms(5);
 

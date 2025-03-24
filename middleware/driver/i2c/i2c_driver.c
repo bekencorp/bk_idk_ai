@@ -661,7 +661,10 @@ bk_err_t bk_i2c_init(i2c_id_t id, const i2c_config_t *cfg)
 	uint32_t support_id = CONFIG_I2C_SUPPORT_ID_BITS;
 	uint32_t id_init_bits = BIT(id);
 	if (!(support_id & id_init_bits))
+    {
+        I2C_LOGE("%s bit check err 0x%x 0x%x\n", __func__, support_id, id_init_bits);
 		return BK_ERR_I2C_CHECK_DEFCONFIG;
+    }
 #endif
 	s_i2c[id].int_status = 0;
 	s_i2c[id].addr_mode = cfg->addr_mode;
