@@ -78,6 +78,14 @@ void http_ota_Command(char *pcWriteBuffer, int xWriteBufferLen, int argc, char *
 	int ret;
 	if (argc != 2)
 		goto HTTP_CMD_ERR;
+
+#if CONFIG_OTA_DISPLAY_PICTURE_DEMO
+	extern int ota_update_with_display_open(void);
+	if(ota_update_with_display_open() != BK_OK)
+	{
+		return;
+	}
+#endif
 	ret = bk_http_ota_download(argv[1]);
 
 	if (0 != ret)

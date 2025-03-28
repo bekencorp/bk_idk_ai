@@ -40,4 +40,10 @@ menu "Ota"
 		default n
 		help
 			enable ota position independent update
+	config OTA_DISPLAY_PICTURE_DEMO
+		depends on OTA_POSITION_INDEPENDENT_AB
+		bool "Enable display picture when do ota position independent update"
+		default n
+		help
+			enable display picture when do ota position independent update
 endmenu

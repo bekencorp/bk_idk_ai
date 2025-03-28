@@ -10,10 +10,10 @@
 #include "modules/wifi.h"
 #endif
 #ifdef CONFIG_OTA_HASH_FUNCTION
-#include "bk_private/bk_ota_private.h" 
 #include "vendor_flash_partition.h"
 #endif
 #include "common/bk_err.h"
+#include "bk_private/bk_ota_private.h"
 
 #ifndef OTA_TAG
 #define OTA_TAG	"OTA"
@@ -314,7 +314,43 @@ int bk_ota_update_partition_flag(int input_val)
 	return BK_OK;
 }
 
+#if CONFIG_OTA_DISPLAY_PICTURE_DEMO
+extern void lvgl_app_deinit(void);
+extern bk_err_t media_app_ota_disp_open(void);
+int ota_update_with_display_open(void)
+{
+	int ret = BK_OK;
+
+	lvgl_app_deinit();
+	if(media_app_ota_disp_open() != BK_OK)
+	{
+		os_printf("open disp failed. \r\n");
+		ret = BK_FAIL;
+	}
+
+	return ret;
+}
+#endif
 #endif // CONFIG_HTTP_AB_PARTITION
+
+static ota_event_callback_t s_ota_event_callback = NULL;
+int ota_event_callback_register(ota_event_callback_t callback)
+{
+	s_ota_event_callback = callback;
+
+	return 0;
+}
+
+int ota_input_event_handler(evt_ota event_param)
+{
+	if(NULL != s_ota_event_callback)
+	{
+		s_ota_event_callback(event_param);
+	}
+
+	return 0;
+}
+
 u8  ota_flag =0;
 #if CONFIG_OTA_HTTP
 int bk_http_ota_download(const char *uri)
@@ -330,6 +366,8 @@ int bk_http_ota_download(const char *uri)
 		return ret;
 	}
     OTA_LOGD("http_ota_download :0x%x",bk_http_ota_download);
+	ota_input_event_handler(EVT_OTA_START);
+
 #ifdef CONFIG_HTTP_AB_PARTITION
     ret = bk_ota_get_current_partition();
     OTA_LOGI("ret :0x%x \r\n",ret);
@@ -365,6 +403,7 @@ int bk_http_ota_download(const char *uri)
 #if CONFIG_SYSTEM_CTRL
 		bk_wifi_ota_dtim(0);
 #endif
+		ota_input_event_handler(EVT_OTA_FAIL);
 	}else{
 
 #ifdef CONFIG_HTTP_AB_PARTITION
@@ -382,6 +421,14 @@ int bk_http_ota_download(const char *uri)
 		{
 			return ret_val;
 		}
+#if CONFIG_OTA_DISPLAY_PICTURE_DEMO
+	extern bk_err_t media_app_ota_disp_close(void);
+	if(media_app_ota_disp_close() != BK_OK)
+	{
+		OTA_LOGE("disp close failed.ret:%d\r\n",ret);
+	}
+#endif
+		ota_input_event_handler(EVT_OTA_SUCCESS);
 		OTA_LOGI("success.\r\n");
 		bk_reboot();
 #else

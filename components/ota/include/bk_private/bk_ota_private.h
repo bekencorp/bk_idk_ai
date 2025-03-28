@@ -84,6 +84,15 @@ struct ota_rbl_head
     uint32_t info_crc32;
 };
 
+typedef enum{
+	EVT_OTA_START = 0,
+	EVT_OTA_FAIL,
+	EVT_OTA_SUCCESS,
+}evt_ota;
+
+typedef uint8_t (*ota_event_callback_t)(evt_ota event_param);
+int ota_event_callback_register(ota_event_callback_t callback);
+
 int32_t ota_get_rbl_head(const bk_logic_partition_t *bk_ptr, struct ota_rbl_head *hdr, uint32_t partition_len);
 int32_t ota_hash_verify(const bk_logic_partition_t *part, const struct ota_rbl_head *hdr);
 int32_t ota_do_hash_check(void);
