@@ -18,7 +18,6 @@
     应用开发 <application/index>
     开发与贡献代码流程 <process/index>
     云平台 <cloud/index>
-    工程与示例 <projects/projects>
     文档中心 <https://docs.bekencorp.com/>
 
 * :ref:`genindex`

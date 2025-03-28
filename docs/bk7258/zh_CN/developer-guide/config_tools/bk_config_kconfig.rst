@@ -5,7 +5,7 @@ Kconfig 配置
 
 :link_to_translation:`en:[English]`
 
-本节介绍 Armino Kconfig 使用过程中常见问题。关于 Kconfig 配置示例可参考 :ref:`Kconfig 配置示例 <201_build_project_demo>`。
+本节介绍 Armino Kconfig 使用过程中常见问题。
 
 Kconfig 配置文件
 -------------------------
@@ -35,7 +35,7 @@ Armino Kconfig 组织如下图所示：
 
 可以将这些文件归为两类：
 
- - 配置定义文件: 
+ - 配置定义文件:
 
    - Kconfig - 通常定义在组件中。
    - Kconfig.projbuild - 定义在组件或者工程目录下。
@@ -83,7 +83,7 @@ CMakeLists.txt 中使用 Kconfig
 ---------------------------------------
 
 在 CMakeLists.txt 中可直接使用 Kconfig 中定义的配置项，唯一要注意的问题不要将
-armino_component_register() 放在任何配置条件中，可参考 :ref:`通过 Kconfig 禁用组件 <207_build_kconfig_disable_component>`。
+armino_component_register() 放在任何配置条件中。
 
 
 

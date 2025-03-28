@@ -9,7 +9,7 @@ Armino 配置糅合在构建中，处理过程如下图所示：
 
 .. figure:: picture/config_overview.svg
     :align: center
-    :alt: 8                                                                                           
+    :alt: 8
     :figclass: align-center
 
 图中标号所对应的处理为：
@@ -24,7 +24,6 @@ Armino 配置糅合在构建中，处理过程如下图所示：
 
 Armino 支持下述几种配置文件：
 
- - Kconfig - 组件配置，生成 sdkconfig.h。详情情参考 :ref:`Kconfig 配置 <bk_config_kconfig>`。
  - csv - CSV 格式配置文件，包括:
 
    - partitions.csv - 分区配置表，用于生成 partitions_gen.h。详情请参考 :ref:`分区配置 <bk_config_partitions>`。

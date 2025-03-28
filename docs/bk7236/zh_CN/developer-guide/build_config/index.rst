@@ -7,7 +7,6 @@
    :maxdepth: 1
 
    概述 <bk_build_overview>
-   示例 <bk_build_example>
    函数与属性 <bk_build_api>
    实现 <bk_build_design>
    常见问题 <bk_build_faq>

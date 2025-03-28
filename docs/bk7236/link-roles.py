@@ -27,21 +27,21 @@ def setup(app):
     baseurl = 'https://github.com/bekencorp/armino'
     app.add_role('armino', autolink('{}/tree/{}/%s'.format(baseurl, rev)))
     app.add_role('armino_file', autolink('{}/blob/{}/%s'.format(baseurl, rev)))
-    app.add_role('armino_raw', autolink('{}/raw/{}/%s'.format(baseurl, rev)))
-    app.add_role('component', autolink('{}/tree/{}/components/%s'.format(baseurl, rev)))
+    # app.add_role('armino_raw', autolink('{}/raw/{}/%s'.format(baseurl, rev)))
+    # app.add_role('component', autolink('{}/tree/{}/components/%s'.format(baseurl, rev)))
     app.add_role('component_file', autolink('{}/blob/{}/components/%s'.format(baseurl, rev)))
-    app.add_role('component_raw', autolink('{}/raw/{}/components/%s'.format(baseurl, rev)))
-    app.add_role('example', autolink('{}/tree/{}/projects/examples/%s'.format(baseurl, rev)))
-    app.add_role('example_file', autolink('{}/blob/{}/projects/examples/%s'.format(baseurl, rev)))
-    app.add_role('example_raw', autolink('{}/raw/{}/projects/examples/%s'.format(baseurl, rev)))
-    app.add_role('middleware', autolink('{}/tree/{}/middleware/%s'.format(baseurl, rev)))
-    app.add_role('middleware_file', autolink('{}/blob/{}/middleware/%s'.format(baseurl, rev)))
-    app.add_role('middleware_raw', autolink('{}/raw/{}/middleware/%s'.format(baseurl, rev)))
-    app.add_role('include', autolink('{}/tree/{}/include/%s'.format(baseurl, rev)))
-    app.add_role('include_file', autolink('{}/blob/{}/include/%s'.format(baseurl, rev)))
-    app.add_role('include_raw', autolink('{}/raw/{}/include/%s'.format(baseurl, rev)))
+    # app.add_role('component_raw', autolink('{}/raw/{}/components/%s'.format(baseurl, rev)))
+    # app.add_role('example', autolink('{}/tree/{}/projects/examples/%s'.format(baseurl, rev)))
+    # app.add_role('example_file', autolink('{}/blob/{}/projects/examples/%s'.format(baseurl, rev)))
+    # app.add_role('example_raw', autolink('{}/raw/{}/projects/examples/%s'.format(baseurl, rev)))
+    # app.add_role('middleware', autolink('{}/tree/{}/middleware/%s'.format(baseurl, rev)))
+    # app.add_role('middleware_file', autolink('{}/blob/{}/middleware/%s'.format(baseurl, rev)))
+    # app.add_role('middleware_raw', autolink('{}/raw/{}/middleware/%s'.format(baseurl, rev)))
+    # app.add_role('include', autolink('{}/tree/{}/include/%s'.format(baseurl, rev)))
+    # app.add_role('include_file', autolink('{}/blob/{}/include/%s'.format(baseurl, rev)))
+    # app.add_role('include_raw', autolink('{}/raw/{}/include/%s'.format(baseurl, rev)))
 
-    # rev = 'refs/heads/armino_main' 
+    # rev = 'refs/heads/armino_main'
     # baseurl = 'http://192.168.0.46/gerrit/plugins/gitiles/iot/wcn'
     # app.add_role('armino', autolink('{}/projects/+/{}/%s'.format(baseurl, rev)))
     # app.add_role('armino_file', autolink('{}/projects/+/{}/%s'.format(baseurl, rev)))
@@ -55,7 +55,7 @@ def setup(app):
     # app.add_role('middleware', autolink('{}/projects/+/{}/middleware/%s'.format(baseurl, rev)))
     # app.add_role('middleware_file', autolink('{}/projects/+/{}/middleware/%s'.format(baseurl, rev)))
     # app.add_role('middleware_raw', autolink('{}/projects/+/{}/middleware/%s'.format(baseurl, rev)))
- 
+
     # link to the current documentation file in specific language version
     on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
     if on_rtd:
