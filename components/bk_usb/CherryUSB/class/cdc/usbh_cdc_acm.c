@@ -97,6 +97,8 @@ int usbh_cdc_acm_set_line_state(struct usbh_cdc_acm *cdc_acm_class, bool dtr, bo
     return usbh_control_transfer(cdc_acm_class->hport->ep0, setup, NULL);
 }
 
+struct usbh_hubport * __maybe_unused g_cdc_usbh_hubport = NULL;
+
 static int usbh_cdc_acm_connect(struct usbh_hubport *hport, uint8_t intf)
 {
 	uint8_t cur_iface       = 0xFF; __maybe_unused_var(cur_iface);
@@ -114,7 +116,7 @@ static int usbh_cdc_acm_connect(struct usbh_hubport *hport, uint8_t intf)
         return -ENOMEM;
     }
 
-    memset(cdc_acm_class, 0, sizeof(struct usbh_cdc_acm));
+    memset(cdc_acm_class, 0x00, sizeof(struct usbh_cdc_acm));
     usbh_cdc_acm_devno_alloc(cdc_acm_class);
     cdc_acm_class->hport = hport;
     cdc_acm_class->ctrl_intf = intf;
@@ -190,16 +192,23 @@ static int usbh_cdc_acm_connect(struct usbh_hubport *hport, uint8_t intf)
             usbh_hport_activate_epx(&cdc_acm_class->bulkout, hport, ep_desc);
         }
     }
-
+	g_cdc_usbh_hubport = hport;
     snprintf(hport->config.intf[intf].devname, CONFIG_USBHOST_DEV_NAMELEN, DEV_FORMAT, cdc_acm_class->minor);
 
     USB_LOG_INFO("Register CDC ACM Class:%s\r\n", hport->config.intf[intf].devname);
-
-    return ret;
+#if CONFIG_USB_CDC_MODEM
+	extern void bk_usb_cdc_connect_notify(struct usbh_hubport *hport, uint8_t intf, uint32_t class);
+	bk_usb_cdc_connect_notify(hport, intf, USB_DEVICE_CLASS_CDC);
+#endif
+	return ret;
 }
 
 static int usbh_cdc_acm_disconnect(struct usbh_hubport *hport, uint8_t intf)
 {
+#if CONFIG_USB_CDC_MODEM
+	extern void bk_usb_cdc_disconnect_notify(struct usbh_hubport *hport, uint8_t intf, uint32_t class);
+	bk_usb_cdc_disconnect_notify(hport, intf, USB_DEVICE_CLASS_CDC);
+#endif
     int ret = 0;
 
     struct usbh_cdc_acm *cdc_acm_class = (struct usbh_cdc_acm *)hport->config.intf[intf].priv;

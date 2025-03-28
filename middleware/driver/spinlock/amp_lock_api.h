@@ -28,6 +28,9 @@ enum
 	AMP_RES_ID_GPIO,
 	AMP_RES_ID_SYS_REG,
 
+#if (CONFIG_USB_CDC_MODEM)
+	AMP_RES_ID_USB_CDC,
+#endif
 	AMP_RES_ID_MAX,
 };
 

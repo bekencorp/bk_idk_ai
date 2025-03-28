@@ -641,52 +641,54 @@ int usbh_enumerate(struct usbh_hubport *hport)
 
     USB_LOG_DBG("Enumeration success, start loading class driver\r\n");
     /*search supported class driver*/
-#if (1)//(CONFIG_STANDARD_DUALSTREAM)
-        for (uint8_t i = 0; i < hport->config.config_desc.bNumInterfaces; i++) {
-            intf_desc = &hport->config.intf[i].altsetting[0].intf_desc;
-    
-            struct usbh_class_driver *class_driver = (struct usbh_class_driver *)usbh_find_class_driver(intf_desc->bInterfaceClass, intf_desc->bInterfaceSubClass, intf_desc->bInterfaceProtocol, hport->device_desc.idVendor, hport->device_desc.idProduct);
-    
-            if (class_driver == NULL) {
-                USB_LOG_DBG("do not support Class:0x%02x,Subclass:0x%02x,Protocl:0x%02x\r\n",
-                            intf_desc->bInterfaceClass,
-                            intf_desc->bInterfaceSubClass,
-                            intf_desc->bInterfaceProtocol);
-    
-                continue;
-            }
-            hport->config.intf[i].class_driver = class_driver;
-            USB_LOG_DBG("Loading %s class driver\r\n", class_driver->driver_name);
+#if (CONFIG_USB_CDC_MODEM)
+    for (uint8_t i = 0; i < hport->config.config_desc.bNumInterfaces; i++) {
+        intf_desc = &hport->config.intf[i].altsetting[0].intf_desc;
+
+        struct usbh_class_driver *class_driver = (struct usbh_class_driver *)usbh_find_class_driver(intf_desc->bInterfaceClass, intf_desc->bInterfaceSubClass, intf_desc->bInterfaceProtocol, hport->device_desc.idVendor, hport->device_desc.idProduct);
+
+        if (class_driver == NULL) {
+            USB_LOG_DBG("do not support Class:0x%02x,Subclass:0x%02x,Protocl:0x%02x\r\n",
+                        intf_desc->bInterfaceClass,
+                        intf_desc->bInterfaceSubClass,
+                        intf_desc->bInterfaceProtocol);
+
+            continue;
         }
-        ret = CLASS_CONNECT(hport, 0);
+        hport->config.intf[i].class_driver = class_driver;
+        USB_LOG_DBG("Loading %s class driver\r\n", class_driver->driver_name);
+        ret = CLASS_CONNECT(hport, i);
         if (ret < 0) {
-            ret = CLASS_DISCONNECT(hport, 0);
+            ret = CLASS_DISCONNECT(hport, i);
             goto errout;
         }
+    }
+#else
 
-//#else
-//    for (uint8_t i = 0; i < hport->config.config_desc.bNumInterfaces; i++) {
-//        intf_desc = &hport->config.intf[i].altsetting[0].intf_desc;
-//
-//        struct usbh_class_driver *class_driver = (struct usbh_class_driver *)usbh_find_class_driver(intf_desc->bInterfaceClass, intf_desc->bInterfaceSubClass, intf_desc->bInterfaceProtocol, hport->device_desc.idVendor, hport->device_desc.idProduct);
-//
-//        if (class_driver == NULL) {
-//            USB_LOG_DBG("do not support Class:0x%02x,Subclass:0x%02x,Protocl:0x%02x\r\n",
-//                        intf_desc->bInterfaceClass,
-//                        intf_desc->bInterfaceSubClass,
-//                        intf_desc->bInterfaceProtocol);
-//
-//            continue;
-//        }
-//        hport->config.intf[i].class_driver = class_driver;
-//        USB_LOG_DBG("Loading %s class driver\r\n", class_driver->driver_name);
-//        ret = CLASS_CONNECT(hport, i);
-//        if (ret < 0) {
-//            ret = CLASS_DISCONNECT(hport, i);
-//            goto errout;
-//        }
-//    }
+    for (uint8_t i = 0; i < hport->config.config_desc.bNumInterfaces; i++) {
+        intf_desc = &hport->config.intf[i].altsetting[0].intf_desc;
+
+        struct usbh_class_driver *class_driver = (struct usbh_class_driver *)usbh_find_class_driver(intf_desc->bInterfaceClass, intf_desc->bInterfaceSubClass, intf_desc->bInterfaceProtocol, hport->device_desc.idVendor, hport->device_desc.idProduct);
+
+        if (class_driver == NULL) {
+            USB_LOG_DBG("do not support Class:0x%02x,Subclass:0x%02x,Protocl:0x%02x\r\n",
+                        intf_desc->bInterfaceClass,
+                        intf_desc->bInterfaceSubClass,
+                        intf_desc->bInterfaceProtocol);
+
+            continue;
+        }
+        hport->config.intf[i].class_driver = class_driver;
+        USB_LOG_DBG("Loading %s class driver\r\n", class_driver->driver_name);
+    }
+    ret = CLASS_CONNECT(hport, 0);
+    if (ret < 0) {
+        ret = CLASS_DISCONNECT(hport, 0);
+        goto errout;
+    }
+
 #endif
+
 
 
     usbh_device_mount_done_callback(hport);

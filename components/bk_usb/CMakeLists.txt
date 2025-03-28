@@ -179,14 +179,14 @@ if (CONFIG_UVC_UAC_DEMO)
 
 endif() # CONFIG_UVC_UAC_DEMO
 
-if (CONFIG_USB_CDC_ACM_DEMO)
+if (CONFIG_USB_CDC_MODEM)
     list (APPEND incs
         example/usb_cdc_acm
     )
     list (APPEND srcs
         example/usb_cdc_acm/bk_cherry_usb_cdc_acm_api.c
     )
-endif() # CONFIG_USB_CDC_ACM_DEMO
+endif() # CONFIG_USB_CDC_MODEM
 
 endif() # CONFIG_USB
 
@@ -220,19 +220,19 @@ if (CONFIG_ATE_TEST)
 endif() # CONFIG_ATE
 
 if (CONFIG_SYS_CPU0)
-if (CONFIG_USB_CDC_ACM_DEMO)
+if (CONFIG_USB_CDC_MODEM)
     list (APPEND incs
         example/usb_cdc_acm
     )
     list (APPEND srcs
-        example/usb_cdc_acm/bk_usb_cdc_demo.c
+        example/usb_cdc_acm/bk_usb_cdc_modem.c
     )
-endif() # CONFIG_USB_CDC_ACM_DEMO
+endif() # CONFIG_USB_CDC_MODEM
 endif() # CONFIG_SYS_CPU0
 
 
 
-armino_component_register(SRCS "${srcs}" INCLUDE_DIRS "${incs}" PRIV_REQUIRES bk_common driver)
+armino_component_register(SRCS "${srcs}" INCLUDE_DIRS "${incs}" PRIV_REQUIRES bk_common driver bk_modem)
 
 if (CONFIG_MUSB_MHDRC)
 target_compile_definitions(${COMPONENT_LIB}

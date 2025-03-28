@@ -122,13 +122,14 @@ void bk_usb_uvc_uac_free_enumerate_resources()
 	bk_usbh_video_unregister_dev();
 	bk_usbh_audio_unregister_dev();
 
+#if (CONFIG_USB_CDC_MODEM)
 	if(uvc_uac_device->usb_driver->hport->raw_config_desc)
 	{
 		uint8_t *raw_config_desc = uvc_uac_device->usb_driver->hport->raw_config_desc;
 		uvc_uac_device->usb_driver->hport->raw_config_desc = NULL;
 		os_free(raw_config_desc);
 	}
-
+#endif
     s_uvc_uac_device->n_uvc_dev = 0;
     s_uvc_uac_device->a_uvc_dev = 0;
 

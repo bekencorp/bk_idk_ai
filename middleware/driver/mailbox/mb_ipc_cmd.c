@@ -26,7 +26,7 @@
 #include "cache.h"
 #endif
 
-#if (CONFIG_USB_CDC_ACM_DEMO)
+#if (CONFIG_USB_CDC_MODEM)
 #include "bk_cherry_usb_cdc_acm_api.h"
 #endif
 
@@ -39,7 +39,7 @@
 #define IPC_RSP_CMD_MASK		0x7F
 
 #define IPC_RSP_TIMEOUT			10		/* 10ms */
-#define IPC_XCHG_DATA_MAX		32 // MB_CHNL_BUFF_LEN
+#define IPC_XCHG_DATA_MAX		48 // MB_CHNL_BUFF_LEN
 
 typedef union
 {
@@ -555,8 +555,7 @@ static u32 ipc_cmd_handler(ipc_chnl_cb_t *chnl_cb, mb_chnl_ack_t *ack_buf)
 #if (USB_CDC_CP1_IPC)
 		case IPC_CPU0_OPEN_USB_CDC:
 			{
-				IPC_CDC_DATA_t *ipc_cdc = (IPC_CDC_DATA_t *)chnl_cb->cmd_buf;
-				bk_usb_cdc_open(ipc_cdc);
+				bk_usb_cdc_open();
 				result = ACK_STATE_COMPLETE;
 			}
 			break;
@@ -588,7 +587,7 @@ static u32 ipc_cmd_handler(ipc_chnl_cb_t *chnl_cb, mb_chnl_ack_t *ack_buf)
 		case IPC_CPU1_UPLOAD_USB_CDC_DATA:
 			{
 				IPC_CDC_DATA_t *p_cdc_data = (IPC_CDC_DATA_t *)chnl_cb->cmd_buf;
-				p_cdc_data->bk_cdc_acm_bulkin_cb();
+				p_cdc_data->bk_cdc_acm_bulkin_cb(p_cdc_data->idx);
 				result = ACK_STATE_COMPLETE;
 			}
 			break;

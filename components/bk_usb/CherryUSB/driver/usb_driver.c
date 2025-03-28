@@ -28,7 +28,7 @@
 #include "bk_uvc_uac_api.h"
 #endif
 
-#if CONFIG_USB_CDC_ACM_DEMO
+#if CONFIG_USB_CDC_MODEM
 #include "usbh_cdc_acm.h"
 #include "bk_cherry_usb_cdc_acm_api.h"
 #endif
@@ -448,7 +448,7 @@ static void bk_usb_updata_interface(bk_usb_driver_comprehensive_ops *usb_driver,
 			break;
 #endif
 
-#if CONFIG_USB_CDC_ACM_DEMO
+#if CONFIG_USB_CDC_MODEM
 		case USB_DEVICE_CLASS_CDC:
 			bk_usb_update_cdc_interface(usb_driver->hport, bInterfaceNumber, interface_sub_class);
 			break;
@@ -739,7 +739,7 @@ static void usb_drv_task_main(beken_thread_arg_t param_data)
 #if CONFIG_UVC_UAC_DEMO
 					bk_usb_uvc_uac_free_enumerate_resources();
 #endif
-#if CONFIG_USB_CDC_ACM_DEMO
+#if CONFIG_USB_CDC_MODEM
 					bk_usb_cdc_exit();
 #endif
 					bk_usb_phy_register_refresh();
@@ -881,11 +881,15 @@ static void usb_drv_task_main(beken_thread_arg_t param_data)
 #if CONFIG_UVC_UAC_DEMO
 					if(bk_usb_get_device_connect_status()) {
 
-					#if CONFIG_USB_CDC_ACM_DEMO
-						bk_usb_cdc_free_enumerate_resources();
-					#endif
+				//	#if CONFIG_USB_CDC_MODEM
+				//		bk_usb_cdc_free_enumerate_resources();
+				//	#endif
 						bk_usb_uvc_uac_free_enumerate_resources();
 					}
+#endif
+
+#if CONFIG_USB_CDC_MODEM
+					bk_usb_cdc_free_enumerate_resources();
 #endif
 
 #if CONFIG_USB_HOST

@@ -17,7 +17,7 @@
 #include <components/log.h>
 #include <components/usb.h>
 #include <components/usb_types.h>
-#include "bk_usb_cdc_demo.h"
+#include "bk_usb_cdc_modem.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,14 +35,18 @@ typedef struct {
 }acm_msg_t;
 
 typedef enum {
+	ACM_OPEN_IND,
 	ACM_START_IND,
 	ACM_BULKIN_IND,
 	ACM_BULKOUT_IND,
 	ACM_UPLOAD_IND,
-	ACM_UPDATE_STATE_IND,
 	ACM_EXIT_IND,
-	ACM_STOP_IND,
-
+	ACM_CLOSE_IND,
+	ACM_CONNECT_IND,
+	ACM_DISCONNECT_IND,
+	ACM_UPLOAD_TIMER_IND,
+	ACM_BULKOUT_DONE_IND,
+	ACM_UPLOAD_DELAY_IND,
 	ACM_UNKNOW,
 }acm_msg_type_t;
 
@@ -54,7 +58,7 @@ void bk_usb_cdc_exit(void);
 
 
 
-void bk_usb_cdc_open(IPC_CDC_DATA_t * p_cdc);
+void bk_usb_cdc_open(void);
 void bk_usb_cdc_close(void);
 
 void bk_cdc_acm_bulkout(IPC_CDC_DATA_t * p_cdc_data);
