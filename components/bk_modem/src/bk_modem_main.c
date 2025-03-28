@@ -84,7 +84,7 @@ static void bk_modem_thread_main(void *args)
         }
     }
 
-    rtos_delete_thread(&bk_modem_queue);
+    rtos_delete_thread(&bk_modem_thread);
 }
 
 void bk_modem_del_resource(void)
