@@ -80,4 +80,5 @@ extern enum bk_modem_state_e bk_modem_get_state(void);
 extern int bk_modem_send_msg(int type, uint32_t arg, uint32_t len, void *param);
 extern void bk_modem_power_on_modem(void);
 extern void bk_modem_power_off_modem(void);
+extern void bk_modem_del_resource(void);
 #endif

@@ -105,6 +105,7 @@ void bk_modem_dte_handle_modem_check(void)
 
     BK_MODEM_LOGI("%s: modem check fail %d\r\n", __func__, temp_flag);
     rtos_delay_milliseconds(500);
+    bk_modem_set_state(MODEM_CHECK);
     bk_modem_send_msg(MSG_MODEM_CHECK, 0,0,0);
 }
 
@@ -217,7 +218,7 @@ void bk_modem_dte_handle_ppp_stop(BUS_MSG_T *msg)
     uint32_t temp_flag = 0xff;
     enum bk_modem_state_e old_state = bk_modem_get_state();
 
-    if (bk_modem_get_state() != PPP_STOP)
+    if ((bk_modem_get_state() != PPP_STOP) || !bk_modem_env.is_ppp_started)
     {
         temp_flag = 0;
         goto fail;
@@ -233,18 +234,18 @@ void bk_modem_dte_handle_ppp_stop(BUS_MSG_T *msg)
             if (!bk_modem_dce_enter_cmd_mode())
             {
                 temp_flag = 1;
-                goto fail;
+                //goto fail;
             }
             if (!bk_modem_dce_stop_ppp())
             {
                 temp_flag = 2;
-                goto fail;
+                //goto fail;
             }
             
             if (bk_modem_netif_stop_ppp() != BK_OK)
             {
                 temp_flag = 3;
-                goto fail;
+                //goto fail;
             }  
 
             bk_modem_netif_destroy_ppp();
@@ -252,6 +253,7 @@ void bk_modem_dte_handle_ppp_stop(BUS_MSG_T *msg)
             bk_modem_env.bk_modem_ppp_mode = PPP_INIT_MODE;
             if (stop_reason == ACTIVE_STOP)
             {
+                bk_modem_del_resource();
                 bk_modem_set_state(WAIT_MODEM_CONN);
             }
             else
@@ -266,7 +268,7 @@ void bk_modem_dte_handle_ppp_stop(BUS_MSG_T *msg)
         if (bk_modem_netif_stop_ppp() != BK_OK)
         {
             temp_flag = 5;
-            goto fail;
+            //goto fail;
         }  
 
         bk_modem_netif_destroy_ppp();

@@ -87,10 +87,8 @@ static void bk_modem_thread_main(void *args)
     rtos_delete_thread(&bk_modem_queue);
 }
 
-void bk_modem_deinit(void)
+void bk_modem_del_resource(void)
 {
-    bk_modem_set_state(WAIT_MODEM_CONN);
-
     if (bk_modem_queue)
     {
         rtos_deinit_queue(&bk_modem_queue);
@@ -105,7 +103,20 @@ void bk_modem_deinit(void)
 
     bk_modem_at_dinit();
     bk_modem_usbh_close();
-    bk_modem_power_off_modem();
+    bk_modem_power_off_modem();    
+}
+
+void bk_modem_deinit(void)
+{
+    bk_modem_set_state(PPP_STOP);
+
+    BUS_MSG_T msg;
+    msg.type = MSG_PPP_STOP;
+    msg.arg = ACTIVE_STOP;
+    msg.len = 0;
+    msg.sema = NULL;
+    msg.param = NULL;
+    bk_modem_dte_handle_ppp_stop(&msg);
 }
 
 bk_err_t bk_modem_init(void)
