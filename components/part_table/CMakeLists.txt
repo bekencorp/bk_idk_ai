@@ -133,6 +133,7 @@ list(APPEND bk7258xx_supported_projects
 	"agora_wenwen_ai"
 	"beken_genie"
 	"beken_genie_ab"
+	"soundhub"
     "ai_dashboard"
     "ai_dialog_free"
 	"phy/cert_test"

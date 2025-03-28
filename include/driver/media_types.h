@@ -475,6 +475,14 @@ typedef struct
     uint32_t *out_len_ptr;
 } bt_audio_encode_req_t;
 
+typedef struct
+{
+    uint8_t *data;
+    uint32_t data_len;
+    uint32_t sampl_rate;
+    uint8_t channel_num;
+} bt_audio_write_req_t;
+
 
 /**
  * @brief define struct for debug
