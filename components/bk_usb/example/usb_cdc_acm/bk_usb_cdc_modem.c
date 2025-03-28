@@ -13,7 +13,7 @@
 #include <driver/pwr_clk.h>
 #include "amp_lock_api.h"
 
-#define TAG "cdc_demo"
+#define TAG "cdc_modem"
 
 #define LOGI(...) BK_LOGW(TAG, ##__VA_ARGS__)
 #define LOGW(...) BK_LOGW(TAG, ##__VA_ARGS__)

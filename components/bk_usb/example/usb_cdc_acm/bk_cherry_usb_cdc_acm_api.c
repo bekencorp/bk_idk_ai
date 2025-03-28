@@ -687,14 +687,14 @@ void bk_cdc_acm_main(void)
 						USB_CDC_LOGD("ACM_EXIT_IND\n");
 					//	bk_usb_device_set_using_status(0, USB_CDC_DEVICE);
 					//	bk_usb_cdc_update_state_notify(CDC_STATUS_DISCON);
-						goto exit;
+					//	goto exit;
 					}
 					break;
 
 				case ACM_CLOSE_IND:
 					{
 						bk_usb_cdc_close_ind();
-						goto exit;
+					//	goto exit;
 					}
 					break;
 				default:
@@ -702,7 +702,7 @@ void bk_cdc_acm_main(void)
 			}
 		}
 	}
-
+#if 0
 exit:
 	for (uint32_t i = 0; i < 2; i++)
 	{
@@ -718,6 +718,7 @@ exit:
 //	acm_msg_queue = NULL;
 //	acm_class_task = NULL;
 //	rtos_delete_thread(NULL);
+#endif
 }
 
 
