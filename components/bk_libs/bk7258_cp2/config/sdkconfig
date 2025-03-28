@@ -100,6 +100,11 @@ CONFIG_NO_HOSTED=y
 #
 
 #
+# Modules::Bk_coex
+#
+# end of Modules::Bk_coex
+
+#
 # Shared Configs with Public components
 #
 

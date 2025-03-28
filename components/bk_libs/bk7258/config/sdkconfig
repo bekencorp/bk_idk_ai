@@ -104,6 +104,13 @@ CONFIG_BLUETOOTH=y
 #
 
 #
+# Modules::Bk_coex
+#
+CONFIG_BK_COEX=y
+# CONFIG_BK_COEX_SIMU_BT is not set
+# end of Modules::Bk_coex
+
+#
 # Shared Configs with Public components
 #
 
