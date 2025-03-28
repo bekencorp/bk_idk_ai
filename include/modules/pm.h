@@ -311,11 +311,12 @@ typedef enum
 	PM_DEV_ID_OTP_AHB,  // 36
 	PM_DEV_ID_OTP_APB,  // 37
 	PM_DEV_ID_SHANHAI,  // 38
-	PM_DEV_ID_KEY,  // 39
+	PM_DEV_ID_KEY,      // 39
+	PM_DEV_ID_CPU1,     // 40
 
-	PM_DEV_ID_DEFAULT,  // 40  it is used by pm module set default cpu frequency
+	PM_DEV_ID_DEFAULT,  // 41  it is used by pm module set default cpu frequency
 
-	PM_DEV_ID_MAX
+	PM_DEV_ID_MAX       //attention:max 63
 }pm_dev_id_e;
 typedef enum
 {
