@@ -119,6 +119,9 @@ int wifi_init(const wifi_init_config_t *config)
 
 	/* start wpa_supplicant/hostapd eloop thread */
 	wpas_thread_start(); //TODO Choose a better name
+	
+	extern void coex_ictw_report_wifi_open_status(bool is_wifi_open);
+	coex_ictw_report_wifi_open_status(true);
 
 	return BK_OK;
 }
