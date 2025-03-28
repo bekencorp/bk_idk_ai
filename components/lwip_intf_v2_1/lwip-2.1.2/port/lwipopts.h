@@ -116,7 +116,7 @@
 #define UDP_DEBUG                       LWIP_DBG_OFF
 #define TCPIP_DEBUG                     LWIP_DBG_OFF
 #ifdef CONFIG_LWIP_PPP_SUPPORT
-#define PPP_DEBUG                       LWIP_DBG_ON
+#define PPP_DEBUG                       LWIP_DBG_OFF
 #else
 #define PPP_DEBUG                       LWIP_DBG_OFF
 #endif
