@@ -228,7 +228,11 @@ struct dynamic_log_node_t
 	u8 ptr[0];
 };
 
+#if CONFIG_SYS_CPU0 && CONFIG_PSRAM_AS_SYS_MEMORY
+#define LOG_MALLOC psram_malloc
+#else
 #define LOG_MALLOC os_malloc
+#endif
 #define LOG_FREE os_free
 
 static dynamic_log_node s_dynamic_header = {NULL};
