@@ -434,5 +434,10 @@ extern int mp_do_startup(int heap_len);
 #if (CONFIG_PSRAM)
 	bk_psram_id_auto_detect();
 #endif
+
+#if (CONFIG_USB_CDC)
+	extern bk_err_t bk_cdc_acm_startup(void);
+	bk_cdc_acm_startup();
+#endif
 	return 0;
 }

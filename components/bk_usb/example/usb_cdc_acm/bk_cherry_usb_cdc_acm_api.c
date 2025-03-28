@@ -466,12 +466,12 @@ void bk_usb_cdc_param_init(IPC_CDC_DATA_t *p_cdc_data)
 	if (!p_cdc_data)
 		USB_CDC_LOGE("Invalid Parameter!\n");
 
-	if (g_acm_device[0]) {
-		acm_device = g_acm_device[0];
-	} else {
-		USB_CDC_LOGE("NULL acm device!\r\n");
-		return;
-	}
+//	if (g_acm_device[0]) {
+//		acm_device = g_acm_device[0];
+//	} else {
+//		USB_CDC_LOGE("NULL acm device!\r\n");
+//		return;
+//	}
 	g_ipc_cdc_data[p_cdc_data->idx] = p_cdc_data;
 
 //	if (!g_rx_buf_temp)
@@ -710,7 +710,7 @@ exit:
 			g_ipc_cdc_data[i] = NULL;
 	}
 	acm_cnt = 0;
-
+	acm_device = NULL;
 //	rtos_deinit_oneshot_timer(&acm_debug_onetimer);
 //
 //	/* free que and delete task */
@@ -854,6 +854,14 @@ void bk_usb_cdc_connect_notify(struct usbh_hubport *hport, uint8_t intf, uint32_
 {
 	USB_CDC_LOGD("[+]%s\n", __func__);
 	bk_usb_get_cdc_instance(hport, intf, USB_DEVICE_CLASS_CDC);
+//	if (g_acm_device[0] && !acm_device)
+	{
+		acm_device = g_acm_device[0];
+	} 
+//	else {
+//		USB_CDC_LOGE("NULL acm device!\r\n");
+//		return;
+//	}
 	acm_send_msg(ACM_CONNECT_IND, 0);
 }
 
