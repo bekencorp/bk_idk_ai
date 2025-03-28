@@ -1173,12 +1173,17 @@ int usbd_msc_sector_write(uint32_t sector, uint8_t *buffer, uint32_t length)
 #endif
 }
 
-void msc_storage_init(void)
+int msc_storage_init(void)
 {
+    int ret = BK_OK;
+
 #if CONFIG_SDIO_HOST
     bk_pm_module_vote_ctrl_external_ldo(GPIO_CTRL_LDO_MODULE_SDIO, SDCARD_LDO_CTRL_GPIO, GPIO_OUTPUT_STATE_HIGH);
     extern bk_err_t bk_sd_card_init(void);
-    bk_sd_card_init();
+    ret = bk_sd_card_init(); 
+    if(ret != BK_OK) {
+        return ret;
+    }
 #endif
 
     if(!s_msc_storage_init)
@@ -1186,34 +1191,31 @@ void msc_storage_init(void)
         usbd_desc_register(msc_storage_descriptor);
         usbd_bos_desc_register(&msc_storage_bos_descriptor);
         usbd_add_interface(usbd_msc_init_intf(&gs_intf0, MSC_OUT_EP, MSC_IN_EP));
-        usbd_initialize();
+        ret = usbd_initialize();
+        if(ret != BK_OK) {
+            return ret;
+        }
         s_msc_storage_init = 1;
     }
-    else
-    {
-        USB_LOG_INFO(" errr, %s ,line:%d, inited\r\n",__FILE__,__LINE__);
-        return ;
-    }
+
+    return ret;
 
 }
-void msc_storage_deinit(void)
+int msc_storage_deinit(void)
 {
+    int ret = BK_OK;
+
     if(s_msc_storage_init)
-    {     
-        usbd_deinitialize();
+    {
+        ret = usbd_deinitialize();
+        if(ret != BK_OK) {
+            return ret;
+        }
         usbd_set_status(0);
         s_msc_storage_init = 0;
     }
-    else
-    {
-        USB_LOG_INFO(" errr, %s ,line:%d, uninited\r\n",__FILE__,__LINE__);
-        return ;
-    }
-#if CONFIG_SDIO_HOST
-    extern bk_err_t bk_sd_card_deinit(void);
-    bk_sd_card_deinit();
-    bk_pm_module_vote_ctrl_external_ldo(GPIO_CTRL_LDO_MODULE_SDIO, SDCARD_LDO_CTRL_GPIO, GPIO_OUTPUT_STATE_LOW);
-#endif
+
+    return ret;
 }
 
 

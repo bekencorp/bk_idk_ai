@@ -1310,11 +1310,11 @@ void cli_usb_base_ops(char *pcWriteBuffer, int xWriteBufferLen, int argc, char *
 void cli_usbd_msc_ops(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **argv)
 {
 	if (os_strcmp(argv[1], "msc_init") == 0) {
-		extern void msc_storage_init(void);
+		extern int msc_storage_init(void);
 		msc_storage_init();
 		CLI_LOGI("%s ,line:%d,msc_storage_init\r\n",__FILE__,__LINE__);
 	} else if (os_strcmp(argv[1], "msc_deinit") == 0) {
-		extern void msc_storage_deinit(void);
+		extern int msc_storage_deinit(void);
 		msc_storage_deinit();
 		CLI_LOGI("%s ,line:%d,msc_storage_deinit\r\n",__FILE__,__LINE__);
 	} else if (os_strcmp(argv[1], "msc_c_vote") == 0) {
@@ -1334,6 +1334,40 @@ void cli_usbd_msc_ops(char *pcWriteBuffer, int xWriteBufferLen, int argc, char *
 		cli_usb_help();
 		return;
 	}
+
+}
+#endif
+
+#if (CONFIG_USB_DEVICE && CONFIG_USB_HOST)
+
+void cli_usbd_otg_manual_ops(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **argv)
+{
+	if (argc < 2) {
+		cli_usb_help();
+		return;
+	}
+
+	E_USB_MODE close_mod = USB_DEVICE_MODE;
+	E_USB_MODE open_mod = USB_HOST_MODE;
+
+	if (os_strcmp(argv[1], "close_d") == 0) {
+		close_mod = USB_DEVICE_MODE;
+	}
+
+	if (os_strcmp(argv[1], "close_h") == 0) {
+		close_mod = USB_HOST_MODE;
+	}
+
+	if (os_strcmp(argv[2], "open_d") == 0) {
+		open_mod = USB_DEVICE_MODE;
+	}
+
+	if (os_strcmp(argv[2], "close_h") == 0) {
+		open_mod = USB_HOST_MODE;
+	}
+
+	extern bk_err_t bk_usb_otg_manual_convers_mod(E_USB_MODE close_mod, E_USB_MODE open_mod);
+	bk_usb_otg_manual_convers_mod(close_mod, open_mod);
 
 }
 #endif
@@ -1375,6 +1409,10 @@ const struct cli_command usb_host_clis[] = {
 #if CONFIG_USBD_MSC
 	{"usbd", "usbd msc_init|msc_deinit", cli_usbd_msc_ops},
 #endif //CONFIG_USBD_MSC
+
+#if (CONFIG_USB_DEVICE && CONFIG_USB_HOST)
+	{"usb_otg", "usb_otg [close_d|close_h] [open_d|open_h]", cli_usbd_otg_manual_ops},
+#endif //(CONFIG_USB_DEVICE && CONFIG_USB_HOST)
 
 	{"usb", "usb driver_init|driver_deinit|power[gpio_id ops]|open_host|open_dev|close", cli_usb_base_ops},
 };

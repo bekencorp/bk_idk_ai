@@ -114,6 +114,12 @@ if (CONFIG_CHERRY_USB)
     endif() # CONFIG_USB_HOST
 endif() # CONFIG_CHERRY_USB
 
+if (CONFIG_USB_DEVICE AND CONFIG_USB_HOST)
+	list(APPEND srcs
+		bk_usb_otg_manual_conversion.c
+	)
+endif() # CONFIG_USB_DEVICE && CONFIG_USB_HOST
+
 if (CONFIG_MENTOR_USB)
 	list(APPEND incs
 		.
