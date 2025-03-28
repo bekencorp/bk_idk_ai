@@ -135,6 +135,10 @@ struct iface {
 	ip_addr_t nmask;
 	ip_addr_t gw;
 	const char *name;
+#if CONFIG_LWIP_PPP_SUPPORT
+	//for ppp
+	void *arg;
+#endif
 };
 FUNCPTR sta_connected_func;
 
@@ -148,6 +152,9 @@ static struct iface g_br = {{0}, .name = "br"};
 #endif
 #if CONFIG_NET_PAN
 static struct iface g_pan = {{0}, .name = "pan"};
+#endif
+#if CONFIG_LWIP_PPP_SUPPORT
+static struct iface g_ppp = {{0}, .name = "ppp"};
 #endif
 
 net_sta_ipup_cb_fn sta_ipup_cb = NULL;
@@ -502,6 +509,23 @@ void *net_get_br_handle(void)
 void *net_get_pan_handle(void)
 {
 	return &g_pan.netif;
+}
+#endif
+
+#if CONFIG_LWIP_PPP_SUPPORT
+void *net_get_ppp_netif_handle(void)
+{
+	return &g_ppp.netif;
+}
+
+void *net_get_ppp_pcb_handle(void)
+{
+	return g_ppp.arg;
+}
+
+void net_set_ppp_pcb_handle(void *ppp)
+{
+	g_ppp.arg = ppp;
 }
 #endif
 

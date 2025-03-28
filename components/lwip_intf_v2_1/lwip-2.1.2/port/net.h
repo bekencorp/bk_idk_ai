@@ -48,6 +48,11 @@ extern void pan_netif_notify_got_ip(void);
 extern void pan_ip_down(void);
 int net_pan_remove_netif(void);
 #endif
+#if CONFIG_LWIP_PPP_SUPPORT
+void *net_get_ppp_netif_handle(void);
+void *net_get_ppp_pcb_handle(void);
+void net_set_ppp_pcb_handle(void *ppp);  
+#endif
 #if LWIP_NETIF_LOOPBACK
 void bk_netif_trigger_loopnetif_msg(void);
 #endif

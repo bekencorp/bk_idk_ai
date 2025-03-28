@@ -61,6 +61,10 @@ menu "Lwip_intf_v2_1"
 		bool "Enable BT Personal Area Networking"
 		default n
 
+	config LWIP_PPP_SUPPORT
+                bool "Enable Ppp Protocol"
+                default n
+
 	menu "Modify Lwip Config"
 		depends on LWIP
 
