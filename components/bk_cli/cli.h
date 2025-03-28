@@ -181,6 +181,9 @@ int cli_jpeg_sw_enc_init(void);
 int cli_gsensor_init(void);
 
 int cli_battery_init(void);
+#if (CONFIG_BK_MODEM)
+int cli_modem_init(void);
+#endif
 
 extern int hexstr2bin_cli(const char *hex, u8 *buf, size_t len);
 #if (CONFIG_BUTTON || CONFIG_ADC_KEY)

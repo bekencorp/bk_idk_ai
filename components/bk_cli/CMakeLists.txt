@@ -420,7 +420,11 @@ if (CONFIG_SCR)
 	list(APPEND srcs cli_scr.c)
 endif()
 
-set(PRIV_REQUIRES_LIST bk_common mbedtls bk_netif bk_ps fatfs bk_vfs bk_init bk_libs at bk_wifi compal ota cmsis jrtplib flashdb bk_bluetooth bk_phy tfm)
+if (CONFIG_BK_MODEM)
+	list(APPEND srcs cli_modem.c)
+endif()
+
+set(PRIV_REQUIRES_LIST bk_modem bk_common mbedtls bk_netif bk_ps fatfs bk_vfs bk_init bk_libs at bk_wifi compal ota cmsis jrtplib flashdb bk_bluetooth bk_phy tfm)
 
 armino_component_register(SRCS "${srcs}"
 	INCLUDE_DIRS "${incs}"

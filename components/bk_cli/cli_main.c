@@ -1857,6 +1857,10 @@ int bk_cli_init(void)
 	cli_psa_customization_init();
 #endif
 
+#if (CONFIG_BK_MODEM)
+	cli_modem_init();
+#endif
+
 #endif //CONFIG_DEBUG_FIRMWARE
 
 /*-----open the cli comand both at release and debug vertion begin-----*/
