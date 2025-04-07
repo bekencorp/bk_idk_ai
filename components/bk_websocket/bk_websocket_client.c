@@ -108,170 +108,6 @@ static bk_err_t ws_disconnect(transport client);
 static int ws_connect(transport client, const char *host, int port, int timeout_ms);
 static bk_err_t websocket_client_destory_config(transport client);
 
-#if CONFIG_WEBSOCKET_RB
-#define RING_BUFFER_DELAY 20
-#define AUDIO_PACKET_SIZE 160+16
-#define BUFFER_SIZE 528000//(PACKET_SIZE * 3000)
-
-data_buffer_t *data_buffer_init(void) {
-	data_buffer_t *ab = (data_buffer_t *)psram_malloc(sizeof(data_buffer_t));
-	if (ab == NULL)
-	{
-		BK_LOGE(TAG, "malloc ab fail\n");
-		return NULL;
-	}
-	memset(ab, 0, sizeof(data_buffer_t));
-
-	ab->buffer = psram_malloc(BUFFER_SIZE);
-	if (ab->buffer == NULL)
-	{
-		BK_LOGE(TAG, "malloc data buffer fail\n");
-		return NULL;
-	}
-	memset(ab->buffer, 0, BUFFER_SIZE);
-	ab->head = 0;
-	ab->tail = 0;
-	int ret = rtos_init_semaphore(&ab->mutex, 1);
-	if (ret != BK_OK) {
-		BK_LOGE(TAG, "Failed to create sema!\n");
-	}
-	rtos_set_semaphore(&ab->mutex);
-	return ab;
-}
-
-void data_buffer_deinit(data_buffer_t *ab) {
-	if (ab == NULL)
-	{
-		BK_LOGE(TAG, "buffer deinit already\n");
-		return;
-	}
-	memset(ab->buffer, 0, BUFFER_SIZE);
-	if (ab->buffer)
-	{
-		psram_free(ab->buffer);
-	}
-	ab->head = 0;
-	ab->tail = 0;
-	int ret = rtos_deinit_semaphore(&ab->mutex);
-	if (ret != BK_OK) {
-		BK_LOGE(TAG, "Failed to deinit sema!\n");
-	}
-	memset(ab, 0, sizeof(data_buffer_t));
-	if(ab) {
-		psram_free(ab);
-	}
-}
-
-bool data_buffer_write(data_buffer_t *ab, const uint8_t *data, size_t len) {
-	if (len > BUFFER_SIZE) {
-		return false;
-	}
-
-	rtos_get_semaphore(&ab->mutex, portMAX_DELAY);
-
-	size_t free_space = (ab->tail > ab->head) ? (ab->tail - ab->head) : (BUFFER_SIZE - ab->head + ab->tail);
-	if (free_space < len) {
-		rtos_set_semaphore(&ab->mutex);
-		return false;
-	}
-
-	if (ab->head + len <= BUFFER_SIZE) {
-		memcpy(&ab->buffer[ab->head], data, len);
-	} else {
-		size_t first_part = BUFFER_SIZE - ab->head;
-		memcpy(&ab->buffer[ab->head], data, first_part);
-		memcpy(ab->buffer, data + first_part, len - first_part);
-	}
-
-	ab->head = (ab->head + len) % BUFFER_SIZE;
-
-	rtos_set_semaphore(&ab->mutex);
-	return true;
-}
-
-bool data_buffer_read(data_buffer_t *ab, uint8_t *data, size_t len) {
-	if (len > BUFFER_SIZE) {
-		return false;
-	}
-
-	rtos_get_semaphore(&ab->mutex, portMAX_DELAY);
-
-	size_t available_data = (ab->head >= ab->tail) ? (ab->head - ab->tail) : (BUFFER_SIZE - ab->tail + ab->head);
-	if (available_data < len) {
-		rtos_set_semaphore(&ab->mutex);
-		return false;
-	}
-
-	if (ab->tail + len <= BUFFER_SIZE) {
-		memcpy(data, &ab->buffer[ab->tail], len);
-	} else {
-		size_t first_part = BUFFER_SIZE - ab->tail;
-		memcpy(data, &ab->buffer[ab->tail], first_part);
-		memcpy(data + first_part, ab->buffer, len - first_part);
-	}
-
-	ab->tail = (ab->tail + len) % BUFFER_SIZE;
-
-	rtos_set_semaphore(&ab->mutex);
-	return true;
-}
-
-void data_check(void *param)
-{
-	transport client = (transport) param;
-	if(client == NULL) {
-		BK_LOGE(TAG, "client null...\n");
-		return;
-	}
-	uint8_t *packet = NULL;
-	packet = os_zalloc(AUDIO_PACKET_SIZE);
-	if (packet != NULL)
-	{
-		if (client->ab_buffer && data_buffer_read(client->ab_buffer, packet, AUDIO_PACKET_SIZE) && client) {
-			bk_websocket_client_dispatch_event(client, WEBSOCKET_EVENT_DATA, (char *)packet, AUDIO_PACKET_SIZE, WS_TRANSPORT_OPCODES_BINARY);
-			BK_LOGD(TAG, "data coming...\n");
-		} else {
-			BK_LOGD(TAG, "Buffer empty, waiting for data...\n");
-		}
-	}
-	os_free(packet);
-}
-
-void data_start_timeout_check(uint32_t timeout, void *param)
-{
-	bk_err_t err = kNoErr;
-	transport client = (transport) param;
-	if(client == NULL) {
-		BK_LOGE(TAG, "client null...\n");
-		return;
-	}
-	BK_LOGI(TAG,"ring_data status timer start!!!\n");
-	err = rtos_init_timer(&client->data_read_tmr, timeout, (timer_handler_t)data_check, param);
-	BK_ASSERT(kNoErr == err);
-	err = rtos_start_timer(&client->data_read_tmr);
-	BK_ASSERT(kNoErr == err);
-	BK_LOGI(TAG,"ring_data status timer:%d\n", timeout);
-
-	return;
-}
-
-void data_stop_timeout_check(beken_timer_t *data_read_tmr)
-{
-	if(!data_read_tmr->handle) {
-		BK_LOGE(TAG, "data_read_tmr deinit already...\n");
-		return;
-	}
-
-	if (rtos_is_timer_init(data_read_tmr)) {
-		if (rtos_is_timer_running(data_read_tmr))
-		{
-			rtos_stop_timer(data_read_tmr);
-		}
-	rtos_deinit_timer(data_read_tmr);
-	}
-}
-#endif
-
 static char *trimwhitespace(const char *str)
 {
 	char *end;
@@ -1082,17 +918,7 @@ static int ws_client_recv(transport client)
 			BK_LOGE(TAG, "ws read timeouts\r\n");
 			return BK_OK;
 		}
-#if CONFIG_WEBSOCKET_RB
-		if (client->last_opcode == WS_TRANSPORT_OPCODES_BINARY) {
-		    if (client->ab_buffer && (!data_buffer_write(client->ab_buffer, (uint8 *)client->rx_buffer, AUDIO_PACKET_SIZE))) {
-		        BK_LOGE(TAG, "Buffer full, dropping packet!\n");
-		    }
-		}
-		else if (client->last_opcode == WS_TRANSPORT_OPCODES_TEXT)
-#endif
-		{
-			bk_websocket_client_dispatch_event(client, WEBSOCKET_EVENT_DATA, client->rx_buffer, rlen, WS_TRANSPORT_OPCODES_TEXT);
-		}
+		bk_websocket_client_dispatch_event(client, WEBSOCKET_EVENT_DATA, client->rx_buffer, rlen, client->last_opcode);
 		client->payload_offset += rlen;
 	} while (client->payload_offset < client->payload_len);
 	//BK_LOGE(TAG, "%s, len:%d\r\n", __func__, client->payload_len);
@@ -1431,11 +1257,7 @@ bk_err_t websocket_client_destroy(transport client)
 				return BK_FAIL;
 			}
 		}
-#if CONFIG_WEBSOCKET_RB
-		data_stop_timeout_check(&client->data_read_tmr);
-		data_buffer_deinit(client->ab_buffer);
-		client->ab_buffer = NULL;
-#endif
+
 		if(websocket_client_stop(client)) {
 			BK_LOGE(TAG, "%s, client stop fail\r\n", __func__);
 			return BK_FAIL;
@@ -1660,15 +1482,7 @@ int websocket_client_start(transport client)
 		BK_LOGE(TAG, "create websocket_client_task fail\n");
 		return BK_FAIL;
 	}
-#if CONFIG_WEBSOCKET_RB
-	client->ab_buffer = data_buffer_init();
-	if (client->ab_buffer == NULL)
-	{
-		BK_LOGE(TAG, "%s, %d, data_buffer_init fail\n", __func__, __LINE__);
-		return BK_FAIL;
-	}
-	data_start_timeout_check(RING_BUFFER_DELAY, (void *)client);
-#endif
+
 	return ret;
 }
 

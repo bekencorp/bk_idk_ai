@@ -97,8 +97,6 @@ typedef struct {
 	transport_bk_tls_t			*bk_ssl;
 	bk_event_handler_t			ws_event_handler;
 	beken_mutex_t 				mutex;
-	data_buffer_t 				*ab_buffer;
-	beken_timer_t 				data_read_tmr;
 }websocket_transport_info_t;
 
 typedef struct {
