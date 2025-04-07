@@ -324,7 +324,10 @@ int32_t bk_cdc_acm_io_write_t(IPC_CDC_DATA_t *p_cdc_data)
 {
 	USB_CDC_LOGD("[+]%s\n", __func__);
 	if (p_cdc_data->idx == 0) {
-		bk_cdc_acm_io_write(p_cdc_data);
+		int32_t ret = 0;
+		ret = bk_cdc_acm_io_write(p_cdc_data);
+		if (ret < 0)
+			USB_CDC_LOGE("[-]%s, fail, ret:%d\r\n", __func__, ret);
 	}
 	else {
 		USB_CDC_LOGE("[-]%s, Error param\n");
@@ -466,12 +469,6 @@ void bk_usb_cdc_param_init(IPC_CDC_DATA_t *p_cdc_data)
 	if (!p_cdc_data)
 		USB_CDC_LOGE("Invalid Parameter!\n");
 
-//	if (g_acm_device[0]) {
-//		acm_device = g_acm_device[0];
-//	} else {
-//		USB_CDC_LOGE("NULL acm device!\r\n");
-//		return;
-//	}
 	g_ipc_cdc_data[p_cdc_data->idx] = p_cdc_data;
 
 //	if (!g_rx_buf_temp)
@@ -777,7 +774,8 @@ error:
 
 void bk_usb_cdc_free_enumerate_resources(void)
 {
-	for (uint32_t i = 0; i < acm_cnt; i++)
+//	for (uint32_t i = 0; i < acm_cnt; i++)
+	for (uint32_t i = 0; i < 2; i++)
 	{
 		if (g_acm_device[i])
 		{
@@ -788,7 +786,7 @@ void bk_usb_cdc_free_enumerate_resources(void)
 			g_acm_device[i] = NULL;
 		}
 	}
-	acm_cnt = 0;
+//	acm_cnt = 0;
 	acm_send_msg(ACM_EXIT_IND, 0);
 }
 
@@ -834,6 +832,11 @@ void bk_usb_get_cdc_instance(struct usbh_hubport *hport, uint8_t intf, uint32_t 
 		USB_CDC_LOGE("don't find /dev/ttyACM%d\r\n", usb_device->minor);
 	}
 
+	if (g_acm_device[usb_device->minor])
+	{
+		g_acm_device[usb_device->minor] = NULL;
+	}
+
 	if (g_acm_device[usb_device->minor] == NULL)
 	{
 		g_acm_device[usb_device->minor] = usb_device;
@@ -846,7 +849,7 @@ void bk_usb_get_cdc_instance(struct usbh_hubport *hport, uint8_t intf, uint32_t 
 //			bk_usbh_cdc_acm_register_in_transfer_callback(g_acm_device[usb_device->minor], bk_cdc_acm_modem_bulkin_callback, NULL);
 //			bk_usbh_cdc_acm_register_out_transfer_callback(g_acm_device[usb_device->minor], bk_cdc_acm_modem_bulkout_callback, NULL);
 //		}
-		acm_cnt++;
+	//	acm_cnt++;
 	}
 
 }
@@ -854,6 +857,7 @@ void bk_usb_get_cdc_instance(struct usbh_hubport *hport, uint8_t intf, uint32_t 
 void bk_usb_cdc_connect_notify(struct usbh_hubport *hport, uint8_t intf, uint32_t class)
 {
 	USB_CDC_LOGD("[+]%s\n", __func__);
+	acm_cnt++;
 	bk_usb_get_cdc_instance(hport, intf, USB_DEVICE_CLASS_CDC);
 //	if (g_acm_device[0] && !acm_device)
 	{
@@ -869,6 +873,7 @@ void bk_usb_cdc_connect_notify(struct usbh_hubport *hport, uint8_t intf, uint32_
 void bk_usb_cdc_disconnect_notify(struct usbh_hubport *hport, uint8_t intf, uint32_t class)
 {
 	USB_CDC_LOGD("[+]%s\n", __func__);
+	acm_cnt--;
 	for(uint32_t i = 0; i < USB_CDC_DEV_MAX_NUM; i++)
 	{
 		if (g_multi_acm.rx_buffer[i])

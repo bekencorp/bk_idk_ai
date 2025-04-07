@@ -28,6 +28,7 @@ static beken_thread_t cdc_demo_task = NULL;
 static uint8_t __maybe_unused g_modem_mode = 0;
 static uint8_t g_cdc_tx_valid = 0;
 static uint8_t g_cdc_rx_valid = 0;
+static uint8_t g_cdc_close = 0;
 static uint8_t *g_tx_buf_temp = NULL;
 static Multi_ACM_DEVICE_EX_T g_multi_acm_ex = {0};
 
@@ -99,15 +100,26 @@ static int32_t bk_usb_cdc_get_txvalid(uint32_t len)
 }
 
 
-void bk_usb_cdc_open(void)
+static void bk_usb_cdc_open_ind(void)
 {
 	ipc_cdc_send_cmd(IPC_CPU0_OPEN_USB_CDC, NULL, 0, NULL, 0);
 }
 
-void bk_usb_cdc_close(void)
+static void bk_usb_cdc_close_ind(void)
 {
 	ipc_cdc_send_cmd(IPC_CPU0_CLOSE_USB_CDC, NULL, 0, NULL, 0);
 }
+
+void bk_usb_cdc_open(void)
+{
+	cdc_send_msg(CDC_STATUS_OPEN, 0);
+}
+
+void bk_usb_cdc_close(void)
+{
+	cdc_send_msg(CDC_STATUS_CLOSE, 0);
+}
+
 
 void bk_cdc_acm_bulkout(IPC_CDC_DATA_t *ipc_cdc)
 {
@@ -151,11 +163,21 @@ static bk_err_t bk_cdc_acm_init_malloc(void)
 {
 	for(uint32_t i = 0; i < USB_CDC_DEV_MAX_NUM; i++)
 	{
+		if (g_multi_acm_ex.rx_buf[i])
+		{
+			psram_free(g_multi_acm_ex.rx_buf[i]);
+			g_multi_acm_ex.rx_buf[i] = NULL;
+		}
 		g_multi_acm_ex.rx_buf[i] = (uint8_t *)psram_malloc(sizeof(uint8_t) * CDC_EXRX_MAX_SIZE);
 		if (g_multi_acm_ex.rx_buf[i] == NULL)
 		{
 			LOGE("psram malloc error!\r\n");
 			return BK_FAIL;
+		}
+		if (g_multi_acm_ex.tx_buf[i])
+		{
+			psram_free(g_multi_acm_ex.tx_buf[i]);
+			g_multi_acm_ex.tx_buf[i] = NULL;
 		}
 		g_multi_acm_ex.tx_buf[i] = (uint8_t *)psram_malloc(sizeof(uint8_t) * CDC_EXTX_MAX_SIZE);
 		if (g_multi_acm_ex.tx_buf[i] == NULL)
@@ -163,15 +185,33 @@ static bk_err_t bk_cdc_acm_init_malloc(void)
 			LOGE("psram malloc error!\r\n");
 			return BK_FAIL;
 		}
+		g_multi_acm_ex.acm_mode[i] = 0;
+		g_multi_acm_ex.l_rx[i] = 0;
+		g_multi_acm_ex.l_tx[i] = 0;
 	}
-	
+	if (g_tx_buf_temp)
+	{
+		psram_free(g_tx_buf_temp);
+		g_tx_buf_temp = NULL;
+	}
 	g_tx_buf_temp = (uint8_t *)psram_malloc(sizeof(uint8_t) * CDC_EXTX_MAX_SIZE);
 	if (g_tx_buf_temp == NULL)
 	{
 		LOGE("psram malloc error!\r\n");
 		return BK_FAIL;
 	}
+
+	g_cdc_tx_valid = 0;
+	g_cdc_rx_valid = 0;
 	return BK_OK;
+}
+
+static void bk_cdc_acm_deinit_param(void)
+{
+	g_cdc_tx_valid = 0;
+	g_cdc_rx_valid = 0;
+	*((uint8_t *)dbg_cdc_ipc[0].tx_valid) = 0;
+	*((uint8_t *)dbg_cdc_ipc[0].rx_valid) = 0;
 }
 
 static void bk_cdc_acm_init_free(void)
@@ -193,6 +233,7 @@ static void bk_cdc_acm_init_free(void)
 		psram_free(g_tx_buf_temp);
 		g_tx_buf_temp = NULL;
 	}
+//	bk_cdc_acm_deinit_param();
 }
 
 void bk_cdc_acm_init(void)
@@ -257,13 +298,27 @@ static void bk_cdc_demo_task(beken_thread_arg_t arg)
 		{
 			switch (msg.type)
 			{
+			#if (USB_CDC_CP0_IPC)
+				case CDC_STATUS_OPEN:
+					bk_usb_cdc_open_ind();
+					break;
+				case CDC_STATUS_CLOSE:
+					g_cdc_close = 1;
+					bk_usb_cdc_close_ind();
+					break;
+			#endif
 				case CDC_STATUS_CONN:
 					bk_modem_usbh_conn_ind();
 					break;
 				case CDC_STATUS_DISCON:
 					{
-						bk_cdc_acm_init_free();
+						bk_cdc_acm_deinit_param();
 						bk_modem_usbh_disconn_ind();
+						if (g_cdc_close == 1)
+						{
+							bk_cdc_acm_init_free();
+							g_cdc_close = 0;
+						}
 					//	goto exit;
 					}
 					break;
