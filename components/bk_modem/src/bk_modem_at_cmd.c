@@ -369,12 +369,12 @@ bk_err_t bk_modem_at_set_plat_configure(void)
 
 //The command set the network adapter parameter configuration. Set <nat> to enable or disable NAT (Network Address 
 //Translation). When NAT is enable, configure local host IP address by <host_addr> if set or default 
-//address ¡±192.168.10.2¡±. When NAT is disable, configure global IP address allocated by LTE network. Set 
+//address Â¡Â±192.168.10.2Â¡Â±. When NAT is disable, configure global IP address allocated by LTE network. Set 
 //<pppauthselect> to select the PPP authentication parameters. When <pppauthselect> is set to 0, the authentication
 //parameters are pre-defined by AT+CGAUTH. When <pppauthselect> is set to 1, the authentication parameters are 
 //defined in PPP LCP procedure.
-//AT+ECNETCFG=¡±nat¡±,<nat>[,<host_addr>]
-//AT+ECNETCFG=¡±pppauthselect¡±,<pppauthselect>
+//AT+ECNETCFG=Â¡Â±natÂ¡Â±,<nat>[,<host_addr>]
+//AT+ECNETCFG=Â¡Â±pppauthselectÂ¡Â±,<pppauthselect>
 
 //Parameter
 //	<nat> Integer type
@@ -383,8 +383,8 @@ bk_err_t bk_modem_at_set_plat_configure(void)
 //	<host_addr> 	String type
 //		Local host IP address supported IPv4 type only
 //			Note:
-//		a) Supported values: ¡°192.168.a.b¡±, a:0-255, b:2-254
-//		b) Default value: ¡°192.168.10.2¡±
+//		a) Supported values: Â¡Â°192.168.a.bÂ¡Â±, a:0-255, b:2-254
+//		b) Default value: Â¡Â°192.168.10.2Â¡Â±
 //	<pppauthselect> Integer type
 //		0 The PPP authentication parameters are pre-defined by AT+CGAUTH. The default value is 0.
 //		1 The PPP authentication parameters are defined in PPP LCP procedure.
@@ -506,7 +506,7 @@ bk_err_t bk_modem_at_disconnect(void)
 	}
 }
 
-// This command controls the Circuit 109 behavior of UE¡¯s DCD (data carrier detection) line.
+// This command controls the Circuit 109 behavior of UEÂ¡Â¯s DCD (data carrier detection) line.
 //Parameter
 //0		DCD function is always ON; The default value is 0.
 //1		DCD function is ON only in the presence of data carrier;
@@ -546,4 +546,26 @@ bk_err_t bk_modem_at_change_ue_resp_mode(void)
 	}
 }
 
+bk_err_t bk_modem_at_cfun(uint8_t value)
+{
+	char *cmd;
+	if (value == 0)
+		cmd = AT_CFUN_0;
+	else if (value == 1)
+		cmd = AT_CFUN_1;
+	else
+		return BK_FAIL;
 
+	if (BK_OK == bk_modem_at_cmd_send(cmd, 3, 5000))
+	{
+		BK_MODEM_LOGI("%s, rsp:%s\r\n",cmd,g_modem_at_rsp_buf);
+		return BK_OK;
+	}
+	else
+	{
+		BK_MODEM_LOGI("at_cmd_send fail!, %s\r\n",cmd);
+		return BK_FAIL;
+	}    
+
+	return BK_FAIL;
+}

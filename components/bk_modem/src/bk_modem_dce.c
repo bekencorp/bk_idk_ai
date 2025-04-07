@@ -55,3 +55,13 @@ bool bk_modem_dce_stop_ppp(void)
 {
     return (BK_OK == bk_modem_at_disconnect());
 }
+
+bool bk_modem_dce_enter_flight_mode(void)
+{
+    return (BK_OK == bk_modem_at_cfun(0));
+}
+
+bool bk_modem_dce_exit_flight_mode(void)
+{
+    return (BK_OK == bk_modem_at_cfun(1));
+}

@@ -63,11 +63,17 @@ void bk_modem_dte_handle_conn_ind(void)
 void bk_modem_dte_handle_modem_check(void)
 {
     uint8_t temp_flag = 0xff;
+    static uint8_t sim_check_cnt = 0;
     do
     {
         // disc state will be set to wait modem conn
         if (bk_modem_get_state() != MODEM_CHECK)
         {
+            if (bk_modem_get_state() == WAIT_MODEM_CONN)
+            {
+                BK_MODEM_LOGI("%s: disc occur \r\n", __func__);
+                return;
+            }
             temp_flag = 0;
             break;
         }
@@ -82,6 +88,7 @@ void bk_modem_dte_handle_modem_check(void)
         if (!bk_modem_dce_check_sim())
         {
             temp_flag = 2;
+            sim_check_cnt++;
             break;
         }
         
@@ -96,6 +103,7 @@ void bk_modem_dte_handle_modem_check(void)
             temp_flag = 4;
             break;
         }
+        sim_check_cnt = 0;
         bk_modem_set_state(PPP_START);
         bk_modem_send_msg(MSG_PPP_START, 0,0,0);
         BK_MODEM_LOGI("%s: modem check pass\r\n", __func__);
@@ -103,8 +111,28 @@ void bk_modem_dte_handle_modem_check(void)
         
     }while(0);
 
+    if ((temp_flag == 2) && (sim_check_cnt >= 10))
+    {
+        if (!bk_modem_dce_enter_flight_mode())
+        {
+            temp_flag = 5;
+            goto retry;
+        }
+        else
+        {
+            rtos_delay_milliseconds(1000);
+        }
+
+        if (!bk_modem_dce_exit_flight_mode())
+        {
+            temp_flag = 6;
+            goto retry;
+        }
+    }
+
+retry:    
     BK_MODEM_LOGI("%s: modem check fail %d\r\n", __func__, temp_flag);
-    rtos_delay_milliseconds(500);
+    rtos_delay_milliseconds(1000);
     bk_modem_set_state(MODEM_CHECK);
     bk_modem_send_msg(MSG_MODEM_CHECK, 0,0,0);
 }
@@ -289,7 +317,7 @@ void bk_modem_dte_handle_ppp_stop(BUS_MSG_T *msg)
     return;
 
 fail:
-    BK_MODEM_LOGI("%s: ppp stop fail %d\r\n", __func__, temp_flag);
+    BK_MODEM_LOGI("%s: ppp stop fail %d,%d\r\n", __func__, temp_flag,bk_modem_get_state());
     bk_modem_env.bk_modem_ppp_mode = PPP_INIT_MODE;
     bk_modem_set_state(MODEM_CHECK);
 }

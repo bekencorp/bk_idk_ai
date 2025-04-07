@@ -18,7 +18,8 @@
 #define AT_CPIN					"AT+CPIN?\r"
 #define AT_CSQ					"AT+CSQ\r"
 #define AT_CGDCONT				"AT+CGDCONT?\r"
-
+#define AT_CFUN_0				"AT+CFUN=0\r"
+#define AT_CFUN_1				"AT+CFUN=1\r"
 
 #define AT_RSP_OK				"OK"
 #define AT_RSP_ERROR			"ERROR"
@@ -62,5 +63,6 @@ bk_err_t bk_modem_at_change_ue_resp_mode(void);
 void bk_modem_at_rcv_resp(const char *resp,uint32_t len);
 bk_err_t bk_modem_at_init(void);
 bk_err_t bk_modem_at_dinit(void);
+bk_err_t bk_modem_at_cfun(uint8_t value);
 
 #endif

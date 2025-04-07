@@ -68,7 +68,7 @@ extern const ip_addr_t *sta_dns;
             sta_dns = dns_getserver(0);
 #endif
             bk_event_post(EVENT_MOD_NETIF, EVENT_NETIF_GOT_IP4,
-				&event_data, sizeof(event_data), BEKEN_NEVER_TIMEOUT);
+                                   &event_data, sizeof(event_data), BEKEN_NEVER_TIMEOUT);
             break;
         case PPPERR_PARAM:
             BK_MODEM_LOGI("Invalid parameter\r\n");
@@ -88,7 +88,8 @@ extern const ip_addr_t *sta_dns;
         case PPPERR_CONNECT: /* Connection lost */
             BK_MODEM_LOGI("Connection lost\r\n");
             //TODO post connection lost event
-
+            bk_modem_set_state(PPP_STOP);
+            bk_modem_send_msg(MSG_PPP_STOP, ABNORMAL_STOP,0,0);
             return;
 
         case PPPERR_AUTHFAIL:
