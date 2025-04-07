@@ -4,5 +4,12 @@ menu "Bk_websocket"
 		depends on MBEDTLS
 		bool "Enable Websocket"
 		default n
-
+	config WEBSOCKET_TLS
+		depends on MBEDTLS
+		bool "Enable Websocket"
+		default n
+	config WEBSOCKET_RB
+		depends on WEBSOCKET
+		bool "Enable Websocket RingBuffer"
+		default n
 endmenu
