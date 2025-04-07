@@ -285,7 +285,7 @@ bk_err_t bk_modem_netif_stop_ppp(void)
         return BK_FAIL;
     }
     BK_MODEM_LOGD("%s: Stopped PPP connection: %p\r\n", __func__, ppp);
-    err_t ret = pppapi_close(ppp, 0);
+    err_t ret = pppapi_close(ppp, 1);
     if (ret != ERR_OK) {
         BK_MODEM_LOGE("pppapi_close failed with %d\r\n", ret);
         return BK_FAIL;
