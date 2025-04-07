@@ -44,12 +44,14 @@ extern void bk_usb_cdc_open(void);
 
 
 static BK_MODEM_USB_STATE_T g_modem_usb_state = MODEM_USB_IDLE;
+static uint32_t g_modem_devidx = 0;
 
-void bk_modem_usbh_conn_ind(void)
+
+void bk_modem_usbh_conn_ind(uint32_t cnt)
 {
+	LOGI("[+]%s, %d\n", __func__, cnt);
 	if (g_modem_usb_state != MODEM_USB_CONN)
 	{
-		LOGI("[+]%s\n", __func__);
 		bk_modem_send_msg(MSG_MODEM_CONN_IND, 0,0,0);
 		g_modem_usb_state = MODEM_USB_CONN;
 	}
@@ -65,7 +67,7 @@ void bk_modem_usbh_disconn_ind(void)
 	}
 }
 
-uint8 bk_modem_get_mode(void)
+uint8_t bk_modem_get_mode(void)
 {
 	if (bk_modem_env.bk_modem_ppp_mode == PPP_CMD_MODE)
 	{
@@ -79,6 +81,17 @@ uint8 bk_modem_get_mode(void)
 
 	return 0;
 }
+
+void bk_modem_set_usbdev_idx(uint32_t idx)
+{
+	g_modem_devidx = idx;
+}
+
+uint32_t bk_modem_get_usbdev_idx(void)
+{
+	return g_modem_devidx;
+}
+
 
 void bk_modem_usbh_close(void)
 {

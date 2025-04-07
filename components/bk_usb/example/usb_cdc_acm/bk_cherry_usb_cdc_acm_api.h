@@ -36,7 +36,7 @@ typedef struct {
 
 typedef enum {
 	ACM_OPEN_IND,
-	ACM_START_IND,
+	ACM_INIT_IND,
 	ACM_BULKIN_IND,
 	ACM_BULKOUT_IND,
 	ACM_UPLOAD_IND,

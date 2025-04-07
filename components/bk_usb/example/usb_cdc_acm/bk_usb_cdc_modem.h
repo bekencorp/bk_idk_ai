@@ -38,7 +38,9 @@ extern "C" {
 
 #endif
 
-#define USB_CDC_DEV_MAX_NUM (1)
+
+#define USB_CDC_ACM_DEV_NUM_MAX (4)
+#define USB_CDC_DATA_DEV_NUM_MAX (4)
 
 #define MAX_BULK_TRS_SIZE (1024)
 #define CDC_TX_MAX_SIZE     512
@@ -104,11 +106,18 @@ typedef struct
 
 typedef struct
 {
-	uint8_t *rx_buf[USB_CDC_DEV_MAX_NUM];
-	uint32_t l_rx[USB_CDC_DEV_MAX_NUM];
-	uint8_t *tx_buf[USB_CDC_DEV_MAX_NUM];
-	uint32_t l_tx[USB_CDC_DEV_MAX_NUM];
-	E_CDC_MODE_T acm_mode[USB_CDC_DEV_MAX_NUM];
+	uint32_t dev_cnt;
+	E_CDC_STATUS_T status;
+}IPC_CDC_STATUS_t;
+
+
+typedef struct
+{
+	uint8_t *rx_buf[USB_CDC_DATA_DEV_NUM_MAX];
+	uint32_t l_rx[USB_CDC_DATA_DEV_NUM_MAX];
+	uint8_t *tx_buf[USB_CDC_DATA_DEV_NUM_MAX];
+	uint32_t l_tx[USB_CDC_DATA_DEV_NUM_MAX];
+	E_CDC_MODE_T acm_mode[USB_CDC_DATA_DEV_NUM_MAX];
 }Multi_ACM_DEVICE_EX_T;
 
 

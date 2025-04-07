@@ -134,8 +134,10 @@ static void bk_usb_init_all_device_driver_sw(void)
 #endif
 
 #if CONFIG_USB_CDC
-	extern void usbh_cdc_acm_class_register();
-	usbh_cdc_acm_class_register();
+//	extern void usbh_cdc_acm_class_register();
+//	usbh_cdc_acm_class_register();
+	extern void usbh_cdc_data_class_register();
+	usbh_cdc_data_class_register();
 #endif
 }
 

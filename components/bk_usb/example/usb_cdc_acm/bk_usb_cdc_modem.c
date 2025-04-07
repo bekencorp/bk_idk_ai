@@ -20,20 +20,22 @@
 #define LOGE(...) BK_LOGE(TAG, ##__VA_ARGS__)
 #define LOGD(...) BK_LOGD(TAG, ##__VA_ARGS__)
 
-IPC_CDC_DATA_t dbg_cdc_ipc[2];
+IPC_CDC_DATA_t dbg_cdc_ipc[USB_CDC_DATA_DEV_NUM_MAX];
 
 static beken_queue_t cdc_msg_queue = NULL;
 static beken_thread_t cdc_demo_task = NULL;
 
 static uint8_t __maybe_unused g_modem_mode = 0;
+static uint8_t __maybe_unused g_modem_idx = 0;
+
 static uint8_t g_cdc_tx_valid = 0;
 static uint8_t g_cdc_rx_valid = 0;
 static uint8_t g_cdc_close = 0;
 static uint8_t *g_tx_buf_temp = NULL;
 static Multi_ACM_DEVICE_EX_T g_multi_acm_ex = {0};
 
-void (*usb_cdc_state_cb)(uint32_t);
-void bk_usb_cdc_connect_init_cb(void (*cb)(uint32_t))
+void (*usb_cdc_state_cb)(IPC_CDC_STATUS_t *);
+void bk_usb_cdc_connect_init_cb(void (*cb)(IPC_CDC_STATUS_t *))
 {
 	if (!usb_cdc_state_cb) {
 		usb_cdc_state_cb = cb;
@@ -62,22 +64,25 @@ static bk_err_t cdc_send_msg(uint8_t type, uint32_t param)
 }
 
 #if (CONFIG_BK_MODEM)
-extern void bk_modem_usbh_conn_ind(void);
+extern void bk_modem_usbh_conn_ind(uint32_t cnt);
 extern void bk_modem_usbh_disconn_ind(void);
 extern void bk_modem_usbh_close(void);
 extern void bk_modem_usbh_bulkout_ind(char *p_tx, uint32_t l_tx);
 extern void bk_modem_usbh_bulkin_ind(uint8_t *p_rx, uint32_t l_rx);
 extern void bk_modem_usbh_poweron_ind(void);
-extern uint8 bk_modem_get_mode(void);
+extern uint8_t bk_modem_get_mode(void);
+extern uint32_t bk_modem_get_usbdev_idx(void);
+
 #else
 
-void bk_modem_usbh_conn_ind(void){ }
+void bk_modem_usbh_conn_ind(uint32_t cnt){ }
 void bk_modem_usbh_disconn_ind(void){ }
 void bk_modem_usbh_close(void){ }
 void bk_modem_usbh_bulkout_ind(char *p_tx, uint32_t l_tx){ }
 void bk_modem_usbh_bulkin_ind(uint8_t *p_rx, uint32_t l_rx){ }
 void bk_modem_usbh_poweron_ind(void){ }
-uint8 bk_modem_get_mode(void){}
+uint8_t bk_modem_get_mode(void){return 0}
+uint32_t bk_modem_get_usbdev_idx(void){return 0}
 
 #endif
 
@@ -138,6 +143,7 @@ int32_t bk_cdc_acm_modem_write(char *p_tx, uint32_t l_tx)
 	}
 
 	g_modem_mode = bk_modem_get_mode();
+	g_modem_idx  = bk_modem_get_usbdev_idx();
 
 	if (bk_usb_cdc_get_txvalid(l_tx) == 1 && g_tx_buf_temp)
 	{
@@ -155,13 +161,13 @@ extern void bk_usb_cdc_param_init(IPC_CDC_DATA_t *p_cdc_data);
 
 static void bk_cdc_acm_bulkin_cb(uint32_t idx)
 {
-	cdc_send_msg(CDC_STATUS_BULKIN, 0);
+	cdc_send_msg(CDC_STATUS_BULKIN, idx);
 }
 
 
 static bk_err_t bk_cdc_acm_init_malloc(void)
 {
-	for(uint32_t i = 0; i < USB_CDC_DEV_MAX_NUM; i++)
+	for(uint32_t i = 0; i < USB_CDC_DATA_DEV_NUM_MAX; i++)
 	{
 		if (g_multi_acm_ex.rx_buf[i])
 		{
@@ -216,7 +222,7 @@ static void bk_cdc_acm_deinit_param(void)
 
 static void bk_cdc_acm_init_free(void)
 {
-	for(uint32_t i = 0; i < USB_CDC_DEV_MAX_NUM; i++) {
+	for(uint32_t i = 0; i < USB_CDC_DATA_DEV_NUM_MAX; i++) {
 		if (g_multi_acm_ex.rx_buf[i])
 		{
 			psram_free(g_multi_acm_ex.rx_buf[i]);
@@ -242,10 +248,12 @@ void bk_cdc_acm_init(void)
 	ret = bk_cdc_acm_init_malloc();
 	BK_ASSERT(ret == BK_OK);
 
-	for(uint32_t i = 0; i < USB_CDC_DEV_MAX_NUM; i++)
+	for(uint32_t i = 0; i < USB_CDC_DATA_DEV_NUM_MAX; i++)
 	{
 		os_memset(&dbg_cdc_ipc[i],0x00,sizeof(IPC_CDC_DATA_t));
 		dbg_cdc_ipc[i].mode = bk_modem_get_mode();
+		dbg_cdc_ipc[i].idx  = bk_modem_get_usbdev_idx();
+
 		dbg_cdc_ipc[i].rx_data = (uint32_t)(g_multi_acm_ex.rx_buf[i]);
 		dbg_cdc_ipc[i].tx_data = (uint32_t)(g_multi_acm_ex.tx_buf[i]);
 		dbg_cdc_ipc[i].rx_len  = (uint32_t)(&g_multi_acm_ex.l_rx[i]);
@@ -260,16 +268,17 @@ void bk_cdc_acm_init(void)
 }
 
 
-static void bk_cdc_acm_state_cb(uint32_t state)
+static void bk_cdc_acm_state_cb(IPC_CDC_STATUS_t * dev_state)
 {
+	uint32_t state = dev_state->status;
 	switch(state)
 	{
 		case CDC_STATUS_CONN:
-			LOGD("CDC_STATUS_CONN\n");
-			cdc_send_msg(CDC_STATUS_CONN, 0);
+			LOGI("CDC_STATUS_CONN\n");
+			cdc_send_msg(CDC_STATUS_CONN, dev_state->dev_cnt);
 			break;
 		case CDC_STATUS_DISCON:
-			LOGD("CDC_STATUS_DISCON\n");
+			LOGI("CDC_STATUS_DISCON\n");
 			cdc_send_msg(CDC_STATUS_DISCON, 0);
 			break;
 		case CDC_STATUS_BULKIN:
@@ -308,7 +317,10 @@ static void bk_cdc_demo_task(beken_thread_arg_t arg)
 					break;
 			#endif
 				case CDC_STATUS_CONN:
-					bk_modem_usbh_conn_ind();
+					{
+						uint32_t cnt = (uint32_t)msg.data;
+						bk_modem_usbh_conn_ind(cnt);
+					}
 					break;
 				case CDC_STATUS_DISCON:
 					{
@@ -324,21 +336,24 @@ static void bk_cdc_demo_task(beken_thread_arg_t arg)
 					break;
 				case CDC_STATUS_BULKIN:
 					{
-						bk_modem_usbh_bulkin_ind((uint8_t *)g_multi_acm_ex.rx_buf[0], g_multi_acm_ex.l_rx[0]);
+						uint32_t idx = (uint32_t)(msg.data);
+						LOGD("CDC_STATUS_BULKIN, idx:%d\n", idx);
+						bk_modem_usbh_bulkin_ind((uint8_t *)g_multi_acm_ex.rx_buf[g_modem_idx], g_multi_acm_ex.l_rx[g_modem_idx]);
 					#if (USB_CDC_CP0_IPC)
-						cdc_send_msg(CDC_STATUS_BULKIN_DONE, 0);
+						cdc_send_msg(CDC_STATUS_BULKIN_DONE, idx);
 					#endif
-						g_multi_acm_ex.l_rx[0] = 0;
+						g_multi_acm_ex.l_rx[g_modem_idx] = 0;
 					}
 					break;
 				case CDC_STATUS_BULKOUT:
 					{
 					#if (USB_CDC_CP0_IPC)
-						uint32_t idx = 0;
+						uint32_t idx = g_modem_idx;
 						uint32_t len = (uint32_t)(msg.data);
 
 						g_multi_acm_ex.l_tx[idx] = len;
 						g_multi_acm_ex.acm_mode[idx] = g_modem_mode;
+
 						os_memcpy(g_multi_acm_ex.tx_buf[idx], g_tx_buf_temp, len);
 
 						dbg_cdc_ipc[idx].idx = idx;
@@ -353,8 +368,10 @@ static void bk_cdc_demo_task(beken_thread_arg_t arg)
 				case CDC_STATUS_BULKIN_DONE:
 					{
 					#if (USB_CDC_CP0_IPC)
+						uint32_t idx = (uint32_t)(msg.data);
+						LOGD("CDC_STATUS_BULKIN_DONE idx:%d\n", idx);
                         amp_res_acquire(AMP_RES_ID_USB_CDC, 2);
-						*((uint8_t *)dbg_cdc_ipc[0].rx_valid) = 0;
+						*((uint8_t *)dbg_cdc_ipc[g_modem_idx].rx_valid) = 0;
 						g_cdc_rx_valid = 0;
                         amp_res_release(AMP_RES_ID_USB_CDC);
 					#endif

@@ -593,8 +593,8 @@ static u32 ipc_cmd_handler(ipc_chnl_cb_t *chnl_cb, mb_chnl_ack_t *ack_buf)
 			break;
 		case IPC_CPU1_UPDATE_USB_CDC_STATE:
 			{
-				extern void (*usb_cdc_state_cb)(uint32_t);
-				uint8_t cdc_state = *((u8 *)chnl_cb->cmd_buf);
+				extern void (*usb_cdc_state_cb)(IPC_CDC_STATUS_t *);
+				IPC_CDC_STATUS_t *cdc_state = (IPC_CDC_STATUS_t *)chnl_cb->cmd_buf;
 				if(usb_cdc_state_cb != NULL)
 					usb_cdc_state_cb(cdc_state);
 				result = ACK_STATE_COMPLETE;

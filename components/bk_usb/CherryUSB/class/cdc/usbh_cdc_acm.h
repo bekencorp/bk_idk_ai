@@ -13,8 +13,10 @@ struct usbh_cdc_acm {
     struct usbh_hubport *hport;
 
     struct cdc_line_coding linecoding;
-    uint8_t ctrl_intf; /* Control interface number */
-    uint8_t data_intf; /* Data interface number */
+//  uint8_t ctrl_intf; /* Control interface number */
+//  uint8_t data_intf; /* Data interface number */
+    uint8_t intf; /*interface number */
+
     bool dtr;
     bool rts;
     uint8_t minor;
@@ -41,6 +43,8 @@ int usbh_cdc_acm_bulk_out_transfer(struct usbh_cdc_acm *cdc_acm_class, uint8_t *
 
 void bk_usbh_cdc_sw_init(struct usbh_hubport *hport, uint8_t interface_num, uint8_t interface_sub_class);
 void bk_usbh_cdc_sw_deinit(struct usbh_hubport *hport, uint8_t interface_num, uint8_t interface_sub_class);
+int32_t bk_usbh_cdc_sw_activate_epx(struct usbh_hubport *hport, struct usbh_cdc_acm *cdc_acm_class, uint8_t intf);
+int32_t bk_usbh_cdc_sw_deactivate_epx(struct usbh_hubport *hport, struct usbh_cdc_acm *cdc_acm_class, uint8_t intf);
 
 #ifdef __cplusplus
 }
