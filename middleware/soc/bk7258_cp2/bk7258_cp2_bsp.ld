@@ -228,7 +228,8 @@ SECTIONS
         _bss_start = .;
         *(.bss)
         *(.bss*)
-        *(COMMON)
+        *(EXCLUDE_FILE(*/libasrfst.a*) .bss)
+        *(EXCLUDE_FILE(*/libasrfst.a*) .bss*)
         . = ALIGN(4);
         _bss_end = .;
     } > RAM
@@ -285,6 +286,7 @@ SECTIONS
         __bss2_start__ = .;
         *(.video_cache_bss)
         *(.video_cache_bss*)
+        *(COMMON)
         . = ALIGN(4);
         __bss2_end__ = .;
     } > PSRAM

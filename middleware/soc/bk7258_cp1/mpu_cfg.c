@@ -92,6 +92,8 @@ ARM_MPU_Region_t mpu_regions[] = {
     #endif
 #else
     { ARM_MPU_RBAR(0x28000000UL, ARM_MPU_SH_INNER, 0, 1, 0),
+      ARM_MPU_RLAR(0x28087FE0UL, 1) },
+    { ARM_MPU_RBAR(0x28088000UL, ARM_MPU_SH_INNER, 0, 1, 0),
       ARM_MPU_RLAR(0x3FFFFFE0UL, 1) },
 #endif
 

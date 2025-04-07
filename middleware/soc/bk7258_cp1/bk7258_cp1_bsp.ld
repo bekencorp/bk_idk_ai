@@ -38,6 +38,10 @@ __BT_SRAM_SIZE = 0;
 __CPU1_APP_RAM_BASE = __BT_SRAM_BASE + __BT_SRAM_SIZE;
 __CPU1_APP_RAM_SIZE = CONFIG_CPU1_APP_RAM_SIZE - __BT_SRAM_SIZE;
 
+__AEC_BUFF_SIZE = (96 << 10);
+__AEC_BUFF_BASE = SOC_SRAM0_DATA_BASE + (640 << 10) - __AEC_BUFF_SIZE;
+
+
 MEMORY
 {
   FLASH (rx)            : ORIGIN = (SOC_FLASH_DATA_BASE + CONFIG_PRIMARY_CPU1_APP_VIRTUAL_CODE_START), LENGTH = CONFIG_PRIMARY_CPU1_APP_VIRTUAL_CODE_SIZE
@@ -49,6 +53,8 @@ MEMORY
   ITCM (rwx)            : ORIGIN = SOC_ITCM_DATA_BASE + __MPU_PROTECT_SIZE, LENGTH = CONFIG_ITCM_SIZE - __MPU_PROTECT_SIZE
   DTCM (rwx)            : ORIGIN = SOC_DTCM_DATA_BASE, LENGTH = CONFIG_DTCM_SIZE
   SWAP (rwx)            : ORIGIN = __PRIMARY_APP_RAM_BASE + CONFIG_CPU0_SPE_RAM_SIZE - __SWAP_SIZE, LENGTH = __SWAP_SIZE
+  AEC (rwx)             : ORIGIN = __AEC_BUFF_BASE, LENGTH = __AEC_BUFF_SIZE
+
   PSRAM (rwx)           : ORIGIN = SOC_PSRAM_DATA_BASE, LENGTH = 0x4000000
 }
 
@@ -298,6 +304,16 @@ SECTIONS
         . = ALIGN(4);
         _swap_end = .;
     } > SWAP AT > FLASH
+
+    .aec_buff ORIGIN(AEC) (NOLOAD):
+    {
+        . = ALIGN(4);
+        _aec_bss_start = .;
+        KEEP(*(.aec_bss*))
+        KEEP(*(.aec_bss))
+        . = ALIGN(4);
+        _aec_bss_end = .;
+    } > AEC
 
     .video.cache.data :
     {
