@@ -147,7 +147,7 @@ void bk_key_driver_deinit(KeyConfig_t* configs, uint8_t num_keys){
 
 void register_event_handler(key_handler_t handler) {
     if (handler == NULL){
-        os_printf("null ptr funtion is %s\r\n",__func__);
+        LOGI("null ptr funtion is %s\r\n",__func__);
     }
     global_handler = handler;
 }
@@ -177,7 +177,9 @@ static void process_key_event(uint8_t gpio_id, key_action_t action) {
             }
 
             if(event != EVENT_NONE) {
-                global_handler(event); 
+                LOGI("current key_id is %d\r\n",gpio_id);
+                global_handler(event);
+                LOGI("end processing key enevt\r\n");
             }
             break;
         }
@@ -193,7 +195,6 @@ static void key_thread(void *param){
         if(rtos_pop_from_queue(&s_key_msgqueue, &rec_msg, BEKEN_WAIT_FOREVER) == kNoErr){
             LOGI("start processing key enevt\r\n");
             process_key_event(rec_msg.gpio_id, rec_msg.action);
-            LOGI("end processing key enevt\r\n");
         }
     }
     
