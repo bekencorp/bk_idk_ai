@@ -5,6 +5,12 @@
 //#include "uart_hal.h"
 //#include <driver/uart.h>
 
+#define MFRC522_TAG "mfrc522"
+#define MFRC522_LOGI(...) BK_LOGI(MFRC522_TAG, ##__VA_ARGS__)
+#define MFRC522_LOGW(...) BK_LOGW(MFRC522_TAG, ##__VA_ARGS__)
+#define MFRC522_LOGE(...) BK_LOGE(MFRC522_TAG, ##__VA_ARGS__)
+#define MFRC522_LOGD(...) BK_LOGD(MFRC522_TAG, ##__VA_ARGS__)
+
 #define MAXRLEN                  (64)// 18
 
 //******************************************************************/
@@ -179,4 +185,5 @@ void bk_mfrc522_set_bit_mask(uint8_t reg, uint8_t mask);
 void bk_mfrc522_clear_bit_mask(uint8_t reg, uint8_t mask);
 void RC522_Config(unsigned char Card_Type);
 char PcdHalt(void);
+extern void delay_ms(UINT32 ms);
 #endif /* _BOARD_MFRC522_H_ */

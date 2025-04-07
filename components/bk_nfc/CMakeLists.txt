@@ -13,6 +13,7 @@ if (CONFIG_NFC_MFRC522_ENABLE)
 list(APPEND srcs
 		bk_mfrc522.c
 		board_uart.c
+		bk_mfrc522_main.c
 	)
 endif()
 endif()

@@ -13,15 +13,9 @@
 #include "board_mfrc522.h"
 #include "components/bk_nfc.h"
 
-#define MFRC522_TAG "mfrc522"
-#define MFRC522_LOGI(...) BK_LOGI(MFRC522_TAG, ##__VA_ARGS__)
-#define MFRC522_LOGW(...) BK_LOGW(MFRC522_TAG, ##__VA_ARGS__)
-#define MFRC522_LOGE(...) BK_LOGE(MFRC522_TAG, ##__VA_ARGS__)
-#define MFRC522_LOGD(...) BK_LOGD(MFRC522_TAG, ##__VA_ARGS__)
-
 void RC522_Config(unsigned char Card_Type)
 {
-	bk_mfrc522_clear_bit_mask(MFRC522_REG_STATUS2,MFRC522_REG_MODE_VAL);
+	bk_mfrc522_clear_bit_mask(MFRC522_REG_STATUS2,MFRC522_REG_STATUS2_VAL);
 	bk_mfrc522_write_rawRc(MFRC522_REG_MODE,MFRC522_REG_MODE_VAL);
 	bk_mfrc522_write_rawRc(MFRC522_REG_RX_SEL,MFRC522_REG_RX_SEL_VAL);
 	bk_mfrc522_write_rawRc(MFRC522_REG_RF_CFG,MFRC522_REG_RF_CFG_VAL);
@@ -53,11 +47,10 @@ char PcdHalt(void)
 */
 void mfrc522_init(void)
 {
-    bk_mfrc522_reset();                              // 复位
-    rtos_delay_milliseconds(5);
-    bk_mfrc522_antenna_off();							//关闭天线发射
-    rtos_delay_milliseconds(2);
-    bk_mfrc522_antenna_on();                             // 开启天线发射
+    bk_mfrc522_reset();         // 复位
+    bk_mfrc522_antenna_off();   //关闭天线发射
+    delay_ms(2);
+    bk_mfrc522_antenna_on();    // 开启天线发射
 }
 
 /**
@@ -67,9 +60,9 @@ void mfrc522_init(void)
 */
 void mfrc522_deinit(void)
 {
-    PcdHalt();                              // 复位
-    rtos_delay_milliseconds(5);
-    bk_mfrc522_antenna_off();							//关闭天线发射
+    bk_mfrc522_antenna_off();   //关闭天线发射
+    delay_ms(5);	
+    PcdHalt();                  // 复位
 }
 
 /**
@@ -302,19 +295,19 @@ void bk_mfrc522_reset(void)
 #if NFC_DEBUG_CODE
     // 需先保持高电平，后给个下降沿
     mfrc522_gpio_write(MFRC522_RST_LOW);
-    rtos_delay_milliseconds(5);
+    delay_ms(5);
     mfrc522_gpio_write(MFRC522_RST_HIGH);
-    rtos_delay_milliseconds(100);
+    delay_ms(100);
 #endif
     uint32_t speed = 0;
     for(int i =0 ;i<2;i++) //loops twice to read all the dirty data in fifo.
     {
         speed = bk_mfrc522_read_rawRc(MFRC522_REG_SERIAL_SPEED);  
-        MFRC522_LOGI("speed :0x%x  \r\n",speed);
+        MFRC522_LOGD("speed :0x%x  \r\n",speed);
     }
 	
     bk_mfrc522_write_rawRc(MFRC522_REG_COMMAND, MFRC522_PCD_RESETPHASE);     // 和MI卡通讯，CRC初始值0x6363
-    rtos_delay_milliseconds(2);
+    delay_ms(2);
 
     bk_mfrc522_write_rawRc(MFRC522_REG_MODE, 0x3D);
     bk_mfrc522_write_rawRc(MFRC522_REG_TRELOAD_L, 30);
@@ -323,6 +316,7 @@ void bk_mfrc522_reset(void)
     bk_mfrc522_write_rawRc(MFRC522_REG_TPRESCALER, 0x3E);
     bk_mfrc522_write_rawRc(MFRC522_REG_TX_ASK, 0x40);
     bk_mfrc522_clear_bit_mask(MFRC522_REG_TEST_PIN_EN, 0x80);//off MX and DTRQ out
+    bk_mfrc522_write_rawRc(MFRC522_REG_TX_ASK, 0x40);
 }
 
 
@@ -410,7 +404,7 @@ char bk_mfrc522_com_transceive(uint8_t command, uint8_t *pInData, uint8_t inLenB
         bk_mfrc522_set_bit_mask(MFRC522_REG_BIT_FRAMING, 0x80);        // 开始发送
     }
 
-    i = 2000;                                   // 根据时钟频率调整，操作M1卡最大等待时间25ms 2000?
+    i = 600;                                   // 根据时钟频率调整，操作M1卡最大等待时间25ms 2000?
     do
     {
         n = bk_mfrc522_read_rawRc(MFRC522_REG_COMIRQ);
@@ -419,7 +413,7 @@ char bk_mfrc522_com_transceive(uint8_t command, uint8_t *pInData, uint8_t inLenB
     while((i != 0) && !(n & 0x01) && !(n & waitFor));
     bk_mfrc522_clear_bit_mask(MFRC522_REG_BIT_FRAMING, 0x80);
 	
-    MFRC522_LOGI("%s , %d ,i :0x%x, n :0x%x\r\n", __FUNCTION__,__LINE__,i, n);
+    MFRC522_LOGD("%s , %d ,i :0x%x, n :0x%x\r\n", __FUNCTION__,__LINE__,i, n);
 	
     if(i != 0)
     {
@@ -462,7 +456,7 @@ char bk_mfrc522_com_transceive(uint8_t command, uint8_t *pInData, uint8_t inLenB
           status = MI_ERR;
         }
     }
-    MFRC522_LOGI("%s , %d ,status:0x%x \r\n", __FUNCTION__,__LINE__,status);
+    MFRC522_LOGD("%s , %d ,status:0x%x \r\n", __FUNCTION__,__LINE__,status);
     bk_mfrc522_set_bit_mask(MFRC522_REG_CONTROL, 0x80);               // stop timer now
     bk_mfrc522_write_rawRc(MFRC522_REG_COMMAND, MFRC522_PCD_IDLE);
 

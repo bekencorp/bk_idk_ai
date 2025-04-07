@@ -69,5 +69,9 @@ char bk_mfrc522_write(uint8_t addr, uint8_t *pData);
  */
 void bk_nfc_deinit(void);
 
+
+typedef uint8_t (*nfc_event_callback_t)(uint8_t event_param, void*card_id);
+int nfc_event_callback_register(nfc_event_callback_t callback);
+
 #endif //__BSP_NFC_H__
 

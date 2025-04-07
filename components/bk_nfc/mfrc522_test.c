@@ -8,13 +8,6 @@
 #include "components/bk_nfc.h"
 #include "cli.h"
 
-
-#define MFRC522_TAG "mfrc522_test"
-#define MFRC522_LOGI(...) BK_LOGI(MFRC522_TAG, ##__VA_ARGS__)
-#define MFRC522_LOGW(...) BK_LOGW(MFRC522_TAG, ##__VA_ARGS__)
-#define MFRC522_LOGE(...) BK_LOGE(MFRC522_TAG, ##__VA_ARGS__)
-#define MFRC522_LOGD(...) BK_LOGD(MFRC522_TAG, ##__VA_ARGS__)
-
 /**
  @brief 测试MFRC522的功能， Search for card --防碰撞---选定卡---验证卡片密码--写数据---读数据
 */

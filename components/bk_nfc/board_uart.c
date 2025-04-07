@@ -45,9 +45,9 @@ static void mfrc522_uart_rx_isr(uart_id_t id, void *param)
        }
 }
 
-static void nfc_isr(gpio_id_t gpio_id)
+void nfc_isr(gpio_id_t gpio_id)
 {
-    os_printf("get the nfc \r\n");
+   // os_printf("get the nfc\r\n");
 }
 
 static void mfrc522_gpio_config(gpio_id_t index, gpio_io_mode_t dir, gpio_pull_mode_t pull, gpio_func_mode_t peir)
@@ -74,6 +74,7 @@ void mfrc522_uart_init(void)
     mfrc522_gpio_config(MFRC522_G_INT_PIN,GPIO_INPUT_ENABLE,GPIO_PULL_UP_EN,GPIO_SECOND_FUNC_DISABLE); //config_gpio
     bk_gpio_register_isr(MFRC522_G_INT_PIN , nfc_isr);
     bk_gpio_set_interrupt_type(MFRC522_G_INT_PIN, GPIO_INT_TYPE_FALLING_EDGE); 
+    bk_gpio_enable_interrupt(MFRC522_G_INT_PIN);
 
     uart_config_t uart_cfg = {0};
 
