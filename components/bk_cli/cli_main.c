@@ -1893,13 +1893,21 @@ int bk_cli_init(void)
 							 4096,
 							 0);
 #else
-
+#if CONFIG_SYS_CPU0 && CONFIG_PSRAM_AS_SYS_MEMORY
+	ret = rtos_create_psram_thread(&cli_thread_handle,
+							 SHELL_TASK_PRIORITY,
+							 "cli",
+							 (beken_thread_function_t)shell_task,
+							 1024*3,
+							 0);
+#else
 	ret = rtos_create_thread(&cli_thread_handle,
 							 SHELL_TASK_PRIORITY,
 							 "cli",
 							 (beken_thread_function_t)shell_task,
 							 1024*3,
 							 0);
+#endif
 
 #endif
 #else // #if CONFIG_SHELL_ASYNCLOG

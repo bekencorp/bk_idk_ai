@@ -522,9 +522,14 @@ bk_err_t bk_flash_svr_init(void)
 
 	int ret_val;
 	
+#if CONFIG_SYS_CPU0 && CONFIG_PSRAM_AS_SYS_MEMORY
+	ret_val = rtos_create_psram_thread(NULL, FLASH_SVR_PRIORITY, "flash_svr",
+					flash_server_task, FLASH_SVR_STACK_SIZE, NULL);
+#else
 	ret_val = rtos_create_thread(NULL, FLASH_SVR_PRIORITY, "flash_svr", 
 					flash_server_task, FLASH_SVR_STACK_SIZE, NULL);
-	
+#endif
+
 	return ret_val;
 
 	#endif

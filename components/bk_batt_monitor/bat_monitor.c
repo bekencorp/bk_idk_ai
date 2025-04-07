@@ -759,12 +759,21 @@ static bk_err_t prvBatteryMonitorTaskInit( void )
         return BK_ERR_NO_MEM;
     }
 
+#if CONFIG_SYS_CPU0 && CONFIG_PSRAM_AS_SYS_MEMORY
+    bk_err_t ret = rtos_create_psram_thread( &battery_monitor_thread_hdl,
+                                       4,
+                                       "battery_monitor",
+                                       (beken_thread_function_t)prvBatteryMonitorTaskMain,
+                                       1536,
+                                       (beken_thread_arg_t)NULL );
+#else
     bk_err_t ret = rtos_create_thread( &battery_monitor_thread_hdl,
                                        4,
                                        "battery_monitor",
                                        (beken_thread_function_t)prvBatteryMonitorTaskMain,
                                        1536,
                                        (beken_thread_arg_t)NULL );
+#endif
 
     if( ret != BK_OK )
     {

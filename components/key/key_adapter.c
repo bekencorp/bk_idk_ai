@@ -92,6 +92,16 @@ void bk_key_driver_init(KeyConfig_t* configs, uint8_t num_keys) {
         goto err_exit;
 	}
 
+#if CONFIG_SYS_CPU0 && CONFIG_PSRAM_AS_SYS_MEMORY
+    	ret = rtos_create_psram_thread(
+								&s_key_thread,
+								KEY_THREAD_PRIORITY,
+								KEY_THREAD_NAME,
+								key_thread,
+								KEY_THREAD_STACK_SIZE,
+								NULL
+							);
+#else
     	ret = rtos_create_thread(
 								&s_key_thread,
 								KEY_THREAD_PRIORITY,
@@ -100,6 +110,7 @@ void bk_key_driver_init(KeyConfig_t* configs, uint8_t num_keys) {
 								KEY_THREAD_STACK_SIZE,
 								NULL
 							);
+#endif
 
 
     if (kNoErr != ret)

@@ -310,12 +310,22 @@ int temp_detect_init(uint32_t init_temperature)
 			return ret;
 		}
 
+#if CONFIG_SYS_CPU0 && CONFIG_PSRAM_AS_SYS_MEMORY
+		ret = rtos_create_psram_thread(&s_tempd_task_handle,
+			TEMPD_TASK_PRIO,
+			"tempd",
+			(beken_thread_function_t)tempd_main,
+			TEMPD_TASK_STACK_SIZE,
+			(beken_thread_arg_t)init_temperature);
+#else
 		ret = rtos_create_thread(&s_tempd_task_handle,
 			TEMPD_TASK_PRIO,
 			"tempd",
 			(beken_thread_function_t)tempd_main,
 			TEMPD_TASK_STACK_SIZE,
 			(beken_thread_arg_t)init_temperature);
+#endif
+
 		if (BK_OK != ret) {
 			rtos_deinit_queue(&s_tempd_msg_queue);
 			s_tempd_msg_queue = NULL;

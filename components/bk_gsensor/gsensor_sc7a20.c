@@ -250,12 +250,21 @@ static void gsensor_task_init()
             return;
         }
 
+#if CONFIG_SYS_CPU0 && CONFIG_PSRAM_AS_SYS_MEMORY
+        ret = rtos_create_psram_thread(&s_gsensor_sc7a20_thread,
+                             5,
+                             "gsensor_sc7a20",
+                             (beken_thread_function_t)gsensor_sc7a20_thread,
+                             1024,
+                             NULL);
+#else
         ret = rtos_create_thread(&s_gsensor_sc7a20_thread,
                              5,
                              "gsensor_sc7a20",
                              (beken_thread_function_t)gsensor_sc7a20_thread,
                              1024,
                              NULL);
+#endif
         if(ret != kNoErr) {
             if(s_gsensor_sc7a20_event_wait) {
                 rtos_deinit_semaphore(&s_gsensor_sc7a20_event_wait);

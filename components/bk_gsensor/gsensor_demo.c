@@ -187,12 +187,21 @@ bk_err_t gsensor_demo_init(void)
             return ret;
         }
 
+#if CONFIG_SYS_CPU0 && CONFIG_PSRAM_AS_SYS_MEMORY
+        ret = rtos_create_psram_thread(&s_gsensor_demo_thread_hdl,
+                            3,
+                             "gsensor_demo",
+                             (beken_thread_function_t)gsensor_demo_thread,
+                             1536,
+                             NULL);
+#else
         ret = rtos_create_thread(&s_gsensor_demo_thread_hdl,
                             3,
                              "gsensor_demo",
                              (beken_thread_function_t)gsensor_demo_thread,
                              1536,
                              NULL);
+#endif
         if(ret != kNoErr) {
             if(s_gsensor_demo_msg_que) {
                 rtos_deinit_queue(&s_gsensor_demo_msg_que);

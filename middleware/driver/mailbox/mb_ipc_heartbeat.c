@@ -356,7 +356,11 @@ bk_err_t mb_ipc_heartbeat_init(void)
 	bk_err_t	ret_val = BK_FAIL;
 
 #if defined(MASTER_HB_TASK) || defined(SLAVE_HB_TASK)
+#if CONFIG_SYS_CPU0 && CONFIG_PSRAM_AS_SYS_MEMORY
+		ret_val = rtos_create_psram_thread(NULL, BEKEN_DEFAULT_WORKER_PRIORITY, "heartbeat", mb_ipc_task, 1536, 0);
+#else
 	ret_val = rtos_create_thread(NULL, BEKEN_DEFAULT_WORKER_PRIORITY, "heartbeat", mb_ipc_task, 1536, 0);
+#endif
 #endif
 
 	if(ret_val != BK_OK)

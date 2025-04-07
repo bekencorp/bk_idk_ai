@@ -194,12 +194,21 @@ extern void cp1_atsvr_task( void *para );
                              (1024 * 3),
                              0);
 #else
+#if CONFIG_SYS_CPU0 && CONFIG_PSRAM_AS_SYS_MEMORY
+	ret = rtos_create_psram_thread(&handler_thread,
+                             BEKEN_DEFAULT_WORKER_PRIORITY,
+                             "atsvr-handler",
+                             (beken_thread_function_t)atsvr_handler_main,
+                             (1024 * 3),
+                             0);
+#else
 	ret = rtos_create_thread(&handler_thread,
                              BEKEN_DEFAULT_WORKER_PRIORITY,
                              "atsvr-handler",
                              (beken_thread_function_t)atsvr_handler_main,
                              (1024 * 3),
                              0);
+#endif
 #endif
 	    if (ret != kNoErr)
 		{
