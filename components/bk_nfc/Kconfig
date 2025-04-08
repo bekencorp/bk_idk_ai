@@ -25,4 +25,8 @@ menu "bk_nfc"
 		default 1
 		help
 		Default 1 mean use UART1
+
+	config NFC_POLLING_PERIOD_MS
+		int "nfc polling time Period(ms)"
+		default 1000
 endmenu

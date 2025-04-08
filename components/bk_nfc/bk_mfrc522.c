@@ -49,7 +49,7 @@ void mfrc522_init(void)
 {
     bk_mfrc522_reset();         // 复位
     bk_mfrc522_antenna_off();   //关闭天线发射
-    delay_ms(2);
+    rtos_delay_milliseconds(2);
     bk_mfrc522_antenna_on();    // 开启天线发射
 }
 
@@ -61,7 +61,7 @@ void mfrc522_init(void)
 void mfrc522_deinit(void)
 {
     bk_mfrc522_antenna_off();   //关闭天线发射
-    delay_ms(5);	
+    rtos_delay_milliseconds(5);	
     PcdHalt();                  // 复位
 }
 
@@ -307,7 +307,7 @@ void bk_mfrc522_reset(void)
     }
 	
     bk_mfrc522_write_rawRc(MFRC522_REG_COMMAND, MFRC522_PCD_RESETPHASE);     // 和MI卡通讯，CRC初始值0x6363
-    delay_ms(2);
+    rtos_delay_milliseconds(2);
 
     bk_mfrc522_write_rawRc(MFRC522_REG_MODE, 0x3D);
     bk_mfrc522_write_rawRc(MFRC522_REG_TRELOAD_L, 30);

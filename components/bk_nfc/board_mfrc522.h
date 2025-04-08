@@ -131,6 +131,46 @@
 #define bk_mfrc522_read_rawRc(addr)                mfrc522_read_rawRc(addr)
 #define bk_mfrc522_write_rawRc(addr, writeData)    mfrc522_write_rawRc(addr, writeData)
 
+typedef enum 
+{
+    MI_STATUS_OK = 0            ,
+    MI_STATUS_ERROR	            ,
+    MI_STATUS_COLLISION         ,
+    MI_STATUS_TIMEOUT           ,
+    MI_STATUS_NO_ROOM           ,
+    MI_STATUS_INTERNAL_ERROR    ,
+    MI_STATUS_INVALID           ,
+    MI_STATUS_CRC_WRONG         ,
+    MI_STATUS_MIFARE_NACK = 0xff,
+}MI_status_code_t;
+
+// The commands used by the PCD to manage communication with several PICCs (ISO 14443-3, Type A, section 6.4)
+typedef enum  {
+    MFRC522_PICC_CMD_REQA           = 0x26,		// REQuest command, Type A. Invites PICCs in state IDLE to go to READY and prepare for anticollision or selection. 7 bit frame.
+    MFRC522_PICC_CMD_WUPA           = 0x52,		// Wake-UP command, Type A. Invites PICCs in state IDLE and HALT to go to READY(*) and prepare for anticollision or selection. 7 bit frame.
+    MFRC522_PICC_CMD_CT             = 0x88,		// Cascade Tag. Not really a command, but used during anti collision.
+    MFRC522_PICC_CMD_SEL_CL1        = 0x93,		// Anti collision/Select, Cascade Level 1
+    MFRC522_PICC_CMD_SEL_CL2        = 0x95,		// Anti collision/Select, Cascade Level 2
+    MFRC522_PICC_CMD_SEL_CL3        = 0x97,		// Anti collision/Select, Cascade Level 3
+    MFRC522_PICC_CMD_HLTA           = 0x50,		// HaLT command, Type A. Instructs an ACTIVE PICC to go to state HALT.
+    MFRC522_PICC_CMD_RATS           = 0xE0,		// Request command for Answer To Reset.
+    MFRC522_PICC_CMD_MF_AUTH_KEY_A  = 0x60,		// Perform authentication with Key A
+    MFRC522_PICC_CMD_MF_AUTH_KEY_B  = 0x61,		// Perform authentication with Key B
+    MFRC522_PICC_CMD_MF_READ        = 0x30,		// Reads one 16 byte block from the authenticated sector of the PICC. Also used for MIFARE Ultralight.
+    MFRC522_PICC_CMD_MF_WRITE       = 0xA0,		// Writes one 16 byte block to the authenticated sector of the PICC. Called "COMPATIBILITY WRITE" for MIFARE Ultralight.
+    MFRC522_PICC_CMD_MF_DECREMENT   = 0xC0,		// Decrements the contents of a block and stores the result in the internal data register.
+    MFRC522_PICC_CMD_MF_INCREMENT   = 0xC1,		// Increments the contents of a block and stores the result in the internal data register.
+    MFRC522_PICC_CMD_MF_RESTORE     = 0xC2,		// Reads the contents of a block into the internal data register.
+    MFRC522_PICC_CMD_MF_TRANSFER    = 0xB0,		// Writes the contents of the internal data register to a block.
+    MFRC522_PICC_CMD_UL_WRITE       = 0xA2,		// Writes one 4 byte page to the PICC.
+}MFRC522_PICC_Command_t;
+
+typedef struct {
+	uint8_t		size;			// Number of bytes in the UID. 4, 7 or 10.
+	uint8_t		uidByte[10];
+	uint8_t		sak;			// The SAK (Select acknowledge) byte returned from the PICC after successful selection.
+} uid_num_t;
+
 /**
  @brief reset RC522
  @return None
@@ -184,6 +224,7 @@ void bk_mfrc522_set_bit_mask(uint8_t reg, uint8_t mask);
 */
 void bk_mfrc522_clear_bit_mask(uint8_t reg, uint8_t mask);
 void RC522_Config(unsigned char Card_Type);
+void mfrc522_init(void);
 char PcdHalt(void);
 extern void delay_ms(UINT32 ms);
 #endif /* _BOARD_MFRC522_H_ */

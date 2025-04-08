@@ -14,6 +14,7 @@ list(APPEND srcs
 		bk_mfrc522.c
 		board_uart.c
 		bk_mfrc522_main.c
+		bk_mfrc522_adapt.c
 	)
 endif()
 endif()
