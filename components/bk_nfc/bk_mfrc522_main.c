@@ -64,7 +64,8 @@ static void nfc_repuire_card_task(void *arg)
                 }
                 MFRC522_LOGI("nfc post ok \r\n:");
             }
-            rtos_delay_milliseconds(500);
+            bk_pm_module_vote_ctrl_external_ldo(GPIO_CTRL_LDO_MODULE_NFC, CONFIG_LDO3V3_CTRL_GPIO, GPIO_OUTPUT_STATE_LOW);
+            rtos_delay_milliseconds(1000);
         }
         else
         {   
@@ -91,7 +92,7 @@ static void nfc_repuire_card_task(void *arg)
 void nfc_get_id_task(void)
 {
    rtos_create_thread(&nfc_test_thread,
-                    3,
+                    5,
                     "nfc_repuire_card_task",
                     nfc_repuire_card_task,
                     2048,
