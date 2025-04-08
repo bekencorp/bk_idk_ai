@@ -52,7 +52,7 @@ void bk_modem_usbh_conn_ind(uint32_t cnt)
 	LOGI("[+]%s, %d\n", __func__, cnt);
 	if (g_modem_usb_state != MODEM_USB_CONN)
 	{
-		bk_modem_send_msg(MSG_MODEM_CONN_IND, 0,0,0);
+		bk_modem_send_msg(MSG_MODEM_CONN_IND, cnt,0,0);
 		g_modem_usb_state = MODEM_USB_CONN;
 	}
 }

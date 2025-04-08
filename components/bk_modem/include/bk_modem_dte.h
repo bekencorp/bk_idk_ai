@@ -4,7 +4,7 @@
 
 #include "bk_modem_main.h"
 
-extern void bk_modem_dte_handle_conn_ind(void);
+extern void bk_modem_dte_handle_conn_ind(BUS_MSG_T *msg);
 extern void bk_modem_dte_handle_modem_check(void);
 extern void bk_modem_dte_handle_ppp_start(void);
 extern void bk_modem_dte_handle_ppp_connect_ind(void);

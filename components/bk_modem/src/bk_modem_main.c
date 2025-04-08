@@ -36,7 +36,7 @@ static void bk_modem_thread_main(void *args)
         {
             case MSG_MODEM_CONN_IND:
             {
-                bk_modem_dte_handle_conn_ind();
+                bk_modem_dte_handle_conn_ind(&msg);
                 break;
             }
 
@@ -153,6 +153,7 @@ bk_err_t bk_modem_init(void)
     {
         goto thread_fail;
     }
+    
     bk_modem_usbh_poweron_ind();
 
     bk_modem_power_on_modem();

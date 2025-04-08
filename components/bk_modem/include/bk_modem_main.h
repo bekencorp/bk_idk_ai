@@ -72,6 +72,8 @@ struct bk_modem_env_s
 {
     enum bk_modem_ppp_mode_e bk_modem_ppp_mode;
     bool is_ppp_started;
+    uint8_t port_num;
+    uint8_t port_idx;
 };
 
 extern struct bk_modem_env_s bk_modem_env;

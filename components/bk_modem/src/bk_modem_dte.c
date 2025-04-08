@@ -51,10 +51,11 @@ void bk_modem_dte_recv_data(uint32_t data_length, uint8_t *data)
     }
 }
 
-void bk_modem_dte_handle_conn_ind(void)
+void bk_modem_dte_handle_conn_ind(BUS_MSG_T *msg)
 {
-    BK_MODEM_LOGI("%s: state %d\r\n", __func__, bk_modem_get_state());
+    BK_MODEM_LOGI("%s: state %d, cnt %d\r\n", __func__, bk_modem_get_state(), msg->arg);
 
+    bk_modem_env.port_num = (uint8_t)msg->arg;
     bk_modem_set_state(MODEM_CHECK);
     bk_modem_send_msg(MSG_MODEM_CHECK, 0,0,0);
     bk_modem_env.bk_modem_ppp_mode = PPP_INIT_MODE;    
@@ -64,6 +65,8 @@ void bk_modem_dte_handle_modem_check(void)
 {
     uint8_t temp_flag = 0xff;
     static uint8_t sim_check_cnt = 0;
+    static uint8_t port_check_cnt = 0;
+    uint32_t retry_time;
     do
     {
         // disc state will be set to wait modem conn
@@ -79,8 +82,19 @@ void bk_modem_dte_handle_modem_check(void)
         }
         
         bk_modem_env.bk_modem_ppp_mode = PPP_CMD_MODE;
+        bk_modem_set_usbdev_idx(bk_modem_env.port_idx);
         if (!bk_modem_dce_send_at())
         {
+            port_check_cnt++;
+            if (port_check_cnt >= 5)
+            {
+                bk_modem_env.port_idx++;
+                if (bk_modem_env.port_idx == bk_modem_env.port_num)
+                {
+                    bk_modem_env.port_idx = 0;
+                }
+                port_check_cnt = 0;
+            }
             temp_flag = 1;
             break;
         }
@@ -104,6 +118,7 @@ void bk_modem_dte_handle_modem_check(void)
             break;
         }
         sim_check_cnt = 0;
+        port_check_cnt = 0;
         bk_modem_set_state(PPP_START);
         bk_modem_send_msg(MSG_PPP_START, 0,0,0);
         BK_MODEM_LOGI("%s: modem check pass\r\n", __func__);
@@ -111,7 +126,9 @@ void bk_modem_dte_handle_modem_check(void)
         
     }while(0);
 
-    if ((temp_flag == 2) && (sim_check_cnt >= 10))
+    retry_time = 1000;/// just try every 1s
+
+    if ((temp_flag == 2) && (sim_check_cnt > 10))
     {
         if (!bk_modem_dce_enter_flight_mode())
         {
@@ -128,11 +145,16 @@ void bk_modem_dte_handle_modem_check(void)
             temp_flag = 6;
             goto retry;
         }
+
+        if (sim_check_cnt > 20)
+        {
+            retry_time = 10000; ///After trying 10 times flight mode, will change 10s dealy for sim-check.
+        }
     }
 
 retry:    
-    BK_MODEM_LOGI("%s: modem check fail %d\r\n", __func__, temp_flag);
-    rtos_delay_milliseconds(1000);
+    BK_MODEM_LOGI("%s: modem check fail %d, port_idx %d\r\n", __func__, temp_flag, bk_modem_env.port_idx);
+    rtos_delay_milliseconds(retry_time);
     bk_modem_set_state(MODEM_CHECK);
     bk_modem_send_msg(MSG_MODEM_CHECK, 0,0,0);
 }
@@ -318,6 +340,12 @@ void bk_modem_dte_handle_ppp_stop(BUS_MSG_T *msg)
 
 fail:
     BK_MODEM_LOGI("%s: ppp stop fail %d,%d\r\n", __func__, temp_flag,bk_modem_get_state());
+    
+    if ((temp_flag == 0) && !bk_modem_env.is_ppp_started && (stop_reason == ACTIVE_STOP))
+    {
+        bk_modem_del_resource();
+    }
+    
     bk_modem_env.bk_modem_ppp_mode = PPP_INIT_MODE;
     bk_modem_set_state(MODEM_CHECK);
 }
