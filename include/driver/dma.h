@@ -50,7 +50,7 @@ bk_err_t bk_dma_driver_deinit(void);
 /**
  * @brief     Allocate a DMA channel
  *
- * @attention: This API can only be called in task context, 
+ * @attention: This API can only be called in task context,
  *             - and can't be called in context that interrupt is disabled.
  *
  * This API should be called before any other dma channel APIs.
@@ -86,7 +86,7 @@ dma_id_t bk_fixed_dma_alloc(u16 user_id, dma_id_t fixed_chnl_id);
 /**
  * @brief     Free the DMA channel
  *
- * @attention: This API can only be called in task context, 
+ * @attention: This API can only be called in task context,
  *             - and can't be called in context that interrupt is disabled.
  *
  * @param user_id DMA channel applicant, the same as in bk_dma_alloc.
