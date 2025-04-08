@@ -329,7 +329,12 @@ int32_t bk_cdc_acm_io_write_t(IPC_CDC_DATA_t *p_cdc_data)
 		int32_t ret = 0;
 		ret = bk_cdc_acm_io_write(p_cdc_data);
 		if (ret < 0)
+		{
+			#if USB_CDC_CP1_IPC
+			acm_send_msg(ACM_BULKOUT_DONE_IND, 0);
+			#endif
 			USB_CDC_LOGE("[-]%s, fail, ret:%d\r\n", __func__, ret);
+		}
 	}
 	else {
 		USB_CDC_LOGE("[-]%s, Error param\n", __func__);
