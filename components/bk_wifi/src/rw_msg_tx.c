@@ -109,7 +109,7 @@ int rw_msg_send(const void *msg_params, int reqcfm, uint16_t reqid, void *cfm)
 	}
 	if (kNoErr != ret) {
 		RWNX_LOGI("%s failed send %d\n", __FUNCTION__, msg->id);
-		os_free((void *)msg_params);
+		ke_msg_free(msg);
 		err = RWNX_ERR_IOCTL_SEND;
 		goto failed_or_timeout;
 	} else if (reqcfm) {
