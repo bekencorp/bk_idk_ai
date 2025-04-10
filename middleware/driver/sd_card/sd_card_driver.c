@@ -1609,7 +1609,7 @@ bk_err_t bk_sd_card_read_blocks(uint8_t *data, uint32_t block_addr, uint32_t blo
 		data_config.data_len = SD_BLOCK_SIZE * block_num;
 
 	//read data from SDIO to buffer
-	bk_sdio_host_read_blks_fifo(data, block_num);
+	error_state = bk_sdio_host_read_blks_fifo(data, block_num);
 
 #if CONFIG_SDCARD_OPS_TRACE_EN
 	s_sdcard_sw_status.read = 4;
