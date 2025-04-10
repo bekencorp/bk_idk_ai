@@ -62,16 +62,6 @@ typedef struct {
 	void						*user_context;
 } websocket_config_t;
 
-/**
- * @brief Websocket rx ring buffer
- */
-typedef struct {
-    uint8_t *buffer;
-    size_t head;
-    size_t tail;
-    beken_semaphore_t mutex;
-} data_buffer_t;
-
 typedef void  (*bk_event_handler_t)(void* event_handler_arg, char *event_base, int32_t event_id, void* event_data);
 
 typedef struct {
