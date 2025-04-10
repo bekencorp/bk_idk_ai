@@ -1694,7 +1694,7 @@ void sys_hal_aud_diffen_en(uint32_t value)
 	sys_ll_set_ana_reg20_diffen(value);
 }
 
-void sys_hal_aud_mic_rst_set(uint32_t value)
+void sys_hal_aud_mic1_rst_set(uint32_t value)
 {
 	sys_ll_set_ana_reg19_rst(value);
 }
@@ -1797,10 +1797,17 @@ void sys_hal_aud_vdd1v5_en(uint32_t value)
 
 void sys_hal_aud_mic2_en(uint32_t value)
 {
+	sys_ll_set_ana_reg27_micen(value);
+}
+
+void sys_hal_aud_mic2_rst_set(uint32_t value)
+{
+	sys_ll_set_ana_reg27_rst(value);
 }
 
 void sys_hal_aud_mic2_gain_set(uint32_t value)
 {
+    sys_ll_set_ana_reg27_micgain(value);
 }
 
 void sys_hal_aud_dacg_set(uint32_t value)

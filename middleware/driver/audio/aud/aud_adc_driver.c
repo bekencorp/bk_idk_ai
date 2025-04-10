@@ -101,9 +101,11 @@ bk_err_t bk_aud_adc_init(aud_adc_config_t *adc_config)
 	sys_drv_aud_micbias_en(1);
 
 	//reset mic after configuring parameters
-	sys_drv_aud_mic_rst_set(1);
+	sys_drv_aud_mic1_rst_set(1);
+	sys_drv_aud_mic2_rst_set(1);
 	delay(10);
-	sys_drv_aud_mic_rst_set(0);
+	sys_drv_aud_mic1_rst_set(0);
+	sys_drv_aud_mic2_rst_set(0);
 
 	aud_hal_set_adc_config0_adc_set_gain(adc_config->adc_gain);
 	aud_hal_set_adc_config0_adc_sampe_edge(adc_config->adc_samp_edge);

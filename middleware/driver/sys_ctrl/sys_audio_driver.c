@@ -183,11 +183,11 @@ uint32_t sys_drv_aud_micbias_trim_set(uint32_t value)
 	return SYS_DRV_SUCCESS;
 }
 
-uint32_t sys_drv_aud_mic_rst_set(uint32_t value)
+uint32_t sys_drv_aud_mic1_rst_set(uint32_t value)
 {
 	uint32_t int_level = sys_drv_enter_critical();
 
-	sys_hal_aud_mic_rst_set(value);
+	sys_hal_aud_mic1_rst_set(value);
 	sys_drv_exit_critical(int_level);
 	return SYS_DRV_SUCCESS;
 }
@@ -197,6 +197,14 @@ uint32_t sys_drv_aud_mic1_gain_set(uint32_t value)
 	uint32_t int_level = sys_drv_enter_critical();
 
 	sys_hal_aud_mic1_gain_set(value);
+	sys_drv_exit_critical(int_level);
+	return SYS_DRV_SUCCESS;
+}
+uint32_t sys_drv_aud_mic2_rst_set(uint32_t value)
+{
+	uint32_t int_level = sys_drv_enter_critical();
+
+	sys_hal_aud_mic2_rst_set(value);
 	sys_drv_exit_critical(int_level);
 	return SYS_DRV_SUCCESS;
 }

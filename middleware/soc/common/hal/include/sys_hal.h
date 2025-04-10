@@ -383,8 +383,9 @@ void sys_hal_aud_rvcmd_en(uint32_t value);
 void sys_hal_aud_lvcmd_en(uint32_t value);
 void sys_hal_aud_micbias1v_en(uint32_t value);
 void sys_hal_aud_micbias_trim_set(uint32_t value);
-void sys_hal_aud_mic_rst_set(uint32_t value);
+void sys_hal_aud_mic1_rst_set(uint32_t value);
 void sys_hal_aud_mic1_gain_set(uint32_t value);
+void sys_hal_aud_mic2_rst_set(uint32_t value);
 void sys_hal_aud_mic2_gain_set(uint32_t value);
 void sys_hal_aud_mic1_single_en(uint32_t value);
 void sys_hal_aud_mic2_single_en(uint32_t value);
@@ -404,7 +405,7 @@ void sys_hal_aud_dac_dcoc_en(uint32_t value);
 void sys_hal_aud_dac_idac_en(uint32_t value);
 void sys_hal_aud_dac_bypass_dwa_en(uint32_t value);
 void sys_hal_aud_dac_dacmute_en(uint32_t value);
-
+void sys_hal_set_ana_reg23_value(uint32_t value);
 /**  Audio End  **/
 
 void sys_hal_set_sys2flsh_2wire(uint32_t value);
