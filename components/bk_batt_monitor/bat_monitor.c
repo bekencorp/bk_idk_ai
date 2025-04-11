@@ -17,7 +17,7 @@
 #include "iot_adc.h"
 #include "bk_saradc.h"
 #include <bat_monitor.h>
-#include "app_event.h"
+// #include "app_event.h"
 
 #if CONFIG_PM_ENABLE
 #include <modules/pm.h>
@@ -99,6 +99,12 @@ static void      prvCheckChargeStatus( IotBatteryHandle_t xHandle );
 static void      prvBatteryMonitorTaskMain( void );
 static bk_err_t  prvBatteryMonitorTaskInit( void );
 
+static battery_event_callback_t s_battery_event_callback = NULL;
+int battery_event_callback_register(battery_event_callback_t callback)
+{
+	s_battery_event_callback = callback;
+	return 0;
+}
 
 int32_t battery_get_voltage(uint16_t *pVoltage)
 {
@@ -679,7 +685,9 @@ static void prvBatteryMonitorTaskMain( void )
         prvCheckChargeStatus( xGlobalHandle );
         if (pxInfo->xBatteryStatus == eBatteryCharging)
         {
-            app_event_send_msg(APP_EVT_CHARGING, 0);
+            if (s_battery_event_callback) {
+                s_battery_event_callback(EVT_BATTERY_CHARGING);
+            }
             bLowVoltageTriggered = false;
         }
 
@@ -706,7 +714,9 @@ static void prvBatteryMonitorTaskMain( void )
                 {
                     if (!bLowVoltageTriggered) // Only when the value decreases from above 20% to below 20% will it trigger
                     {
-                        app_event_send_msg(APP_EVT_LOW_VOLTAGE, 0);
+                        if (s_battery_event_callback) {
+                            s_battery_event_callback(EVT_BATTERY_LOW_VOLTAGE);
+                        }
                         BAT_MONITOR_WPRT("Low voltage event triggered!\r\n");
                         bLowVoltageTriggered = true;
                     }

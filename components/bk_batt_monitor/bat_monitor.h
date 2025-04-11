@@ -93,6 +93,13 @@ typedef struct IotBatteryDescriptor
     uint8_t              ucChargeLevel;
 } IotBatteryDescriptor_t;
 
+typedef enum{
+	EVT_BATTERY_CHARGING = 0,
+	EVT_BATTERY_LOW_VOLTAGE,
+}evt_battery;
+
+typedef uint8_t (*battery_event_callback_t)(evt_battery event_param);
+int battery_event_callback_register(battery_event_callback_t callback);
 
 /* Public API function prototypes */
 /**
