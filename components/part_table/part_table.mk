@@ -63,14 +63,8 @@ bk7239xx_supported_targets := bk7239
 bk7239xx_supported_projects := app
 
 
-############################################################
-#        Create supported projects list for bk723L         #
-############################################################
-bk723Lxx_supported_targets := bk723L
-bk723Lxx_supported_projects := app
-bk723Lxx_supported_projects := $(bk723Lxx_supported_projects) customization/config_ab
 
-PART_TABLE_SUPPORTED_TARGETS := $(bk7235xx_supported_targets) $(bk7256xx_supported_targets) $(bk7236xx_supported_targets) $(bk7258xx_supported_targets) $(bk7234xx_supported_targets) $(bk7239xx_supported_targets) $(bk723Lxx_supported_targets)
+PART_TABLE_SUPPORTED_TARGETS := $(bk7235xx_supported_targets) $(bk7256xx_supported_targets) $(bk7236xx_supported_targets) $(bk7258xx_supported_targets) $(bk7234xx_supported_targets) $(bk7239xx_supported_targets)
 PART_TABLE_SUPPORTED_PROJECTS := app
 ifneq ($(findstring $(ARMINO_SOC), $(bk7235xx_supported_targets)),)
 	PART_TABLE_SUPPORTED_PROJECTS := $(bk7235xx_supported_projects)
@@ -89,9 +83,6 @@ ifneq ($(findstring $(ARMINO_SOC), $(bk7234xx_supported_targets)),)
 endif
 ifneq ($(findstring $(ARMINO_SOC), $(bk7239xx_supported_targets)),)
 	PART_TABLE_SUPPORTED_PROJECTS := $(bk7239xx_supported_projects)
-endif
-ifneq ($(findstring $(ARMINO_SOC), $(bk723Lxx_supported_targets)),)
-	PART_TABLE_SUPPORTED_PROJECTS := $(bk723Lxx_supported_projects)
 endif
 
 ARMINO_TOOL_PART_TABLE := $(ARMINO_DIR)/tools/build_tools/part_table_tools/gen_bk7256partitions.py
@@ -112,15 +103,15 @@ endif
 ifeq ("$(ARMINO_SOC)", "bk7239")
 	BOOTLOADER_JSON_OLD := $(ARMINO_BOOTLOADER)/tools/partition_ota.json
 endif
-ifeq ("$(ARMINO_SOC)", "bk723L")
-	BOOTLOADER_JSON_OLD := $(ARMINO_BOOTLOADER)/tools/partition_ota.json
-endif
+
 CLEAN_ALLFILE_INSEQ := --smode-inseq=3,0
 SHOW_APPS_INSEQ := --smode-inseq=4,0
 DEFAULT_CSV_FILE := $(ARMINO_DIR)/tools/build_tools/part_table_tools/bk7256Partitions.csv
 
+PARTITIONS_CSV_FILE := $(DEFAULT_CSV_FILE)
+
 ifneq ($(findstring $(ARMINO_SOC), $(PART_TABLE_SUPPORTED_TARGETS)),)
-ifneq ($(findstring $(PROJECT), $(PART_TABLE_SUPPORTED_PROJECTS)),)
+ifneq ($(wildcard $(ARMINO_DIR)/$(PROJECT_DIR)/config/$(ARMINO_SOC)/$(ARMINO_SOC)_partitions.csv),)
 	main_target_config := $(ARMINO_DIR)/$(PROJECT_DIR)/config/$(ARMINO_SOC).config
 	ifneq ($(wildcard $(ARMINO_DIR)/$(PROJECT_DIR)/config/$(ARMINO_SOC)/config),)
 		main_target_config := $(ARMINO_DIR)/$(PROJECT_DIR)/config/$(ARMINO_SOC)/config
@@ -144,11 +135,7 @@ ifneq ($(findstring $(PROJECT), $(PART_TABLE_SUPPORTED_PROJECTS)),)
 	else
 		SUPPORT_DUAL_CORE := false
 	endif
-else
-	PARTITIONS_CSV_FILE := $(DEFAULT_CSV_FILE)
 endif
-else
-	PARTITIONS_CSV_FILE := $(DEFAULT_CSV_FILE)
 endif
 
 PART_TABLE_SUPPORTED_PROJECTS :=$(PART_TABLE_SUPPORTED_PROJECTS) customization/bk7256_configa customization/bk7256_configb
