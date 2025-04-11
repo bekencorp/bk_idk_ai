@@ -57,6 +57,23 @@ void get_http_ab_version(char *pcWriteBuffer, int xWriteBufferLen, int argc, cha
     }
 #endif
 }
+
+extern int bk_ota_swap_execute_partition(void);
+void swap_ab_execute_partition(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **argv)
+{
+	int32_t ret = 0;
+
+	ret = bk_ota_swap_execute_partition();
+	if(ret == BK_FAIL)
+	{
+		os_printf("swap fail\r\n");
+	}
+	else
+	{
+		os_printf("swap success\r\n");
+		bk_reboot();
+	}
+}
 #endif
 
 #if CONFIG_DIRECT_XIP && CONFIG_SECURITY_OTA
@@ -79,13 +96,6 @@ void http_ota_Command(char *pcWriteBuffer, int xWriteBufferLen, int argc, char *
 	if (argc != 2)
 		goto HTTP_CMD_ERR;
 
-#if CONFIG_OTA_DISPLAY_PICTURE_DEMO
-	extern int ota_update_with_display_open(void);
-	if(ota_update_with_display_open() != BK_OK)
-	{
-		return;
-	}
-#endif
 	ret = bk_http_ota_download(argv[1]);
 
 	if (0 != ret)
@@ -160,6 +170,7 @@ static const struct cli_command s_ota_commands[] = {
 
 #if CONFIG_HTTP_AB_PARTITION
 	{"ab_version", NULL, get_http_ab_version},
+	{"swap_ab_partition", NULL, swap_ab_execute_partition},
 #endif
 
 #if CONFIG_DIRECT_XIP && CONFIG_SECURITY_OTA

@@ -96,6 +96,15 @@ int ota_event_callback_register(ota_event_callback_t callback);
 int32_t ota_get_rbl_head(const bk_logic_partition_t *bk_ptr, struct ota_rbl_head *hdr, uint32_t partition_len);
 int32_t ota_hash_verify(const bk_logic_partition_t *part, const struct ota_rbl_head *hdr);
 int32_t ota_do_hash_check(void);
+
+#if CONFIG_OTA_DISPLAY_PICTURE_DEMO
+extern void lvgl_app_deinit(void);
+extern bk_err_t audio_turn_off(void);
+extern bk_err_t media_app_ota_disp_open(void);
+extern bk_err_t media_app_ota_disp_close(void);
+extern bk_err_t bk_ota_reponse_state_to_audio(int ota_state);
+#endif
+
 #endif
 
 

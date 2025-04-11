@@ -31,6 +31,8 @@
 #define OTA_LOGD(...) 
 #endif
 
+#define FLASH_DEFAULT_VALUE               (0xFFFFFFFF)
+
 #ifdef CONFIG_HTTP_AB_PARTITION
 #define OTA_DEBUG_TEST                    (0)
 #define FLASH_BASE_ADDRESS                (0x44030000)
@@ -314,14 +316,67 @@ int bk_ota_update_partition_flag(int input_val)
 	return BK_OK;
 }
 
+int bk_ota_swap_execute_partition(void)
+{
+	uint8_t     ota_flag_buf[16]= {0};
+	uint32_t    a_app_head= 0;
+	uint32_t    b_app_head= 0;
+	bk_logic_partition_t *bk_ota_ptr = NULL;
+	bk_logic_partition_t *a_app_ptr  = NULL;
+	bk_logic_partition_t *b_app_ptr  = NULL;
+
+	a_app_ptr = bk_flash_partition_get_info(BK_PARTITION_APPLICATION);
+	b_app_ptr = bk_flash_partition_get_info(BK_PARTITION_S_APP_USER);
+	bk_ota_ptr = bk_flash_partition_get_info(BK_PARTITION_OTA_FINA_EXECUTIVE);
+	if((bk_ota_ptr == NULL)||(a_app_ptr == NULL) ||(b_app_ptr == NULL))
+	{
+		os_printf("get partition fail! \r\n");
+		return BK_FAIL;
+	}
+	bk_flash_read_bytes((a_app_ptr->partition_start_addr), (uint8_t *)&a_app_head, sizeof(uint32_t));
+	bk_flash_read_bytes((b_app_ptr->partition_start_addr), (uint8_t *)&b_app_head, sizeof(uint32_t));
+	//os_printf("a_app_head :0x%x ,b_app_head :0x%x \r\n", a_app_head, b_app_head);
+    if ((a_app_head == FLASH_DEFAULT_VALUE)||(b_app_head == FLASH_DEFAULT_VALUE))
+	{
+		os_printf("only one execute partition and forbid swap! \r\n");
+		return BK_FAIL;
+	}
+	else
+	{
+		flash_protect_type_t protect_type = bk_flash_get_protect_type();
+		bk_flash_set_protect_type(FLASH_PROTECT_NONE);
+		exec_flag ret = bk_ota_get_current_partition();
+		if(ret == EXEX_A_PART)        //execute A 
+		{
+			os_printf("execute A, swap to B \r\n");
+			bk_flash_erase_sector(bk_ota_ptr->partition_start_addr);
+			exec_flag   ota_exec_flag = EXEC_B_PART;
+			os_memset(&ota_flag_buf[0], 0xFF, sizeof(ota_flag_buf));
+			os_memcpy(&ota_flag_buf[0], &ota_exec_flag, 1);
+			bk_flash_write_bytes(bk_ota_ptr->partition_start_addr, ota_flag_buf, sizeof(ota_flag_buf));
+		}
+		else if(ret == EXEC_B_PART)    //execute B
+		{
+			os_printf("execute B, swap to A \r\n");
+			bk_flash_erase_sector(bk_ota_ptr->partition_start_addr);
+		}
+		else
+		{
+			os_printf("swap partition fail! \r\n");
+		}
+		bk_flash_set_protect_type(protect_type);
+
+		return BK_OK;
+	}
+}
+
 #if CONFIG_OTA_DISPLAY_PICTURE_DEMO
-extern void lvgl_app_deinit(void);
-extern bk_err_t media_app_ota_disp_open(void);
 int ota_update_with_display_open(void)
 {
 	int ret = BK_OK;
 
 	lvgl_app_deinit();
+	audio_turn_off();
 	if(media_app_ota_disp_open() != BK_OK)
 	{
 		os_printf("open disp failed. \r\n");
@@ -366,6 +421,12 @@ int bk_http_ota_download(const char *uri)
 		return ret;
 	}
     OTA_LOGD("http_ota_download :0x%x",bk_http_ota_download);
+#if CONFIG_OTA_DISPLAY_PICTURE_DEMO
+	if(ota_update_with_display_open() != BK_OK)
+	{
+		return BK_FAIL;
+	}
+#endif
 	ota_input_event_handler(EVT_OTA_START);
 
 #ifdef CONFIG_HTTP_AB_PARTITION
@@ -400,10 +461,18 @@ int bk_http_ota_download(const char *uri)
 	ota_flag = 0;
 	if (0 != ret){
 		OTA_LOGE("request epoch time from remote server failed.ret:%d\r\n",ret);
+		ota_input_event_handler(EVT_OTA_FAIL);
+	#if CONFIG_OTA_DISPLAY_PICTURE_DEMO
+		if(media_app_ota_disp_close() != BK_OK)
+		{
+			OTA_LOGE("disp close failed.ret:%d\r\n",ret);
+
+			return BK_FAIL;
+		}
+	#endif
 #if CONFIG_SYSTEM_CTRL
 		bk_wifi_ota_dtim(0);
 #endif
-		ota_input_event_handler(EVT_OTA_FAIL);
 	}else{
 
 #ifdef CONFIG_HTTP_AB_PARTITION
@@ -421,14 +490,13 @@ int bk_http_ota_download(const char *uri)
 		{
 			return ret_val;
 		}
-#if CONFIG_OTA_DISPLAY_PICTURE_DEMO
-	extern bk_err_t media_app_ota_disp_close(void);
-	if(media_app_ota_disp_close() != BK_OK)
-	{
-		OTA_LOGE("disp close failed.ret:%d\r\n",ret);
-	}
-#endif
 		ota_input_event_handler(EVT_OTA_SUCCESS);
+#if CONFIG_OTA_DISPLAY_PICTURE_DEMO
+		if(media_app_ota_disp_close() != BK_OK)
+		{
+			OTA_LOGE("disp close failed.ret:%d\r\n",ret);
+		}
+#endif
 		OTA_LOGI("success.\r\n");
 		bk_reboot();
 #else
