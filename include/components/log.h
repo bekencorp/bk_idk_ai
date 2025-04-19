@@ -93,6 +93,7 @@ extern "C" {
 #define BK_U64_TO_U32(x) (((uint32_t)(((x) >> 32) & 0xFFFFFFFF)), ((uint32_t)((x) & 0xFFFFFFFF)))
 
 void bk_mem_dump(const char* titile, uint32_t start, uint32_t len);
+void bk_mem_dump_ex(const char *title, unsigned char *data, uint32_t data_len);
 #define BK_MEM_DUMP(_title, _start, _len) bk_mem_dump((_title), (_start), (_len))
 
 #if CONFIG_SHELL_ASYNCLOG
