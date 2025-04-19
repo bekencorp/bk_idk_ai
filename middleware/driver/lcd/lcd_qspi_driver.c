@@ -278,7 +278,7 @@ static bk_err_t lcd_qspi_common_deinit(void)
     bk_dma2d_driver_deinit();
 #elif CONFIG_SOC_BK7236XX
     bk_dma_free(DMA_DEV_DTCM, lcd_qspi_dma_id);
-    BK_LOG_ON_ERR(bk_dma_driver_deinit());
+//    BK_LOG_ON_ERR(bk_dma_driver_deinit());
 #endif
 
     return BK_OK;
