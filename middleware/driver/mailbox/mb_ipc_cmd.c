@@ -39,7 +39,7 @@
 #define IPC_RSP_CMD_MASK		0x7F
 
 #define IPC_RSP_TIMEOUT			10		/* 10ms */
-#define IPC_XCHG_DATA_MAX		48 // MB_CHNL_BUFF_LEN
+#define IPC_XCHG_DATA_MAX		32 // MB_CHNL_BUFF_LEN
 
 typedef union
 {
@@ -553,55 +553,26 @@ static u32 ipc_cmd_handler(ipc_chnl_cb_t *chnl_cb, mb_chnl_ack_t *ack_buf)
 			break;
 
 #if (USB_CDC_CP1_IPC)
-		case IPC_CPU0_OPEN_USB_CDC:
+		case IPC_USB_CDC_CP0_NOTIFY:
 			{
-				bk_usb_cdc_open();
-				result = ACK_STATE_COMPLETE;
-			}
-			break;
-		case IPC_CPU0_CLOSE_USB_CDC:
-			{
-				bk_usb_cdc_close();
-				result = ACK_STATE_COMPLETE;
-			}
-			break;
-
-		case IPC_CPU0_INIT_USB_CDC_PARAM:
-			{
-				IPC_CDC_DATA_t *p_cdc_data = (IPC_CDC_DATA_t *)chnl_cb->cmd_buf;
-				bk_usb_cdc_param_init(p_cdc_data);
-				result = ACK_STATE_COMPLETE;
-			}
-			break;
-
-		case IPC_CPU0_SET_USB_CDC_CMD:
-			{
-				IPC_CDC_DATA_t *p_cdc_data = (IPC_CDC_DATA_t *)chnl_cb->cmd_buf;
-				bk_cdc_acm_bulkout(p_cdc_data);
+				extern void bk_usb_cdc_rcv_notify_cp1(IPC_CDC_DATA_T *p);
+				IPC_CDC_DATA_T *p_cdc_data = (IPC_CDC_DATA_T *)chnl_cb->cmd_buf;
+				bk_usb_cdc_rcv_notify_cp1(p_cdc_data);
 				result = ACK_STATE_COMPLETE;
 			}
 			break;
 #endif
 
 #if (USB_CDC_CP0_IPC)
-		case IPC_CPU1_UPLOAD_USB_CDC_DATA:
+		case IPC_USB_CDC_CP1_NOTIFY:
 			{
-				IPC_CDC_DATA_t *p_cdc_data = (IPC_CDC_DATA_t *)chnl_cb->cmd_buf;
-				p_cdc_data->bk_cdc_acm_bulkin_cb(p_cdc_data->idx);
-				result = ACK_STATE_COMPLETE;
-			}
-			break;
-		case IPC_CPU1_UPDATE_USB_CDC_STATE:
-			{
-				extern void (*usb_cdc_state_cb)(IPC_CDC_STATUS_t *);
-				IPC_CDC_STATUS_t *cdc_state = (IPC_CDC_STATUS_t *)chnl_cb->cmd_buf;
-				if(usb_cdc_state_cb != NULL)
-					usb_cdc_state_cb(cdc_state);
+				extern void bk_usb_cdc_rcv_notify_cp0(IPC_CDC_DATA_T *p);
+				IPC_CDC_DATA_T *p_cdc_data = (IPC_CDC_DATA_T *)chnl_cb->cmd_buf;
+				bk_usb_cdc_rcv_notify_cp0(p_cdc_data);
 				result = ACK_STATE_COMPLETE;
 			}
 			break;
 #endif
-
 
 		#if CONFIG_SYS_CPU0
 		case IPC_CPU1_POWER_UP_INDICATION:		// cpu1 indication, power up successfully.
@@ -1237,7 +1208,12 @@ u32 ipc_send_dma_chnl_user(u8 chnl_id)
 
 void ipc_cdc_send_cmd(u8 cmd, u8 *cmd_buf, u16 cmd_len, u8 * rsp_buf, u16 rsp_buf_len)
 {
-	ipc_send_cmd(&ipc_chnl_cb, cmd, (uint8_t *)cmd_buf, cmd_len, (uint8_t *)rsp_buf, rsp_buf_len);
+	bk_err_t ret_val = BK_FAIL;
+	ret_val = ipc_send_cmd(&ipc_chnl_cb, cmd, (uint8_t *)cmd_buf, cmd_len, (uint8_t *)rsp_buf, rsp_buf_len);
+	if (ret_val != BK_OK)
+	{
+		os_printf("[+]ipc_cdc_send_cmd, ret:%d\r\n", ret_val);
+	}
 }
 
 #endif

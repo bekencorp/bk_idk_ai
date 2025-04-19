@@ -35,35 +35,29 @@ typedef struct {
 }acm_msg_t;
 
 typedef enum {
-	ACM_OPEN_IND,
+	ACM_OPEN_IND = 0,
 	ACM_INIT_IND,
-	ACM_BULKIN_IND,
 	ACM_BULKOUT_IND,
-	ACM_UPLOAD_IND,
 	ACM_EXIT_IND,
 	ACM_CLOSE_IND,
 	ACM_CONNECT_IND,
 	ACM_DISCONNECT_IND,
-	ACM_UPLOAD_TIMER_IND,
-	ACM_BULKOUT_DONE_IND,
-	ACM_UPLOAD_DELAY_IND,
+
+	ACM_BULKIN_IND,  // 7
+	ACM_UPLOAD_IND,   //8
+	ACM_UPLOAD_TIMER_IND,   //9
 	ACM_UNKNOW,
 }acm_msg_type_t;
-
-
 
 void bk_usb_update_cdc_interface(void *hport, uint8_t bInterfaceNumber, uint8_t interface_sub_class);
 void bk_usb_cdc_free_enumerate_resources(void);
 void bk_usb_cdc_exit(void);
 
-
-
 void bk_usb_cdc_open(void);
 void bk_usb_cdc_close(void);
+void bk_cdc_acm_bulkout(void);
 
-void bk_cdc_acm_bulkout(IPC_CDC_DATA_t * p_cdc_data);
-
-void bk_usb_cdc_param_init(IPC_CDC_DATA_t *p_cdc_data);
+void bk_usb_cdc_param_init(IPC_CDC_DATA_T *p_cdc_data);
 
 
 #ifdef __cplusplus

@@ -38,8 +38,7 @@ extern "C" {
 
 #endif
 
-
-#define USB_CDC_ACM_DEV_NUM_MAX (4)
+#define USB_CDC_ACM_DEV_NUM_MAX  (4)
 #define USB_CDC_DATA_DEV_NUM_MAX (4)
 
 #define MAX_BULK_TRS_SIZE (1024)
@@ -57,14 +56,18 @@ typedef enum
 
 typedef enum
 {
-	CDC_STATUS_OPEN,
+	CDC_STATUS_OPEN = 0,
 	CDC_STATUS_CLOSE,
-	CDC_STATUS_CONN,
-	CDC_STATUS_DISCON,
-	CDC_STATUS_BULKIN,
-	CDC_STATUS_BULKOUT,
-	CDC_STATUS_BULKIN_DONE,
-	CDC_STATUS_UPDATE_PARAM,
+	CDC_STATUS_CONN,         /// 2
+	CDC_STATUS_DISCON,       /// 3
+	CDC_STATUS_INIT_PARAM,   /// 4
+	CDC_STATUS_BULKOUT_CMD,
+	CDC_STATUS_BULKOUT_DATA,
+
+	CDC_STATUS_BULKIN_CMD,
+	CDC_STATUS_BULKIN_DATA, //8
+
+	CDC_STATUS_BULKIN_CMD_DONE,
 	CDC_STATUS_OUT_DELAY,
 	CDC_STATUS_ABNORMAL,
 	CDC_STATUS_IDLE,
@@ -83,43 +86,107 @@ typedef struct {
 	uint32_t data;
 }cdc_msg_t;
 
+#if 1
 
-typedef struct
+typedef enum
 {
-	uint32_t idx; //port_idx OR acm_dev_idx ???
-	E_CDC_MODE_T mode;// Command/Data
-	uint32_t tx_len;
-	uint32_t tx_data;
+	/* cp0 ---> cp1 */
+	CPU0_OPEN_USB_CDC = 0,
+	CPU0_CLOSE_USB_CDC,
+	CPU0_INIT_USB_CDC_PARAM,
 
-	uint32_t rx_len;
-	uint32_t rx_data;
+	CPU0_BULKOUT_USB_CDC_CMD,
+	CPU0_BULKOUT_USB_CDC_DATA,
 
-	uint32_t cmd_len;
-	uint32_t state;
-
-	void (*bk_cdc_acm_bulkin_cb)(uint32_t idx);
-
-	uint32_t rx_valid;
-	uint32_t tx_valid;
-}IPC_CDC_DATA_t;
-
+	/* cp1 ---> cp0 */
+	CPU1_UPDATE_USB_CDC_STATE,
+	CPU1_UPLOAD_USB_CDC_CMD,   ///6
+	CPU1_UPLOAD_USB_CDC_DATA,  ///7
+}IPC_CDC_SUBMSG_TYPE_T;
 
 typedef struct
 {
 	uint32_t dev_cnt;
 	E_CDC_STATUS_T status;
-}IPC_CDC_STATUS_t;
+}CDC_STATUS_t;
 
 
 typedef struct
 {
-	uint8_t *rx_buf[USB_CDC_DATA_DEV_NUM_MAX];
-	uint32_t l_rx[USB_CDC_DATA_DEV_NUM_MAX];
-	uint8_t *tx_buf[USB_CDC_DATA_DEV_NUM_MAX];
-	uint32_t l_tx[USB_CDC_DATA_DEV_NUM_MAX];
-	E_CDC_MODE_T acm_mode[USB_CDC_DATA_DEV_NUM_MAX];
-}Multi_ACM_DEVICE_EX_T;
+	uint32_t l_tx;
+	uint8_t *tx_buf;   /// 2048Bytes
+}CDC_CIRBUF_CMD_TX_T;   //cp0 alloc
 
+typedef struct
+{
+	uint32_t l_rx;
+	uint8_t *rx_buf;   /// 512Bytes
+}CDC_CIRBUF_CMD_RX_T;   //cp1 alloc
+
+typedef struct
+{
+	CDC_CIRBUF_CMD_RX_T *p_cdc_cmd_rx;   //cp1 alloc
+	CDC_CIRBUF_CMD_TX_T *p_cdc_cmd_tx;   //cp0 alloc
+}Multi_ACM_DEVICE_CMD_T;   
+
+#define CDC_CIRBUFFER_IN  1
+#define CDC_CIRBUFFER_OUT 1
+
+#define CDC_RX_CIRBUFFER_NUM   32
+#define CDC_TX_CIRBUFFER_NUM   16
+
+typedef struct
+{
+	uint32_t len;
+	uint8_t *data;
+}CDC_CIRBUF_RX_ELE_T;
+
+typedef struct
+{
+	volatile uint8_t wd;
+	volatile uint8_t rd;
+	CDC_CIRBUF_RX_ELE_T *data[CDC_RX_CIRBUFFER_NUM];
+}CDC_CIRBUF_DATA_RX_T;
+
+typedef struct
+{
+	uint32_t len;
+	uint8_t *data;
+}CDC_CIRBUF_TX_ELE_T;
+
+typedef struct
+{
+	volatile uint8_t wd;
+	volatile uint8_t rd;
+	CDC_CIRBUF_TX_ELE_T *data[CDC_TX_CIRBUFFER_NUM];   /// 2048
+}CDC_CIRBUF_DATA_TX_T;
+
+
+typedef struct
+{
+	CDC_CIRBUF_DATA_RX_T *p_cdc_data_rx;   //cp1 alloc
+	CDC_CIRBUF_DATA_TX_T *p_cdc_data_tx;   //cp0 alloc
+}Multi_ACM_DEVICE_DATA_T;
+
+
+typedef struct
+{
+	uint8_t idx;
+	uint8_t mode;
+
+	CDC_STATUS_t *p_status;
+	Multi_ACM_DEVICE_CMD_T *p_cmd;
+	Multi_ACM_DEVICE_DATA_T *p_data;
+}Multi_ACM_DEVICE_TOTAL_T;
+
+typedef struct
+{
+	IPC_CDC_SUBMSG_TYPE_T msg;
+	uint32_t cmd_len;
+	uint32_t p_info;   /// Multi_ACM_DEVICE_TOTAL_T *p     p_info = p
+}IPC_CDC_DATA_T;
+
+#endif
 
 #ifdef __cplusplus
 }

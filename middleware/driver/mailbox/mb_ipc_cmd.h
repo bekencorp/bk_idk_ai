@@ -44,15 +44,10 @@ enum
 	IPC_CPU1_TRAP_HANDLE_BEGIN,             /* CPU1 -> CPU0  */
 	IPC_CPU1_TRAP_HANDLE_END,               /* CPU1 -> CPU0  */
 
-	IPC_CPU0_OPEN_USB_CDC,
-	IPC_CPU0_CLOSE_USB_CDC,
-
-	IPC_CPU0_SET_USB_CDC_CMD,
-	IPC_CPU0_GET_USB_CDC_DATA,
-	IPC_CPU0_INIT_USB_CDC_PARAM,
-
-	IPC_CPU1_UPDATE_USB_CDC_STATE,
-	IPC_CPU1_UPLOAD_USB_CDC_DATA,
+/////////////////////////////////////////
+	IPC_USB_CDC_CP0_NOTIFY,   // CP0 -> CP1
+	IPC_USB_CDC_CP1_NOTIFY,   // CP1 -> CP0
+/////////////////////////////////////////
 
 	IPC_CMD_MAX  = 0x7F,  /* cmd id can NOT great than 0x7F. */
 };

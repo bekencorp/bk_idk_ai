@@ -379,17 +379,20 @@ int32_t bk_usbh_cdc_sw_activate_epx(struct usbh_hubport *hport, struct usbh_cdc_
 	uint8_t i = 0;
 	struct usb_endpoint_descriptor *ep_desc;
 	if (!hport || !cdc_acm_class) {
-		USB_LOG_INFO("cdc activate_epx Fail, intf:%d\r\n", intf);
+		USB_LOG_WRN("cdc activate_epx Fail, intf:%d\r\n", intf);
 		return -1;
 	}
 
 	for (i = 0; i < hport->config.intf[intf].altsetting[0].intf_desc.bNumEndpoints; i++) {
 		ep_desc = &hport->config.intf[intf].altsetting[0].ep[i].ep_desc;
 
-		if (ep_desc->bEndpointAddress & 0x80) {
-			ret = usbh_hport_activate_epx(&cdc_acm_class->bulkin, hport, ep_desc);
-		} else {
-			ret = usbh_hport_activate_epx(&cdc_acm_class->bulkout, hport, ep_desc);
+		if (ep_desc->bmAttributes == USB_ENDPOINT_TYPE_BULK)
+		{
+			if (ep_desc->bEndpointAddress & 0x80) {
+				ret = usbh_hport_activate_epx(&cdc_acm_class->bulkin, hport, ep_desc);
+			} else {
+				ret = usbh_hport_activate_epx(&cdc_acm_class->bulkout, hport, ep_desc);
+			}
 		}
 	}
 	snprintf(hport->config.intf[intf].devname, CONFIG_USBHOST_DEV_NAMELEN, DEV_FORMAT, cdc_acm_class->minor);
@@ -435,9 +438,9 @@ const struct usbh_class_driver cdc_data_class_driver = {
     .disconnect  = usbh_cdc_data_disconnect
 };
 
-#if 0
+
 CLASS_INFO_DEFINE const struct usbh_class_info cdc_acm_class_info = {
-    .match_flags = USB_CLASS_MATCH_INTF_CLASS | USB_CLASS_MATCH_INTF_SUBCLASS | USB_CLASS_MATCH_INTF_PROTOCOL,
+    .match_flags = USB_CLASS_MATCH_INTF_CLASS,
     .class = USB_DEVICE_CLASS_CDC,
     .subclass = CDC_ABSTRACT_CONTROL_MODEL,
     .protocol = CDC_COMMON_PROTOCOL_AT_COMMANDS,
@@ -445,18 +448,6 @@ CLASS_INFO_DEFINE const struct usbh_class_info cdc_acm_class_info = {
     .pid = 0x00,
     .class_driver = &cdc_acm_class_driver
 };
-#else
-CLASS_INFO_DEFINE const struct usbh_class_info cdc_acm_class_info = {
-    .match_flags = USB_CLASS_MATCH_INTF_CLASS,
-    .class = USB_DEVICE_CLASS_CDC,
-    .subclass = 0x00,//CDC_ABSTRACT_CONTROL_MODEL,
-    .protocol = 0x00,//CDC_COMMON_PROTOCOL_AT_COMMANDS,
-    .vid = 0x00,
-    .pid = 0x00,
-    .class_driver = &cdc_acm_class_driver
-};
-
-#endif
 
 CLASS_INFO_DEFINE const struct usbh_class_info cdc_data_class_info = {
     .match_flags = USB_CLASS_MATCH_INTF_CLASS,
