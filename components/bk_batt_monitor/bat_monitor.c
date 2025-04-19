@@ -42,6 +42,7 @@
 #define HARDWARE_BATTERY_PRESENT          1
 
 /* Battery capacity threshold example (percentage) for simple determination */
+#define SHUTDOWN_CAPACITY_THRESHOLD       2
 #define LOW_CAPACITY_THRESHOLD            20
 #define FULL_CAPACITY_THRESHOLD           95
 
@@ -659,6 +660,7 @@ int32_t iot_battery_close(IotBatteryHandle_t pxBatteryHandle)
 static void prvBatteryMonitorTaskMain( void )
 {
     static bool bLowVoltageTriggered = false;  // Low Battery Status Indicator
+    static bool bShutdownTriggered = false;
 
     xGlobalHandle = iot_battery_open( 0 );
     if( xGlobalHandle == NULL )
@@ -689,6 +691,7 @@ static void prvBatteryMonitorTaskMain( void )
                 s_battery_event_callback(EVT_BATTERY_CHARGING);
             }
             bLowVoltageTriggered = false;
+            bShutdownTriggered = false;
         }
 
         {
@@ -710,9 +713,23 @@ static void prvBatteryMonitorTaskMain( void )
             if( iot_battery_chargeLevel( xGlobalHandle, &ucCharge ) == IOT_BATTERY_SUCCESS )
             {
                 /* Low battery detection logic */
-                if ((ucCharge <= LOW_CAPACITY_THRESHOLD) && (pxInfo->xBatteryStatus != eBatteryCharging))
+                if ((ucCharge <= SHUTDOWN_CAPACITY_THRESHOLD) && (pxInfo->xBatteryStatus != eBatteryCharging))
                 {
-                    if (!bLowVoltageTriggered) // Only when the value decreases from above 20% to below 20% will it trigger
+                    if (!bShutdownTriggered)
+                    {
+                        if (s_battery_event_callback) {
+                            s_battery_event_callback(EVT_SHUTDOWN_LOW_BATTERY);
+                        }
+                        BAT_MONITOR_WPRT("Shutdown due to critical battery level!\r\n");
+                        bShutdownTriggered = true;
+
+                        // if you want to shutdown immdiately,can runnning this fake function here：
+                        // system_shutdown();
+                    }
+                }
+                else if ((ucCharge <= LOW_CAPACITY_THRESHOLD) && (pxInfo->xBatteryStatus != eBatteryCharging))
+                {
+                    if (!bLowVoltageTriggered)
                     {
                         if (s_battery_event_callback) {
                             s_battery_event_callback(EVT_BATTERY_LOW_VOLTAGE);
@@ -720,10 +737,12 @@ static void prvBatteryMonitorTaskMain( void )
                         BAT_MONITOR_WPRT("Low voltage event triggered!\r\n");
                         bLowVoltageTriggered = true;
                     }
+                    bShutdownTriggered = false;
                 }
                 else
                 {
                     bLowVoltageTriggered = false;  // When charging resumes, reset the flag
+                    bShutdownTriggered = false;
                 }
                 if(pxInfo->xBatteryStatus != eBatteryCharging)
                     BAT_MONITOR_PRT("Battery level: %u%%\r\n", ucCharge);
