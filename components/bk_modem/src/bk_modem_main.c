@@ -19,6 +19,7 @@ beken_queue_t bk_modem_queue = NULL;
 
 static enum bk_modem_state_e s_bk_modem_state = WAIT_MODEM_CONN;
 struct bk_modem_env_s bk_modem_env;
+static uint8_t bk_modem_status = 0;
 
 static void bk_modem_thread_main(void *args)
 {
@@ -104,24 +105,38 @@ void bk_modem_del_resource(void)
     bk_modem_at_dinit();
     bk_modem_usbh_close();
     bk_modem_power_off_modem();    
+    bk_modem_status = 0;
 }
 
 void bk_modem_deinit(void)
 {
-    bk_modem_set_state(PPP_STOP);
+    if (bk_modem_status == 1)
+    {
+        bk_modem_set_state(PPP_STOP);
 
-    BUS_MSG_T msg;
-    msg.type = MSG_PPP_STOP;
-    msg.arg = ACTIVE_STOP;
-    msg.len = 0;
-    msg.sema = NULL;
-    msg.param = NULL;
-    bk_modem_dte_handle_ppp_stop(&msg);
+        BUS_MSG_T msg;
+        msg.type = MSG_PPP_STOP;
+        msg.arg = ACTIVE_STOP;
+        msg.len = 0;
+        msg.sema = NULL;
+        msg.param = NULL;
+        bk_modem_dte_handle_ppp_stop(&msg);
+    }
+    else
+    {
+        BK_MODEM_LOGE("bk modem already close, no need close again\r\n");
+    }
 }
 
 bk_err_t bk_modem_init(void)
 {
     int ret;
+
+    if (bk_modem_status == 1)
+    {
+        BK_MODEM_LOGE("bk modem already stat, no need start again\r\n");
+        return BK_FAIL; 
+    }
 
     // Create bk modem thread and initialize bk mode queue.
     if ((bk_modem_thread != NULL) || (bk_modem_queue != NULL))
@@ -157,7 +172,8 @@ bk_err_t bk_modem_init(void)
     bk_modem_usbh_poweron_ind();
 
     bk_modem_power_on_modem();
-    
+
+    bk_modem_status = 1;
     return BK_OK;
     
 thread_fail:
