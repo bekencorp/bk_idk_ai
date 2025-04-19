@@ -1,15 +1,15 @@
 
 set(incs mqtt )
 
-unset(c_compile_options)
-# always set BK_SUPPLICANT macro to indicate changes that modified by BK.
-list(APPEND c_compile_options "-DMQTT_COMM_ENABLED")
-list(APPEND c_compile_options "-DMQTT_DIRECT")
-list(APPEND c_compile_options "-DIOTX_WITHOUT_TLS")
-list(APPEND c_compile_options "-DOTA_SIGNAL_CHANNEL=1")
-
-
 if (CONFIG_ALI_MQTT)
+
+	unset(c_compile_options)
+	# always set BK_SUPPLICANT macro to indicate changes that modified by BK.
+	list(APPEND c_compile_options "-DMQTT_COMM_ENABLED")
+	list(APPEND c_compile_options "-DMQTT_DIRECT")
+	list(APPEND c_compile_options "-DIOTX_WITHOUT_TLS")
+	list(APPEND c_compile_options "-DOTA_SIGNAL_CHANNEL=1")
+
 	list(APPEND incs
 				mqtt/utils
 	)
