@@ -991,12 +991,12 @@ static int websocket_client_send_with_opcode(transport client, ws_transport_opco
 		return BK_FAIL;
 	}
 
-	rtos_lock_mutex(&client->mutex);
-
 	if (!websocket_client_is_connected(client)) {
-		BK_LOGE(TAG, "Websocket client is not connected");
-		goto unlock_and_return;
+		BK_LOGE(TAG, "Websocket client is not connected\r\n");
+		return BK_FAIL;
 	}
+
+	rtos_lock_mutex(&client->mutex);
 
 	uint32_t current_opcode = opcode;
 	while (widx < len || current_opcode) {
@@ -1028,7 +1028,7 @@ static int websocket_client_send_with_opcode(transport client, ws_transport_opco
 	ret = widx;
 
 unlock_and_return:
-	if (&client->mutex)
+	if (client->mutex)
 		rtos_unlock_mutex(&client->mutex);
 	else
 		BK_LOGE(TAG, "mutex already deinit\r\n");
@@ -1289,7 +1289,7 @@ static void free_client(transport client)
 		return ;
 
 	rtos_deinit_mutex(&client->mutex);
-
+	client->mutex = NULL;
 	client->ws_event_handler = NULL;
 
 	if (client->tx_buffer)
@@ -1389,7 +1389,7 @@ void websocket_client_task(beken_thread_arg_t *thread_param)
 					BK_LOGD(TAG, "Read poll timeout: skipping read()...\r\n");
 					break;
 				 }
-				 client->ping_tick_ms = bk_tick_get_ms();
+				 //client->ping_tick_ms = bk_tick_get_ms();
 				 rtos_lock_mutex(&client->mutex);
 				 if (ws_client_recv(client) == BK_FAIL) {
 					BK_LOGE(TAG, "Error receive data\r\n");
