@@ -227,7 +227,7 @@ endif()
 if (CONFIG_LCD)
 	list(APPEND srcs
 		"lcd/lcd_driver.c"
-		"lcd/lcd_spi.c"
+		"lcd/lcd_spi_io.c"
 		)
 endif()
 
@@ -306,9 +306,15 @@ if (CONFIG_SPI_MST_FLASH)
 		)
 endif() #if (CONFIG_SPI_MST_FLASH)
 
-if (CONFIG_QSPI AND CONFIG_LCD_QSPI)
+if (CONFIG_LCD_QSPI)
 	list(APPEND srcs
 		"lcd/lcd_qspi_driver.c"
+		)
+endif()
+
+if (CONFIG_LCD_SPI)
+	list(APPEND srcs
+		"lcd/lcd_spi_driver.c"
 		)
 endif()
 

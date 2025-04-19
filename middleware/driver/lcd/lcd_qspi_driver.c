@@ -67,6 +67,8 @@ static void dma2d_transfer_complete_isr(void)
 #elif CONFIG_SOC_BK7236XX
 static dma_id_t lcd_qspi_dma_id = DMA_ID_MAX;
 static uint32_t dma_repeat_once_len = 0;
+static uint8_t s_lcd_qspi_flag = 1;
+static uint8_t lcd_qspi_dma_is_init = 0;
 extern media_debug_t *media_debug;
 
 static void lcd_qspi_dma_finish_isr(void)
@@ -94,7 +96,11 @@ static bk_err_t lcd_qspi_driver_init(qspi_id_t qspi_id, lcd_qspi_clk_t clk)
     qspi_config_t lcd_qspi_config;
     os_memset(&lcd_qspi_config, 0, sizeof(lcd_qspi_config));
 
-    os_memset(&s_lcd_qspi, 0, sizeof(s_lcd_qspi));
+    if (s_lcd_qspi_flag) {
+        os_memset(&s_lcd_qspi, 0, sizeof(s_lcd_qspi));
+        s_lcd_qspi_flag = 0;
+    }
+
     s_lcd_qspi[qspi_id].hal.id = qspi_id;
     qspi_hal_init(&s_lcd_qspi[qspi_id].hal);
 
@@ -157,8 +163,31 @@ static bk_err_t lcd_qspi_driver_init(qspi_id_t qspi_id, lcd_qspi_clk_t clk)
     return BK_OK;
 }
 
-static bk_err_t lcd_qspi_hardware_reset(void)
+static bk_err_t lcd_qspi_hardware_reset(qspi_id_t qspi_id)
 {
+#if (CONFIG_LCD_QSPI_DEVICE_NUM > 1)
+    if (qspi_id == 0) {
+        gpio_dev_unmap(LCD0_QSPI_RESET_PIN);
+        gpio_dev_map(LCD0_QSPI_RESET_PIN, 0);
+        bk_gpio_enable_pull(LCD0_QSPI_RESET_PIN);
+        bk_gpio_pull_up(LCD0_QSPI_RESET_PIN);
+        rtos_delay_milliseconds(10);
+        bk_gpio_pull_down(LCD0_QSPI_RESET_PIN);
+        rtos_delay_milliseconds(10);
+        bk_gpio_pull_up(LCD0_QSPI_RESET_PIN);
+        rtos_delay_milliseconds(120);
+    } else {
+        gpio_dev_unmap(LCD1_QSPI_RESET_PIN);
+        gpio_dev_map(LCD1_QSPI_RESET_PIN, 0);
+        bk_gpio_enable_pull(LCD1_QSPI_RESET_PIN);
+        bk_gpio_pull_up(LCD1_QSPI_RESET_PIN);
+        rtos_delay_milliseconds(10);
+        bk_gpio_pull_down(LCD1_QSPI_RESET_PIN);
+        rtos_delay_milliseconds(10);
+        bk_gpio_pull_up(LCD1_QSPI_RESET_PIN);
+        rtos_delay_milliseconds(120);
+    }
+#else
     gpio_dev_unmap(LCD_QSPI_RESET_PIN);
     gpio_dev_map(LCD_QSPI_RESET_PIN, 0);
     bk_gpio_enable_pull(LCD_QSPI_RESET_PIN);
@@ -168,6 +197,7 @@ static bk_err_t lcd_qspi_hardware_reset(void)
     rtos_delay_milliseconds(10);
     bk_gpio_pull_up(LCD_QSPI_RESET_PIN);
     rtos_delay_milliseconds(120);
+#endif
 
     return BK_OK;
 }
@@ -210,79 +240,6 @@ void sh8601a_set_display_mem_area(uint16 xs, uint16 xe, uint16 ys, uint16 ye)
     bk_lcd_qspi_send_cmd(0x2, 0x31, param_row,4);
 }
 #endif
-
-static bk_err_t lcd_qspi_common_init(qspi_id_t qspi_id)
-{
-    bk_err_t ret = BK_OK;
-
-    lcd_qspi_hardware_reset();
-
-    ret = rtos_init_semaphore(&lcd_qspi_semaphore, 1);
-    if (ret != kNoErr) {
-        LCD_QSPI_LOGE("lcd qspi semaphore init failed.\r\n");
-        return BK_FAIL;
-    }
-
-#if (CONFIG_SOC_BK7256XX)
-    ret = bk_dma2d_driver_init();
-    if (ret != BK_OK) {
-        LCD_QSPI_LOGE("dma2d driver init failed!\r\n");
-        return BK_FAIL;
-    }
-#if (USE_HAL_DMA2D_REGISTER_CALLBACKS == 1)
-    bk_dma2d_register_int_callback_isr(DMA2D_TRANS_COMPLETE_ISR, dma2d_transfer_complete_isr);
-    if (ret != BK_OK) {
-        LCD_QSPI_LOGE("dma2d interrupt register failed!\r\n");
-        return BK_FAIL;
-    }
-    bk_dma2d_int_enable(DMA2D_TRANS_COMPLETE, 1);
-#endif
-
-#elif CONFIG_SOC_BK7236XX
-    ret = bk_dma_driver_init();
-    if (ret != BK_OK) {
-        LCD_QSPI_LOGE("dma driver init failed!\r\n");
-        return BK_FAIL;
-    }
-
-    lcd_qspi_dma_id = bk_dma_alloc(DMA_DEV_DTCM);
-    if ((lcd_qspi_dma_id < DMA_ID_0) || (lcd_qspi_dma_id >= DMA_ID_MAX)) {
-        LCD_QSPI_LOGE("lcd qspi dma malloc failed!\r\n");
-        return BK_FAIL;
-    }
-
-#if (CONFIG_SPE)
-    bk_dma_set_src_sec_attr(lcd_qspi_dma_id, DMA_ATTR_SEC);
-    bk_dma_set_dest_sec_attr(lcd_qspi_dma_id, DMA_ATTR_SEC);
-    bk_dma_set_dest_burst_len(lcd_qspi_dma_id, BURST_LEN_INC16);
-    bk_dma_set_src_burst_len(lcd_qspi_dma_id, BURST_LEN_INC16);
-#endif
-#endif
-
-    lcd_qspi_quad_write_enable(qspi_id);
-
-    return BK_OK;
-}
-
-static bk_err_t lcd_qspi_common_deinit(void)
-{
-    bk_err_t ret = BK_OK;
-
-    ret = rtos_deinit_semaphore(&lcd_qspi_semaphore);
-    if (ret != kNoErr) {
-        LCD_QSPI_LOGE("lcd qspi semaphore deinit failed.\r\n");
-        return BK_FAIL;
-    }
-
-#if (CONFIG_SOC_BK7256XX)
-    bk_dma2d_driver_deinit();
-#elif CONFIG_SOC_BK7236XX
-    bk_dma_free(DMA_DEV_DTCM, lcd_qspi_dma_id);
-//    BK_LOG_ON_ERR(bk_dma_driver_deinit());
-#endif
-
-    return BK_OK;
-}
 
 #if (CONFIG_SOC_BK7256XX)
 static void bk_lcd_qspi_dma2d_fill(uint32_t width, uint32_t height, uint32_t color, bool data_reverse)
@@ -478,18 +435,18 @@ static bk_err_t lcd_qspi_refresh_by_line_lcd_head_config(qspi_id_t qspi_id, cons
             head_cmd[i] = 0x0;
             continue;
         } else {
-        cmd[i] = ((cmd[i] >> 4) & 0x0F) | ((cmd[i] << 4) & 0xF0);
-        cmd[i] = ((cmd[i] >> 2) & 0x33) | ((cmd[i] << 2) & 0xCC);
-        cmd[i] = ((cmd[i] >> 1) & 0x55) | ((cmd[i] << 1) & 0xAA);
+        uint8_t cmd_temp = cmd[i];
+        cmd_temp = ((cmd_temp >> 4) & 0x0F) | ((cmd_temp << 4) & 0xF0);
+        cmd_temp = ((cmd_temp >> 2) & 0x33) | ((cmd_temp << 2) & 0xCC);
+        cmd_temp = ((cmd_temp >> 1) & 0x55) | ((cmd_temp << 1) & 0xAA);
 
-        head_cmd[i] = ((cmd[i] << 21) & 0x10000000) | ((cmd[i] << 18) & 0x01000000) |
-                      ((cmd[i] << 15) & 0x00100000) | ((cmd[i] << 12) & 0x00010000) |
-                      ((cmd[i] << 9) & 0x00001000) | ((cmd[i] << 6) & 0x00000100) |
-                      ((cmd[i] << 3) & 0x00000010) | (cmd[i] & 0x00000001);
+        head_cmd[i] = ((cmd_temp << 21) & 0x10000000) | ((cmd_temp << 18) & 0x01000000) |
+                      ((cmd_temp << 15) & 0x00100000) | ((cmd_temp << 12) & 0x00010000) |
+                      ((cmd_temp << 9) & 0x00001000) | ((cmd_temp << 6) & 0x00000100) |
+                      ((cmd_temp << 3) & 0x00000010) | (cmd_temp & 0x00000001);
         }
     }
 
-    qspi_hal_enable_soft_reset(&s_lcd_qspi[qspi_id].hal);
     qspi_hal_set_lcd_head_cmd0(&s_lcd_qspi[qspi_id].hal, head_cmd[0]);
     qspi_hal_set_lcd_head_cmd1(&s_lcd_qspi[qspi_id].hal, head_cmd[1]);
     qspi_hal_set_lcd_head_cmd2(&s_lcd_qspi[qspi_id].hal, head_cmd[2]);
@@ -535,36 +492,80 @@ bk_err_t bk_lcd_qspi_init(qspi_id_t qspi_id, const lcd_device_t *device)
         return BK_FAIL;
     }
 
+    lcd_qspi_hardware_reset(qspi_id);
+
     ret = lcd_qspi_driver_init(qspi_id, device->qspi->clk);
     if (ret != BK_OK) {
         LCD_QSPI_LOGE("lcd qspi driver init failed!\r\n");
         return ret;
     }
 
-    ret = lcd_qspi_common_init(qspi_id);
-    if (ret == BK_FAIL) {
-        LCD_QSPI_LOGE("lcd qspi common init failed!\r\n");
-        return ret;
-    }
-
-#if CONFIG_SOC_BK7236XX
-    dma_repeat_once_len = lcd_qspi_get_dma_repeat_once_len(device);
-    LCD_QSPI_LOGI("dma_repeat_once_len = %d\r\n", dma_repeat_once_len);
-    bk_dma_set_transfer_len(lcd_qspi_dma_id, dma_repeat_once_len);
-    if (qspi_id == QSPI_ID_0) {
-        dma_set_dst_pause_addr(lcd_qspi_dma_id, LCD_QSPI0_DATA_ADDR + device->qspi->frame_len);
-    } else if (qspi_id == QSPI_ID_1) {
-        dma_set_dst_pause_addr(lcd_qspi_dma_id, LCD_QSPI1_DATA_ADDR + device->qspi->frame_len);
-    } else {
-        LCD_QSPI_LOGE("unsupported lcd qspi id\r\n");
+#if (CONFIG_SOC_BK7256XX)
+    ret = rtos_init_semaphore(&lcd_qspi_semaphore, 1);
+    if (ret != kNoErr) {
+        LCD_QSPI_LOGE("lcd qspi semaphore init failed.\r\n");
         return BK_FAIL;
     }
 
+    ret = bk_dma2d_driver_init();
+    if (ret != BK_OK) {
+        LCD_QSPI_LOGE("dma2d driver init failed!\r\n");
+        return BK_FAIL;
+    }
+
+#if (USE_HAL_DMA2D_REGISTER_CALLBACKS == 1)
+    bk_dma2d_register_int_callback_isr(DMA2D_TRANS_COMPLETE_ISR, dma2d_transfer_complete_isr);
+    if (ret != BK_OK) {
+        LCD_QSPI_LOGE("dma2d interrupt register failed!\r\n");
+        return BK_FAIL;
+    }
+    bk_dma2d_int_enable(DMA2D_TRANS_COMPLETE, 1);
+#endif
+
+#elif (CONFIG_SOC_BK7236XX)
+    if (lcd_qspi_dma_is_init == 0) {
+        ret = rtos_init_semaphore(&lcd_qspi_semaphore, 1);
+        if (ret != kNoErr) {
+            LCD_QSPI_LOGE("lcd qspi semaphore init failed.\r\n");
+            return BK_FAIL;
+        }
+
+        ret = bk_dma_driver_init();
+        if (ret != BK_OK) {
+            LCD_QSPI_LOGE("dma driver init failed!\r\n");
+            return BK_FAIL;
+        }
+
+        lcd_qspi_dma_id = bk_dma_alloc(DMA_DEV_DTCM);
+        if ((lcd_qspi_dma_id < DMA_ID_0) || (lcd_qspi_dma_id >= DMA_ID_MAX)) {
+            LCD_QSPI_LOGE("lcd qspi dma malloc failed!\r\n");
+            return BK_FAIL;
+        }
+
+        #if (CONFIG_SPE)
+            bk_dma_set_src_sec_attr(lcd_qspi_dma_id, DMA_ATTR_SEC);
+            bk_dma_set_dest_sec_attr(lcd_qspi_dma_id, DMA_ATTR_SEC);
+            bk_dma_set_dest_burst_len(lcd_qspi_dma_id, BURST_LEN_INC16);
+            bk_dma_set_src_burst_len(lcd_qspi_dma_id, BURST_LEN_INC16);
+        #endif
+
+        dma_repeat_once_len = lcd_qspi_get_dma_repeat_once_len(device);
+        LCD_QSPI_LOGI("dma_repeat_once_len = %d\r\n", dma_repeat_once_len);
+        bk_dma_set_transfer_len(lcd_qspi_dma_id, dma_repeat_once_len);
+
+        lcd_qspi_dma_is_init = 1;
+    }
+
+    qspi_hal_disable_soft_reset(&s_lcd_qspi[qspi_id].hal);
+    delay_us(10);
     qspi_hal_enable_soft_reset(&s_lcd_qspi[qspi_id].hal);
+
     if (device->qspi->refresh_method == LCD_QSPI_REFRESH_BY_LINE) {
         lcd_qspi_refresh_by_line_lcd_head_config(qspi_id, device);
     }
 #endif
+
+    lcd_qspi_quad_write_enable(qspi_id);
 
     if (device->qspi->init_cmd != NULL) {
         const lcd_qspi_init_cmd_t *init = device->qspi->init_cmd;
@@ -588,13 +589,31 @@ bk_err_t bk_lcd_qspi_deinit(qspi_id_t qspi_id)
 {
     bk_err_t ret = BK_OK;
 
-    ret = lcd_qspi_common_deinit();
-    if (ret == BK_FAIL) {
-        LCD_QSPI_LOGE("lcd qspi common deinit failed!\r\n");
-        return ret;
+#if (CONFIG_SOC_BK7256XX)
+    ret = rtos_deinit_semaphore(&lcd_qspi_semaphore);
+    if (ret != kNoErr) {
+        LCD_QSPI_LOGE("lcd qspi semaphore deinit failed.\r\n");
+        return BK_FAIL;
     }
 
+    bk_dma2d_driver_deinit();
+#elif CONFIG_SOC_BK7236XX
+    if (lcd_qspi_dma_is_init == 1) {
+        ret = rtos_deinit_semaphore(&lcd_qspi_semaphore);
+        if (ret != kNoErr) {
+            LCD_QSPI_LOGE("lcd qspi semaphore deinit failed.\r\n");
+            return BK_FAIL;
+        }
+
+        bk_dma_free(DMA_DEV_DTCM, lcd_qspi_dma_id);
+//        BK_LOG_ON_ERR(bk_dma_driver_deinit());
+
+        lcd_qspi_dma_is_init = 0;
+    }
+#endif
+
     BK_LOG_ON_ERR(bk_qspi_deinit(qspi_id));
+    s_lcd_qspi_flag = 1;
 
     return BK_OK;
 }
@@ -678,8 +697,10 @@ bk_err_t bk_lcd_qspi_send_data(qspi_id_t qspi_id, const lcd_device_t *device, ui
     }
 #elif (CONFIG_SOC_BK7236XX)
     if (qspi_id == QSPI_ID_0) {
+        dma_set_dst_pause_addr(lcd_qspi_dma_id, LCD_QSPI0_DATA_ADDR + device->qspi->frame_len);
         bk_dma_stateless_judgment_configuration((void *)LCD_QSPI0_DATA_ADDR, (void *)data, data_len, lcd_qspi_dma_id, (void *)lcd_qspi_dma_finish_isr);
     } else if (qspi_id == QSPI_ID_1) {
+        dma_set_dst_pause_addr(lcd_qspi_dma_id, LCD_QSPI1_DATA_ADDR + device->qspi->frame_len);
         bk_dma_stateless_judgment_configuration((void *)LCD_QSPI1_DATA_ADDR, (void *)data, data_len, lcd_qspi_dma_id, (void *)lcd_qspi_dma_finish_isr);
     } else {
         LCD_QSPI_LOGE("unsupported lcd qspi id\r\n");

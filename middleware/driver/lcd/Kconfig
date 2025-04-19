@@ -4,8 +4,14 @@ menu "LCD"
 		default n
 
 	config LCD_QSPI
+        depends on QSPI
 		bool "Enable LCD QSPI"
 		default n
+
+	config LCD_QSPI_DEVICE_NUM
+		depends on LCD_QSPI
+		int "Set lcd qspi device number"
+		default 1
 
 	config LCD_QSPI_COLOR_DEPTH_BYTE
 		depends on LCD_QSPI
@@ -22,4 +28,13 @@ menu "LCD"
 	config LCD_BACKLIGHT_GPIO_CTRL
 		bool "Enable lcd backlight gpio ctrl"
 		default n
+
+	config LCD_SPI
+		bool "Enable LCD SPI"
+		default n
+
+	config LCD_SPI_DEVICE_NUM
+		depends on LCD_SPI
+		int "Set lcd spi device number"
+		default 1
 endmenu

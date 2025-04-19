@@ -3,7 +3,7 @@
 #include <os/str.h>
 #include <os/os.h>
 #include <stdlib.h>
-#include <driver/lcd_spi.h>
+#include <driver/lcd_spi_io.h>
 #include <driver/gpio.h>
 #include "bk_misc.h"
 #include <driver/hal/hal_gpio_types.h>

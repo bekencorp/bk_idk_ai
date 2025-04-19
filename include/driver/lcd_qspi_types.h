@@ -21,10 +21,15 @@
 extern "C" {
 #endif
 
+#if (CONFIG_LCD_QSPI_DEVICE_NUM > 1)
+#define LCD_QSPI_ID0    QSPI_ID_0
+#define LCD_QSPI_ID1    QSPI_ID_1
+#else
 #ifdef CONFIG_LCD_QSPI_ID
 #define LCD_QSPI_ID     CONFIG_LCD_QSPI_ID
 #else
 #define LCD_QSPI_ID     QSPI_ID_0
+#endif
 #endif
 
 #if CONFIG_SOC_BK7256XX
@@ -35,10 +40,16 @@ extern "C" {
 #if CONFIG_SOC_BK7236XX
 #define LCD_QSPI0_DATA_ADDR     0x64000000
 #define LCD_QSPI1_DATA_ADDR     0x68000000
+
+#if (CONFIG_LCD_QSPI_DEVICE_NUM > 1)
+#define LCD0_QSPI_RESET_PIN     GPIO_46
+#define LCD1_QSPI_RESET_PIN     GPIO_45
+#else
 #ifdef CONFIG_LCD_QSPI_RESET_PIN
 #define LCD_QSPI_RESET_PIN      CONFIG_LCD_QSPI_RESET_PIN
 #else
 #define LCD_QSPI_RESET_PIN      GPIO_40
+#endif
 #endif
 #endif
 

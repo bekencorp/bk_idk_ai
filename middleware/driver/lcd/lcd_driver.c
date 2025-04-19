@@ -28,7 +28,7 @@
 #include <driver/hal/hal_gpio_types.h>
 #include <driver/hal/hal_lcd_types.h>
 #include <driver/timer.h>
-#include <driver/lcd_spi.h>
+#include <driver/lcd_spi_io.h>
 #include <driver/pwm.h>
 #include <driver/gpio.h>
 #include <driver/flash.h>
@@ -38,6 +38,10 @@
 #if CONFIG_LCD_QSPI
 #include <driver/lcd_qspi.h>
 #include <driver/lcd_qspi_types.h>
+#endif
+
+#if CONFIG_LCD_SPI
+#include <driver/lcd_spi.h>
 #endif
 
 #define TAG "lcd_drv"
@@ -1133,12 +1137,27 @@ bk_err_t lcd_driver_init(const lcd_device_t *device)
 		bk_lcd_8080_init(device);
 		lcd_hal_mcu_set_in_out_format(device->src_fmt, device->out_fmt);
 	}
-#if CONFIG_LCD_QSPI
-	else if (device->type == LCD_TYPE_QSPI)
-	{
-        bk_lcd_qspi_disp_open(LCD_QSPI_ID, device);
+    else if (device->type == LCD_TYPE_QSPI)
+    {
+    #if CONFIG_LCD_QSPI
+        #if (CONFIG_LCD_QSPI_DEVICE_NUM > 1)
+            bk_lcd_qspi_init(LCD_QSPI_ID0, device);
+            bk_lcd_qspi_init(LCD_QSPI_ID1, device);
+        #else
+            bk_lcd_qspi_disp_open(LCD_QSPI_ID, device);
+        #endif
+    #endif
     }
-#endif
+    else if (device->type == LCD_TYPE_SPI) {
+    #if CONFIG_LCD_SPI
+        #if (CONFIG_LCD_SPI_DEVICE_NUM > 1)
+            lcd_spi_init(LCD_SPI_ID0, device);
+            lcd_spi_init(LCD_SPI_ID1, device);
+        #else
+            lcd_spi_init(LCD_SPI_ID, device);
+        #endif
+    #endif
+    }
 
 	uint64_t before, after;
 #if CONFIG_ARCH_RISCV
@@ -1191,12 +1210,28 @@ bk_err_t lcd_driver_deinit(void)
 			goto out;
 		}
 	}
-#if CONFIG_LCD_QSPI
     else if (s_lcd.device.type == LCD_TYPE_QSPI)
     {
-        bk_lcd_qspi_disp_close(LCD_QSPI_ID);
+    #if CONFIG_LCD_QSPI
+        #if (CONFIG_LCD_QSPI_DEVICE_NUM > 1)
+            bk_lcd_qspi_deinit(LCD_QSPI_ID0);
+            bk_lcd_qspi_deinit(LCD_QSPI_ID1);
+        #else
+            bk_lcd_qspi_disp_close(LCD_QSPI_ID);
+        #endif
+    #endif
     }
-#endif
+    else if (s_lcd.device.type == LCD_TYPE_SPI)
+    {
+    #if CONFIG_LCD_SPI
+        #if (CONFIG_LCD_SPI_DEVICE_NUM > 1)
+            lcd_spi_deinit(LCD_SPI_ID0);
+            lcd_spi_deinit(LCD_SPI_ID1);
+        #else
+            lcd_spi_deinit(LCD_SPI_ID);
+        #endif
+    #endif
+    }
 
 	out:
 	bk_lcd_driver_deinit();

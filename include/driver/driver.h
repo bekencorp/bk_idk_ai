@@ -35,7 +35,7 @@
 #include "jpeg_dec.h"
 #include "jpeg_enc.h"
 #include "lcd.h"
-#include "lcd_spi.h"
+#include "lcd_spi_io.h"
 #include "mailbox_channel.h"
 #include "mailbox.h"
 #include "media_types.h"
