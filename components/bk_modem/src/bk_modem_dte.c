@@ -86,7 +86,7 @@ void bk_modem_dte_handle_modem_check(void)
         if (!bk_modem_dce_send_at())
         {
             port_check_cnt++;
-            if (port_check_cnt >= 5)
+            if (port_check_cnt >= 2)
             {
                 bk_modem_env.port_idx++;
                 if (bk_modem_env.port_idx == bk_modem_env.port_num)

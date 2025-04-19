@@ -33,12 +33,12 @@ bool bk_modem_dce_check_register(void)
 
 bool bk_modem_dce_set_apn(void)
 {
-    return (BK_OK == bk_modem_at_cgdcont(1,"ipv4v6","apn_name"));
+    return (BK_OK == bk_modem_at_cgdcont(1,"ipv4v6",""));
 }
 
 bool bk_modem_dce_check_attach(void)
 {
-    return (BK_OK == bk_modem_at_cgdcont_check());
+    return (BK_OK == bk_modem_at_get_ps_reg());
 }
 
 bool bk_modem_dce_start_ppp(void)

@@ -20,11 +20,14 @@
 #define AT_CGDCONT				"AT+CGDCONT?\r"
 #define AT_CFUN_0				"AT+CFUN=0\r"
 #define AT_CFUN_1				"AT+CFUN=1\r"
+#define AT_CGREG				"AT+CGREG?\r"
 
 #define AT_RSP_OK				"OK"
 #define AT_RSP_ERROR			"ERROR"
 #define AT_RSP_CONNECT			"CONNECT"
 #define AT_RSP_CPIN				"+CPIN: READY"
+#define AT_RSP_CGREG1			"+CGREG: 0,1"
+#define AT_RSP_CGREG5			"+CGREG: 0,5"
 
 //AT
 bk_err_t bk_modem_at_ready(void);
@@ -64,5 +67,5 @@ void bk_modem_at_rcv_resp(const char *resp,uint32_t len);
 bk_err_t bk_modem_at_init(void);
 bk_err_t bk_modem_at_dinit(void);
 bk_err_t bk_modem_at_cfun(uint8_t value);
-
+bk_err_t bk_modem_at_get_ps_reg(void);
 #endif
