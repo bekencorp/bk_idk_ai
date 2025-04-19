@@ -32,6 +32,11 @@ bool g_modem_at_timer_cb_handle = false;
 bk_err_t bk_modem_at_init(void)
 {
 	bk_err_t ret = BK_FAIL;
+	if (g_modem_at_semaphore != NULL)
+	{
+		BK_MODEM_LOGI("sem already exist\r\n");
+		return BK_FAIL;
+	}
 	ret = rtos_init_semaphore(&g_modem_at_semaphore, 32);
 	if (kNoErr != ret)
 	{
@@ -47,6 +52,7 @@ bk_err_t bk_modem_at_dinit(void)
 	if (g_modem_at_semaphore != NULL)
 	{
 		ret = rtos_deinit_semaphore(&g_modem_at_semaphore);
+		g_modem_at_semaphore = NULL;
 		if (kNoErr != ret)
 		{
 			BK_MODEM_LOGI("sem dinit fail[%d]!\r\n", ret);
