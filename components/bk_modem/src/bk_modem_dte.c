@@ -65,7 +65,7 @@ void bk_modem_dte_handle_modem_check(void)
 {
     uint8_t temp_flag = 0xff;
     static uint8_t sim_check_cnt = 0;
-    uint32_t retry_time;
+    uint32_t retry_time = 0;
     do
     {
         // disc state will be set to wait modem conn
@@ -113,7 +113,7 @@ void bk_modem_dte_handle_modem_check(void)
         
     }while(0);
 
-    retry_time = 1000;/// just try every 1s
+    retry_time = 3000;
 
     if ((temp_flag == 2) && (sim_check_cnt > 10))
     {
@@ -141,9 +141,21 @@ void bk_modem_dte_handle_modem_check(void)
 
 retry:    
     BK_MODEM_LOGI("%s: modem check fail %d\r\n", __func__, temp_flag);
-    rtos_delay_milliseconds(retry_time);
-    bk_modem_set_state(MODEM_CHECK);
-    bk_modem_send_msg(MSG_MODEM_CHECK, 0,0,0);
+    if (temp_flag == 1)
+    {
+        bk_modem_usbh_close();
+        bk_modem_power_off_modem();    
+        rtos_delay_milliseconds(retry_time);
+        bk_modem_set_state(MSG_MODEM_CONN_IND);
+        bk_modem_power_on_modem();          
+        bk_modem_usbh_poweron_ind();
+    }
+    else
+    {
+        rtos_delay_milliseconds(retry_time);
+        bk_modem_set_state(MODEM_CHECK);
+        bk_modem_send_msg(MSG_MODEM_CHECK, 0,0,0);
+    }
 }
 
 void bk_modem_dte_handle_ppp_start(void)
@@ -199,9 +211,21 @@ void bk_modem_dte_handle_ppp_start(void)
 
 retry:
     BK_MODEM_LOGI("%s: ppp dail fail%d\r\n", __func__, temp_flag);    
-    rtos_delay_milliseconds(500);
-    bk_modem_set_state(MODEM_CHECK);
-    bk_modem_send_msg(MSG_MODEM_CHECK, 0,0,0);
+    if ((temp_flag == 2) || (temp_flag == 3))
+    {
+        bk_modem_usbh_close();
+        bk_modem_power_off_modem();    
+        rtos_delay_milliseconds(3000);
+        bk_modem_set_state(MSG_MODEM_CONN_IND);
+        bk_modem_power_on_modem();          
+        bk_modem_usbh_poweron_ind();
+    }
+    else    
+    {
+        rtos_delay_milliseconds(3000);
+        bk_modem_set_state(MODEM_CHECK);
+        bk_modem_send_msg(MSG_MODEM_CHECK, 0,0,0);
+    }
 }
 
 void bk_modem_dte_handle_ppp_connect_ind(void)

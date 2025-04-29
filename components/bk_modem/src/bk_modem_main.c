@@ -26,14 +26,6 @@ static void bk_modem_thread_main(void *args)
 {
     int ret;
     BUS_MSG_T msg;
-
-    #if CONFIG_SYS_CPU1
-    bk_pm_module_vote_boot_cp1_ctrl(PM_BOOT_CP1_MODULE_NAME_BK_MODEM, PM_POWER_MODULE_STATE_ON);
-    rtos_delay_milliseconds(3000);
-    #endif
-    
-    bk_modem_usbh_poweron_ind();
-    bk_modem_power_on_modem();
     
     while (1) 
     {
@@ -86,6 +78,14 @@ static void bk_modem_thread_main(void *args)
                 break;
             }            
 
+            case MSG_MODEM_USBH_POWER_ON:
+            {
+                rtos_delay_milliseconds(3000);
+                bk_modem_power_on_modem();              
+                bk_modem_usbh_poweron_ind();
+                break;
+            }  
+            
             default:
             {
                 BK_MODEM_LOGI("%s: error!", __func__);
@@ -181,6 +181,12 @@ bk_err_t bk_modem_init(void)
     {
         goto thread_fail;
     }
+
+    #if CONFIG_SYS_CPU1
+    bk_pm_module_vote_boot_cp1_ctrl(PM_BOOT_CP1_MODULE_NAME_BK_MODEM, PM_POWER_MODULE_STATE_ON);
+    #endif
+
+    bk_modem_send_msg(MSG_MODEM_USBH_POWER_ON, 0, 0, 0);
 
     bk_modem_status = 1;
     return BK_OK;

@@ -27,6 +27,8 @@ enum bk_modem_msg_e
     MSG_PPP_STOP,
     /// MODEM DISC
     MSG_MODEM_DISC_IND,
+    /// POWER ON CPU1
+    MSG_MODEM_USBH_POWER_ON,
 };
 
 enum bk_modem_state_e
