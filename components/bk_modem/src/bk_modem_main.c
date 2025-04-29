@@ -13,6 +13,7 @@
 #include "bk_modem_usbh_if.h"
 #include "../../include/os/os.h"
 #include "common/bk_err.h"
+#include "../../include/driver/pwr_clk.h"
  
 beken_thread_t bk_modem_thread = NULL;
 beken_queue_t bk_modem_queue = NULL;
@@ -26,6 +27,14 @@ static void bk_modem_thread_main(void *args)
     int ret;
     BUS_MSG_T msg;
 
+    #if CONFIG_SYS_CPU1
+    bk_pm_module_vote_boot_cp1_ctrl(PM_BOOT_CP1_MODULE_NAME_BK_MODEM, PM_POWER_MODULE_STATE_ON);
+    rtos_delay_milliseconds(3000);
+    #endif
+    
+    bk_modem_usbh_poweron_ind();
+    bk_modem_power_on_modem();
+    
     while (1) 
     {
         ret = rtos_pop_from_queue(&bk_modem_queue, &msg, BEKEN_WAIT_FOREVER);
@@ -106,6 +115,10 @@ void bk_modem_del_resource(void)
     bk_modem_usbh_close();
     bk_modem_power_off_modem();    
     bk_modem_status = 0;
+    
+    #if CONFIG_SYS_CPU1
+    bk_pm_module_vote_boot_cp1_ctrl(PM_BOOT_CP1_MODULE_NAME_BK_MODEM, PM_POWER_MODULE_STATE_OFF);
+    #endif    
 }
 
 void bk_modem_deinit(void)
@@ -168,10 +181,6 @@ bk_err_t bk_modem_init(void)
     {
         goto thread_fail;
     }
-    
-    bk_modem_usbh_poweron_ind();
-
-    bk_modem_power_on_modem();
 
     bk_modem_status = 1;
     return BK_OK;

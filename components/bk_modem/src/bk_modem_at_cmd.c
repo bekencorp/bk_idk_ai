@@ -82,6 +82,7 @@ static bk_err_t bk_modem_at_rsp_analysis(uint8_t *cmd,uint8_t *resp)
 			if (!((NULL != os_strstr((const char *)resp, AT_RSP_CGREG1))
 				|| (NULL != os_strstr((const char *)resp, AT_RSP_CGREG5))))
 			{
+				BK_MODEM_LOGI("at_rsp_analysis: rsp is fail, resp %s\r\n", resp);              
 		              return BK_FAIL;
 			}
 		}
@@ -95,6 +96,7 @@ static bk_err_t bk_modem_at_rsp_analysis(uint8_t *cmd,uint8_t *resp)
 		{
 			return BK_OK;
 		}
+		BK_MODEM_LOGI("at_rsp_analysis: rsp is fail, resp %s\r\n", resp);        
 		return BK_FAIL;
 	}
 }
