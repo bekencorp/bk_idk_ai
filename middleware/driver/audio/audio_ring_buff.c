@@ -16,6 +16,7 @@ void ring_buffer_init(RingBufferContext* rb, uint8_t* addr, uint32_t capacity, d
     rb->rp       = 0;
     rb->dma_id      = dma_id;
     rb->dma_type = dma_type;
+    rb->full_flag = false;
 
     if(dma_id != DMA_ID_MAX)
     {
@@ -36,6 +37,7 @@ void ring_buffer_clear(RingBufferContext* rb)
 {
     rb->wp = 0;
     rb->rp = 0;
+    rb->full_flag = false;
 
     if(rb->dma_id != DMA_ID_MAX)
     {
@@ -130,6 +132,10 @@ uint32_t ring_buffer_read(RingBufferContext* rb, uint8_t* buffer, uint32_t size)
         dma_channel_dst_curr_address_set(rb->dma, (uint32_t)&rb->address[rb->rp]);
     }
     #endif
+    if(true == rb->full_flag)
+    {
+        rb->full_flag = false;
+    }
 
     return read_bytes;
 }
@@ -140,6 +146,11 @@ uint32_t ring_buffer_write(RingBufferContext* rb, uint8_t* buffer, uint32_t size
     uint32_t write_bytes = size;
     uint32_t rp;
 
+    if(true == rb->full_flag)
+    {
+        return 0;
+    }
+    
     if(write_bytes == 0) return 0;
 
     if((rb->dma_id != DMA_ID_MAX) && (rb->dma_type == RB_DMA_TYPE_READ))
@@ -195,6 +206,11 @@ uint32_t ring_buffer_write(RingBufferContext* rb, uint8_t* buffer, uint32_t size
         }
     }
 
+    if(rb->wp == rb->rp)
+    {
+        rb->full_flag = true;
+    }
+
     if(rb->wp >= rb->capacity && rb->rp)
     {
         rb->wp = 0;
@@ -243,6 +259,11 @@ uint32_t ring_buffer_get_fill_size(RingBufferContext* rb)
     }
 
     fill_size = wp >= rp ? wp - rp : rb->capacity - rp + wp;
+
+    if(true == rb->full_flag)
+    {
+        fill_size = rb->capacity;
+    }
 
     return fill_size;
 }

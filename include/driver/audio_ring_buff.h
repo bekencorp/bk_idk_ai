@@ -40,6 +40,7 @@ typedef struct _RingBufferContext
     //void*    dma;
     dma_id_t dma_id;
     uint32_t dma_type;
+    uint32_t full_flag;   /**< RingBuffer full flag     */
 }RingBufferContext;
 
 /**
