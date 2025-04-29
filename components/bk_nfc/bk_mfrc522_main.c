@@ -95,4 +95,13 @@ void nfc_get_id_task(void)
                     2048,
                     NULL);
 }
+
+void nfc_delete_get_id_task(void)
+{
+    if(nfc_test_thread)
+    {
+        rtos_delete_thread(&nfc_test_thread);
+        nfc_test_thread = NULL;
+    }
+}
 /****************************************************END OF FILE****************************************************/

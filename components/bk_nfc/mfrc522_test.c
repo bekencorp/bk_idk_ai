@@ -7,7 +7,9 @@
 #include "board_mfrc522.h"
 #include "components/bk_nfc.h"
 #include "cli.h"
+#include <driver/gpio.h>
 
+extern bk_err_t bk_pm_module_vote_ctrl_external_ldo(gpio_ctrl_ldo_module_e module,gpio_id_t gpio_id,gpio_output_state_e value);
 /**
  @brief 测试MFRC522的功能， Search for card --防碰撞---选定卡---验证卡片密码--写数据---读数据
 */
@@ -21,6 +23,7 @@ static int nfc_test_main(void)
 	uint8_t status;
 
 	MFRC522_LOGI("enter test !!!!!!!\n\r",__FUNCTION__);
+	bk_pm_module_vote_ctrl_external_ldo(GPIO_CTRL_LDO_MODULE_NFC, CONFIG_LDO3V3_CTRL_GPIO, GPIO_OUTPUT_STATE_HIGH);
 	bk_nfc_init();
 	while(1)
 	{
@@ -116,6 +119,7 @@ static int nfc_test_main(void)
 			}
 			memset(Card_Data,0,16);
 			bk_nfc_deinit();
+			bk_pm_module_vote_ctrl_external_ldo(GPIO_CTRL_LDO_MODULE_NFC, CONFIG_LDO3V3_CTRL_GPIO, GPIO_OUTPUT_STATE_LOW);
 		}
 		return 0 ;
 	}
@@ -142,7 +146,7 @@ static void cli_nfc_cmd_test(char *pcWriteBuffer, int xWriteBufferLen, int argc,
 		MFRC522_LOGI("param is invaild !!!!!!!\n\r",__FUNCTION__);
 		return;
 	}
-
+	bk_pm_module_vote_ctrl_external_ldo(GPIO_CTRL_LDO_MODULE_NFC, CONFIG_LDO3V3_CTRL_GPIO, GPIO_OUTPUT_STATE_HIGH);
 	if (os_strcmp(argv[1], "init") == 0) {
 		bk_nfc_init();
 		MFRC522_LOGE("init ok\n\r");
@@ -196,7 +200,12 @@ static void cli_nfc_cmd_test(char *pcWriteBuffer, int xWriteBufferLen, int argc,
 		else{
 			MFRC522_LOGI("Auth State ok\n\r");
 		}
-	} else {
+	} else if(os_strcmp(argv[1], "deinit") == 0){
+		extern void nfc_delete_get_id_task(void);
+		nfc_delete_get_id_task();
+		bk_nfc_deinit();
+		bk_pm_module_vote_ctrl_external_ldo(GPIO_CTRL_LDO_MODULE_NFC, CONFIG_LDO3V3_CTRL_GPIO, GPIO_OUTPUT_STATE_LOW);
+	}else {
 
 		return;
 	}
@@ -251,7 +260,7 @@ static void cli_nfc_write_read_test(char *pcWriteBuffer, int xWriteBufferLen, in
 #define NFC_CMD_CNT (sizeof(s_nfc_commands) / sizeof(struct cli_command))
 static const struct cli_command s_nfc_commands[] = {
 	{"nfc_test", "nfc_test", cli_nfc_test},
-	{"nfc_cmd_test", "nfc_cmd_test[init/request/anticoll/select/authState/write/read]", cli_nfc_cmd_test},
+	{"nfc_cmd_test", "nfc_cmd_test[init/request/anticoll/select/authState/write/read/deinit]", cli_nfc_cmd_test},
 	{"nfc_write_test", "nfc_write_test[mode][value]", cli_nfc_write_read_test},
 };
 
