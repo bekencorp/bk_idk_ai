@@ -146,7 +146,7 @@ retry:
         bk_modem_usbh_close();
         bk_modem_power_off_modem();    
         rtos_delay_milliseconds(retry_time);
-        bk_modem_set_state(MSG_MODEM_CONN_IND);
+        bk_modem_set_state(WAIT_MODEM_CONN);
         bk_modem_power_on_modem();          
         bk_modem_usbh_poweron_ind();
     }
@@ -216,7 +216,7 @@ retry:
         bk_modem_usbh_close();
         bk_modem_power_off_modem();    
         rtos_delay_milliseconds(3000);
-        bk_modem_set_state(MSG_MODEM_CONN_IND);
+        bk_modem_set_state(WAIT_MODEM_CONN);
         bk_modem_power_on_modem();          
         bk_modem_usbh_poweron_ind();
     }
