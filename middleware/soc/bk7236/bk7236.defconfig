@@ -1391,3 +1391,4 @@ CONFIG_BLE_USE_HIGH_POWER_LEVEL=n
 #
 # end of Modules Configuration
 # end of ARMINO Configuration
+CONFIG_RF_FIRMWARE_DYNAMIC_PARTITION=y

@@ -225,9 +225,15 @@ static void phy_sys_drv_modem_clk_ctrl_on(void)
 
 static uint32_t bk_flash_partition_get_rf_firmware_info(void)
 {
+#if CONFIG_RF_FIRMWARE_DYNAMIC_PARTITION
+    uint32_t rf_partition_start_addr = bk_flash_get_capacity_bytes() - FLASH_RF_FIRMWARE_OFFSET;
+    bk_printf("rf_partition_start_addr=%x\r\n",rf_partition_start_addr);
+    return rf_partition_start_addr;
+#else
     bk_logic_partition_t * pt = NULL;
     pt = bk_flash_partition_get_info(BK_PARTITION_RF_FIRMWARE);
     return pt->partition_start_addr;
+#endif
 }
 
 static bk_err_t bk_flash_set_protect_type_protect_none(void)

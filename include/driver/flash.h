@@ -70,7 +70,12 @@ flash_line_mode_t bk_flash_get_line_mode(void);
  * @return flash line mode
  */
 uint32_t bk_flash_get_id(void);
-
+/**
+ * @brief     Get flash capacity
+ *
+ * @return flash size with bytes
+ */
+uint32_t bk_flash_get_capacity_bytes(void);
 /**
  * @brief     Set flash clock dpll
  *

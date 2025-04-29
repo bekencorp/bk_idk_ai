@@ -9,6 +9,7 @@
 #else
 #include <driver/flash_partition.h>
 #endif
+#include <driver/flash.h>
 // #include "wlan_ui_pub.h"
 // #include "_reg_rc.h"
 #include "sys_ctrl.h"
@@ -569,8 +570,10 @@ static int bkreg_run_command_implement(const char *content, int cnt)
 		UINT32 len, len_left = 0, addr;
 		UINT8 *read_buf = (UINT8 *)&pHCItxBuf->param[OTP_CMD_RET_LEN];
 
-		rx_param        = (REGISTER_PARAM *)pHCIrxBuf->param;
-
+		rx_param = (REGISTER_PARAM *)pHCIrxBuf->param;
+#if CONFIG_RF_FIRMWARE_DYNAMIC_PARTITION
+		addr = rx_param->addr - (bk_flash_get_capacity_bytes() - FLASH_RF_FIRMWARE_OFFSET);
+#else
 #if CONFIG_FLASH_ORIGIN_API
 		bk_logic_partition_t *pt = bk_flash_get_info(BK_PARTITION_RF_FIRMWARE);
 #else
@@ -578,7 +581,8 @@ static int bkreg_run_command_implement(const char *content, int cnt)
 #endif
 		len_left = rx_param->value;
 		addr = rx_param->addr - pt->partition_start_addr;//0xFA000;
-
+#endif
+		len_left = rx_param->value;
 		while (len_left) {
 			len = (len_left > OTP_READ_MAX_LEN) ? OTP_READ_MAX_LEN : len_left;
 			len = manual_cal_read_otp_flash(addr, len, read_buf);

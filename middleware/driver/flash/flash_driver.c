@@ -810,6 +810,13 @@ bk_err_t bk_flash_write_bytes(uint32_t address, const uint8_t *user_buf, uint32_
 	return ret_val;
 }
 
+uint32_t bk_flash_get_capacity_bytes(void)
+{
+	uint32_t flash_id = bk_flash_get_id();
+	uint32_t flash_capacity_bytes = 1 << (flash_id & 0xff);
+	return flash_capacity_bytes;
+}
+
 uint32_t bk_flash_get_id(void)
 {
 	return s_flash.flash_id;
