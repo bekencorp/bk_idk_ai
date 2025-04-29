@@ -16,6 +16,7 @@
 #define INTF_DESC_bInterfaceSubClass 6 /** Interface subclass offset */
 #define INTF_DESC_iInterface         8
 
+#define INTF_ASSOC_iFUNCTION         7 /** IAD iFunction offset */
 
 #define DEV_FORMAT "/dev/ttyACM%d"
 
@@ -96,13 +97,38 @@ int usbh_cdc_acm_set_line_state(struct usbh_cdc_acm *cdc_acm_class, bool dtr, bo
 
     return usbh_control_transfer(cdc_acm_class->hport->ep0, setup, NULL);
 }
+static void usbh_cdc_get_string(uint8_t *str, char *p)
+{
+	uint8_t string[64 + 1] = { 0 };
+	int len, i = 2, j = 0;
+	len = str[0];
+//	USB_LOG_RAW("++++Len : %d\r\n", len);
+	while (i < len) {
+		string[j] = str[i];
+		i += 2;
+		j++;
+	}
+	os_memcpy(p, &string[0], os_strlen((char *)&string[0]));
+//	USB_LOG_RAW("%s---%d\r\n", string, os_strlen((char *)&string[0]));
+}
+
+static void usbh_cdc_acm_match_funtion(struct usbh_cdc_acm *cdc_acm_class, char *p)
+{
+	if (os_strcasecmp("ppp", p) == 0)    //case-insensitive
+		cdc_acm_class->function = USBH_CDC_FUNCTION_PPP;
+	else if (os_strcasecmp("at", p) == 0)
+		cdc_acm_class->function = USBH_CDC_FUNCTION_AT;
+	else
+		USB_LOG_WRN("Need Match New Function Pattern!n");
+}
 
 static int usbh_cdc_acm_connect(struct usbh_hubport *hport, uint8_t intf)
 {
-	uint8_t cur_iface       = 0xFF; __maybe_unused_var(cur_iface);
-	uint8_t cur_alt_setting = 0xFF; __maybe_unused_var(cur_alt_setting);
-	uint8_t cur_iClass      = 0xFF; __maybe_unused_var(cur_iClass);
-	uint8_t cur_nep         = 0; __maybe_unused_var(cur_nep);
+	uint8_t __maybe_unused cur_ifaceNum    = 0xFF;
+	uint8_t __maybe_unused cur_alt_setting = 0xFF;
+	uint8_t __maybe_unused cur_iClass      = 0xFF;
+	uint8_t __maybe_unused cur_nep         = 0;
+	uint8_t __maybe_unused cur_iInterface  = 0;
 	uint8_t idx = 0;
 
     int ret = 0;
@@ -115,10 +141,9 @@ static int usbh_cdc_acm_connect(struct usbh_hubport *hport, uint8_t intf)
 
     memset(cdc_acm_class, 0x00, sizeof(struct usbh_cdc_acm));
     usbh_cdc_acm_devno_alloc(cdc_acm_class);
+
     cdc_acm_class->hport = hport;
-
     cdc_acm_class->intf = intf;
-
     hport->config.intf[intf].priv = cdc_acm_class;
 
 #if 1
@@ -153,24 +178,26 @@ static int usbh_cdc_acm_connect(struct usbh_hubport *hport, uint8_t intf)
 	uint8_t *p = hport->raw_config_desc;
 	while (p[DESC_bLength]) {
 		switch (p[DESC_bDescriptorType]) {
+			case USB_DESCRIPTOR_TYPE_INTERFACE_ASSOCIATION:
+				break;
 			case USB_DESCRIPTOR_TYPE_INTERFACE:
-				cur_iface       = p[INTF_DESC_bInterfaceNumber];   // current interface number
+				cur_ifaceNum    = p[INTF_DESC_bInterfaceNumber];   // current interface number
 				cur_alt_setting = p[INTF_DESC_bAlternateSetting];
 				cur_iClass      = p[INTF_DESC_bInterfaceClass];    // current interface class
 				cur_nep         = p[INTF_DESC_bNumEndpoints];
+				cur_iInterface  = p[INTF_DESC_iInterface];
 				break;
 			case USB_DESCRIPTOR_TYPE_ENDPOINT:
-				if (cur_iface == cdc_acm_class->intf)
+				if (cur_ifaceNum == cdc_acm_class->intf)
 				{
-					os_memcpy(&hport->config.intf[cur_iface].altsetting[0].ep[idx].ep_desc, &p[DESC_bLength], p[DESC_bLength]);
+					os_memcpy(&hport->config.intf[cur_ifaceNum].altsetting[0].ep[idx].ep_desc, &p[DESC_bLength], p[DESC_bLength]);
 					idx++;
 				}
 				break;
 			default:
 				break;
 		}
-		/* skip to next descriptor */
-		p += p[DESC_bLength];
+		p += p[DESC_bLength]; /* skip to next descriptor */
 	}
 
 #if 0
@@ -194,6 +221,7 @@ static int usbh_cdc_acm_connect(struct usbh_hubport *hport, uint8_t intf)
 #endif
 	return ret;
 }
+
 
 static int usbh_cdc_acm_disconnect(struct usbh_hubport *hport, uint8_t intf)
 {
@@ -228,14 +256,13 @@ static int usbh_cdc_acm_disconnect(struct usbh_hubport *hport, uint8_t intf)
 
 static int usbh_cdc_data_connect(struct usbh_hubport *hport, uint8_t intf)
 {
-
-	uint8_t cur_iface       = 0xFF; __maybe_unused_var(cur_iface);
-	uint8_t cur_alt_setting = 0xFF; __maybe_unused_var(cur_alt_setting);
-	uint8_t cur_iClass      = 0xFF; __maybe_unused_var(cur_iClass);
-	uint8_t cur_nep         = 0;   __maybe_unused_var(cur_nep);
+	uint8_t __maybe_unused cur_iface       = 0xFF;
+	uint8_t __maybe_unused cur_alt_setting = 0xFF;
+	uint8_t __maybe_unused cur_iClass      = 0xFF;
+	uint8_t __maybe_unused cur_nep         = 0;
+	uint8_t __maybe_unused cur_iFunction   = 0;
 	uint8_t idx = 0;
-
-    int ret;
+	int ret;
 
     struct usbh_cdc_acm *cdc_acm_class = usb_malloc(sizeof(struct usbh_cdc_acm));
     if (cdc_acm_class == NULL) {
@@ -249,10 +276,9 @@ static int usbh_cdc_data_connect(struct usbh_hubport *hport, uint8_t intf)
         USB_LOG_ERR("[-]%s, ret:%d\r\n", __func__, ret);
         return ret;
     }
+
     cdc_acm_class->hport = hport;
-
     cdc_acm_class->intf = intf;
-
     hport->config.intf[intf].priv = cdc_acm_class;
 
 #ifdef CONFIG_USBHOST_CDC_ACM_NOTIFY   ///?????
@@ -265,9 +291,13 @@ static int usbh_cdc_data_connect(struct usbh_hubport *hport, uint8_t intf)
     usbh_pipe_alloc(&cdc_acm_class->intin, &ep_cfg);
 #endif
 
+	uint8_t t_iInterface = 0;
 	uint8_t *p = hport->raw_config_desc;
 	while (p[DESC_bLength]) {
 		switch (p[DESC_bDescriptorType]) {
+			case USB_DESCRIPTOR_TYPE_INTERFACE_ASSOCIATION:
+				cur_iFunction = p[INTF_ASSOC_iFUNCTION];
+				break;
 			case USB_DESCRIPTOR_TYPE_INTERFACE:
 				cur_iface       = p[INTF_DESC_bInterfaceNumber];   // current interface number
 				cur_alt_setting = p[INTF_DESC_bAlternateSetting];
@@ -278,14 +308,33 @@ static int usbh_cdc_data_connect(struct usbh_hubport *hport, uint8_t intf)
 				if (cur_iface == cdc_acm_class->intf && cur_nep!=0)
 				{
 					os_memcpy(&hport->config.intf[cur_iface].altsetting[0].ep[idx].ep_desc, &p[DESC_bLength], p[DESC_bLength]);
+					t_iInterface = cur_iFunction;
 					idx++;
 				}
 				break;
 			default:
 				break;
 		}
-		/* skip to next descriptor */
-		p += p[DESC_bLength];
+		p += p[DESC_bLength]; /* skip to next descriptor */
+	}
+
+	if (t_iInterface != 0)
+	{
+		char ttt[16] = {0};
+		uint8_t ep0_buffer[CONFIG_USBHOST_REQUEST_BUFFER_LEN];
+		struct usb_setup_packet *setup = &hport->setup;
+		/* Get string */
+		setup->bmRequestType = USB_REQUEST_DIR_IN | USB_REQUEST_STANDARD | USB_REQUEST_RECIPIENT_DEVICE;
+		setup->bRequest = USB_REQUEST_GET_DESCRIPTOR;
+		setup->wValue = (uint16_t)((USB_DESCRIPTOR_TYPE_STRING << 8) | t_iInterface);
+		setup->wIndex = 0x0409;
+		setup->wLength = 255;
+		ret = usbh_control_transfer(hport->ep0, setup, ep0_buffer);
+		if (ret < 0) {
+			USB_LOG_ERR("Failed to get string,errorcode:%d\r\n", ret);
+		}
+		usbh_cdc_get_string(ep0_buffer, &ttt[0]);
+		usbh_cdc_acm_match_funtion(cdc_acm_class, &ttt[0]);
 	}
 
 #if 0

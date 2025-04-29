@@ -9,6 +9,14 @@
 #include "usb_cdc.h"
 #include "usb_hc.h"
 
+
+enum {
+	USBH_CDC_FUNCTION_PPP = 1,
+	USBH_CDC_FUNCTION_AT,
+	USBH_CDC_FUNCTION_MAX,
+};
+
+
 struct usbh_cdc_acm {
     struct usbh_hubport *hport;
 
@@ -28,6 +36,9 @@ struct usbh_cdc_acm {
 
 	struct usbh_urb bulkout_urb;
 	struct usbh_urb bulkin_urb;
+
+	/// add function type
+	uint8_t function;
 };
 
 #ifdef __cplusplus

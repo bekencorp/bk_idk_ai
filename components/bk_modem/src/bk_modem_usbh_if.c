@@ -41,11 +41,7 @@ extern bk_err_t bk_cdc_acm_startup(void);
 extern void bk_usb_cdc_modem(void);
 extern void bk_usb_cdc_open(void);
 
-
-
 static BK_MODEM_USB_STATE_T g_modem_usb_state = MODEM_USB_IDLE;
-static uint32_t g_modem_devidx = 0;
-
 
 void bk_modem_usbh_conn_ind(uint32_t cnt)
 {
@@ -81,17 +77,6 @@ uint8_t bk_modem_get_mode(void)
 
 	return 0;
 }
-
-void bk_modem_set_usbdev_idx(uint32_t idx)
-{
-	g_modem_devidx = idx;
-}
-
-uint32_t bk_modem_get_usbdev_idx(void)
-{
-	return g_modem_devidx;
-}
-
 
 void bk_modem_usbh_close(void)
 {

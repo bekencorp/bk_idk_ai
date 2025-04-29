@@ -26,7 +26,6 @@ extern void bk_modem_usbh_bulkout_ind(char *p_tx, uint32_t l_tx);
 extern void bk_modem_usbh_bulkin_ind(uint8_t *p_rx, uint32_t l_rx);
 extern void bk_modem_usbh_poweron_ind(void);
 extern uint8_t bk_modem_get_mode(void);
-extern uint32_t bk_modem_get_usbdev_idx(void);
 
 #else
 
@@ -37,7 +36,6 @@ void bk_modem_usbh_bulkout_ind(char *p_tx, uint32_t l_tx){ }
 void bk_modem_usbh_bulkin_ind(uint8_t *p_rx, uint32_t l_rx){ }
 void bk_modem_usbh_poweron_ind(void){ }
 uint8_t bk_modem_get_mode(void){return 0}
-uint32_t bk_modem_get_usbdev_idx(void){return 0}
 #endif
 
 IPC_CDC_DATA_T *g_cdc_ipc;
@@ -75,19 +73,17 @@ static bk_err_t cdc_send_msg(uint8_t type, uint32_t param)
 	{
 		msg.type = type;
 		msg.data = param;
-
 		ret = rtos_push_to_queue(&cdc_msg_queue, &msg, BEKEN_NO_WAIT);
 		if (kNoErr != ret)
 		{
 			LOGE("cdc_send_msg Fail, ret:%d\n", ret);
-			BK_ASSERT(0);// for debug
 			return kNoResourcesErr;
 		}
 		return ret;
 	}
 	return kGeneralErr;
 }
- uint32_t queue_size_temp = 0;
+
 static bk_err_t cdc_send_rxmsg(uint8_t type, uint32_t param)
 {
 	bk_err_t ret = kNoErr;
@@ -95,26 +91,12 @@ static bk_err_t cdc_send_rxmsg(uint8_t type, uint32_t param)
 
 	if (cdc_msg_rxqueue)
 	{
-             if (type == CDC_STATUS_BULKIN_DATA)
-             {
-                queue_size_temp++;
-             }
-                
 		msg.type = type;
 		msg.data = param;
 
 		ret = rtos_push_to_queue(&cdc_msg_rxqueue, &msg, 100);//BEKEN_NO_WAIT);
-
-
-		if(queue_size_temp >= 35)
-		{
-			//LOGE("cdc_send_rxmsg too more, queue_size_temp:%d\n", queue_size_temp);
-		}
 		if (kNoErr != ret)
 		{
-			bool val = rtos_is_queue_full(&cdc_msg_rxqueue);
-			LOGE("cdc_send_rxmsg Fail, ret:%d, val:%d\n", ret, val);
-		//	BK_ASSERT(0); // for debug
 			return kNoResourcesErr;
 		}
 		return ret;
@@ -196,7 +178,6 @@ int32_t bk_cdc_acm_modem_write(char *p_tx, uint32_t l_tx)
 		LOGE("[+]%s, Transbuf overflow!\r\n", __func__);
 	}
 
-	g_multi_acm_total->idx = bk_modem_get_usbdev_idx();
 	g_multi_acm_total->mode = bk_modem_get_mode();
 
 	if (g_multi_acm_total->mode == 1) ///AT mode
@@ -209,14 +190,14 @@ int32_t bk_cdc_acm_modem_write(char *p_tx, uint32_t l_tx)
 		uint8_t * p_buf = NULL;
 		uint8_t rd = g_multi_acm_total->p_data->p_cdc_data_tx->rd;
 		uint8_t wd = g_multi_acm_total->p_data->p_cdc_data_tx->wd;
-        	while (1)
-        	{
-        		uint8_t t_rd = g_multi_acm_total->p_data->p_cdc_data_tx->rd;
-        		if (rd == t_rd)
-        			break;
-        		else
-        			rd = t_rd;
-        	}        
+    	while (1)
+    	{
+    		uint8_t t_rd = g_multi_acm_total->p_data->p_cdc_data_tx->rd;
+    		if (rd == t_rd)
+    			break;
+    		else
+    			rd = t_rd;
+    	}
 		while (1)
 		{
 			if (!_is_full(wd, rd))
@@ -241,15 +222,8 @@ int32_t bk_cdc_acm_modem_write(char *p_tx, uint32_t l_tx)
 		g_multi_acm_total->p_data->p_cdc_data_tx->data[wd]->len = l_tx;
 		os_memcpy(p_buf, p_tx, l_tx);
 
-	//	if (ret == kNoErr)
-		{
-			//rd = g_multi_acm_total->p_data->p_cdc_data_tx->rd;
-			g_multi_acm_total->p_data->p_cdc_data_tx->wd = wd;
-		}
-	//	if (!_is_empty(wd, rd))
-		{
-			cdc_send_msg(CDC_STATUS_BULKOUT_DATA, 0);
-		}
+		g_multi_acm_total->p_data->p_cdc_data_tx->wd = wd;
+		cdc_send_msg(CDC_STATUS_BULKOUT_DATA, 0);
 	}
 	return 0;
 }
@@ -570,7 +544,7 @@ static void bk_cdc_usbh_upload_ind(void)
 		else
 			wd = t_wd;
 	}
-	
+
 	LOGD("[++]%s, rd:%d, wd:%d\r\n", __func__, rd, wd);
 	while (!_is_empty(wd, rd))
 	{
@@ -582,13 +556,8 @@ static void bk_cdc_usbh_upload_ind(void)
 		}
 		g_temp_rx_len = len;
 		os_memcpy(&g_temp_rx_buf[0], p_buf, g_temp_rx_len);
-		//g_multi_acm_total->p_data->p_cdc_data_rx->rd = rd;
-		//if (g_multi_acm_total->p_data->p_cdc_data_rx->rd >= CDC_RX_CIRBUFFER_NUM)
-		//{
-			//g_multi_acm_total->p_data->p_cdc_data_rx->rd = 0;
-		//}
+
 		bk_modem_usbh_bulkin_ind(&g_temp_rx_buf[0], g_temp_rx_len);
-		//rd = g_multi_acm_total->p_data->p_cdc_data_rx->rd;
 	}
 	g_multi_acm_total->p_data->p_cdc_data_rx->rd = rd;
 }
@@ -610,8 +579,6 @@ static void bk_cdc_demo_rxtask(beken_thread_arg_t arg)
 					g_multi_acm_total->p_cmd->p_cdc_cmd_rx->l_rx = 0;
 					break;
 				case CDC_STATUS_BULKIN_DATA:
-					//extern uin32_t queue_size_temp;
-					queue_size_temp--;
 					bk_cdc_usbh_upload_ind();
 					break;
 				default:

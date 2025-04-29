@@ -58,14 +58,13 @@ void bk_modem_dte_handle_conn_ind(BUS_MSG_T *msg)
     bk_modem_env.port_num = (uint8_t)msg->arg;
     bk_modem_set_state(MODEM_CHECK);
     bk_modem_send_msg(MSG_MODEM_CHECK, 0,0,0);
-    bk_modem_env.bk_modem_ppp_mode = PPP_INIT_MODE;    
+    bk_modem_env.bk_modem_ppp_mode = PPP_INIT_MODE;
 }
 
 void bk_modem_dte_handle_modem_check(void)
 {
     uint8_t temp_flag = 0xff;
     static uint8_t sim_check_cnt = 0;
-    static uint8_t port_check_cnt = 0;
     uint32_t retry_time;
     do
     {
@@ -80,25 +79,14 @@ void bk_modem_dte_handle_modem_check(void)
             temp_flag = 0;
             break;
         }
-        
+
         bk_modem_env.bk_modem_ppp_mode = PPP_CMD_MODE;
-        bk_modem_set_usbdev_idx(bk_modem_env.port_idx);
         if (!bk_modem_dce_send_at())
         {
-            port_check_cnt++;
-            if (port_check_cnt >= 2)
-            {
-                bk_modem_env.port_idx++;
-                if (bk_modem_env.port_idx == bk_modem_env.port_num)
-                {
-                    bk_modem_env.port_idx = 0;
-                }
-                port_check_cnt = 0;
-            }
             temp_flag = 1;
             break;
         }
-        
+
         if (!bk_modem_dce_check_sim())
         {
             temp_flag = 2;
@@ -118,7 +106,6 @@ void bk_modem_dte_handle_modem_check(void)
             break;
         }
         sim_check_cnt = 0;
-        port_check_cnt = 0;
         bk_modem_set_state(PPP_START);
         bk_modem_send_msg(MSG_PPP_START, 0,0,0);
         BK_MODEM_LOGI("%s: modem check pass\r\n", __func__);
@@ -153,7 +140,7 @@ void bk_modem_dte_handle_modem_check(void)
     }
 
 retry:    
-    BK_MODEM_LOGI("%s: modem check fail %d, port_idx %d\r\n", __func__, temp_flag, bk_modem_env.port_idx);
+    BK_MODEM_LOGI("%s: modem check fail %d\r\n", __func__, temp_flag);
     rtos_delay_milliseconds(retry_time);
     bk_modem_set_state(MODEM_CHECK);
     bk_modem_send_msg(MSG_MODEM_CHECK, 0,0,0);
@@ -198,7 +185,7 @@ void bk_modem_dte_handle_ppp_start(void)
         rtos_start_oneshot_timer(&bk_modem_timer);
         #endif        
         bk_modem_send_msg(MSG_PPP_CONNECT_IND, 0,0,0);
-        bk_modem_env.bk_modem_ppp_mode = PPP_DATA_MODE;        
+        bk_modem_env.bk_modem_ppp_mode = PPP_DATA_MODE;
 
         BK_MODEM_LOGI("%s: ppp dial ok&recv conncet\r\n", __func__);
         
