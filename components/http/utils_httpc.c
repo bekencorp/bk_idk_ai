@@ -1011,6 +1011,10 @@ int httpclient_retrieve_content(httpclient_t *client, char *data, int len, uint3
 #endif
 
 		b_data =  os_malloc((TCP_LEN_MAX + 1) * sizeof(char));
+		if (b_data == NULL) {
+			os_printf("b_data alloc fail\n");
+			return ERROR_NO_ENOUGH_MEM;
+		}
 		bk_http_ptr->do_data = 1;
 		bk_http_ptr->http_total = readLen - len;
 		do {
