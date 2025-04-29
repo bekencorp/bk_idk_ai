@@ -79,6 +79,8 @@ char *bk_normalize_path(const char *path) {
 
 	if (path[0] == '/') {
 		new_path = os_strdup(path);
+		if (!new_path)
+			return NULL;
 	} else {
 		char *cwd = bk_vfs_refer_cwd();
 		len = strlen(cwd) + strlen(path) + 2;
