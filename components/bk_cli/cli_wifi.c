@@ -1408,7 +1408,7 @@ int cli_netif_event_cb(void *arg, event_module_t event_module,
 			rtos_set_semaphore(&wifi_cmd_sema);
 		}
 		got_ip = (netif_event_got_ip4_t *)event_data;
-		CLI_LOGW("%s got ip\n", got_ip->netif_if == NETIF_IF_STA ? "BK STA" : "BK PAN");
+		CLI_LOGW("netif_idx %d\r got ip\n", got_ip->netif_if);
 		break;
 	default:
 		CLI_LOGW("rx event <%d %d>\n", event_module, event_id);

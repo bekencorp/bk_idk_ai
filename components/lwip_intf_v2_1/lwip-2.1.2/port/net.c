@@ -365,9 +365,6 @@ static void wm_netif_status_callback(struct netif *n)
 		if (dhcp != NULL) {
 			/* dhcp success*/
 			if (dhcp->state == DHCP_STATE_BOUND) {
-#if CONFIG_NET_PAN
-				LWIP_LOGI("pan_ip_addr: "BK_IP4_FORMAT" \r\n", BK_IP4_STR(ip_addr_get_ip4_u32(&n->ip_addr)));
-#endif
 				/*
 				LWIP_LOGI("ip_addr: "BK_IP4_FORMAT" \r\n", BK_IP4_STR(ip_addr_get_ip4_u32(&n->ip_addr)));
 				sta_tick.sta_ip_tick = rtos_get_time();
