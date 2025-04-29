@@ -512,6 +512,7 @@ static void bk_usb_cdc_close_ind(void)
 	bk_usb_otg_manual_convers_mod(USB_HOST_MODE, USB_DEVICE_MODE);
 #elif (CONFIG_USB_HOST)
 	bk_usb_close();
+	bk_usb_power_ops(CONFIG_USB_VBAT_CONTROL_GPIO_ID, 0);
 #endif
 	if (g_rx_buf_temp)
 	{
