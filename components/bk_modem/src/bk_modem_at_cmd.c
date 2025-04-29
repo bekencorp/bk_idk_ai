@@ -103,7 +103,14 @@ static bk_err_t bk_modem_at_rsp_analysis(uint8_t *cmd,uint8_t *resp)
 
 static void bk_modem_at_timeout_cb(void* ptr)
 {
-	BK_MODEM_LOGI("AT command_timer is too loong\r\n");
+	BK_MODEM_LOGI("AT command_timer is too long\r\n");
+
+	if (g_modem_at_semaphore == NULL)
+	{
+		BK_MODEM_LOGI("at_semaphore is deinited.\r\n");
+		return;
+	}
+
 	g_modem_at_timer_cb_handle = true;
 	int ret = rtos_set_semaphore(&g_modem_at_semaphore);
 	if (ret) 
