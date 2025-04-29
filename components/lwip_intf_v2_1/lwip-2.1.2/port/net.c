@@ -691,6 +691,12 @@ void ap_set_default_netif(void)
 		netifapi_netif_set_default(&g_eth.netif);
 #endif
 #endif
+#ifdef CONFIG_LWIP_PPP_SUPPORT
+#if (IP_FORWARD && IP_NAPT)
+	if (netif_is_up(&g_ppp.netif) && netif_is_link_up(&g_ppp.netif))
+		netifapi_netif_set_default(&g_ppp.netif);
+#endif
+#endif
 }
 
 void reset_default_netif(void)
