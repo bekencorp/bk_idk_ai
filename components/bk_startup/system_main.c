@@ -28,6 +28,7 @@
 #include <modules/ota.h>
 #endif
 #include <driver/flash_partition.h>
+#include <driver/flash.h>
 
 #include "boot.h"
 
@@ -449,6 +450,12 @@ void entry_main(void)
 	start_app_main_thread();
 #if (CONFIG_SYS_CPU0)
 	start_user_app_thread();
+#endif
+
+#if CONFIG_BLUETOOTH
+typedef void (*ble_sleep_state_cb)(uint8_t is_sleeping, uint32_t slp_period);
+extern void bk_ble_register_sleep_state_callback(ble_sleep_state_cb cb);
+	bk_ble_register_sleep_state_callback(ble_sleep_cb);
 #endif
 
 #if (CONFIG_SYS_CPU0) && (CONFIG_FREERTOS_V10)

@@ -173,6 +173,9 @@ static void cli_flash_partition_cmd(char *pcWriteBuffer, int xWriteBufferLen, in
 	}
 }
 
+#if CONFIG_SYS_CPU0
+
+#if 0
 /*
  * flash erase will affect ble connecting, unless flash erase while ble is sleeping
  * This test case aims to do flash erasing with ble sleeping and connecting
@@ -311,6 +314,7 @@ static int ble_callback_deal_handler(uint32_t deal_flash_time)
     GLOBAL_INT_RESTORE();
     return ret_val;
 }
+#endif
 
 void flash_erase_with_ble_sleep(uint32_t erase_addr)
 {
@@ -354,7 +358,7 @@ static void cli_flash_erase_test_with_ble(char *pcWriteBuffer, int xWriteBufferL
 
 	if (os_strcmp(argv[1], "ble") == 0) {
 #if (CONFIG_BLUETOOTH)
-		bk_ble_register_sleep_state_callback(flash_test_ble_sleep_cb);
+		//bk_ble_register_sleep_state_callback(flash_test_ble_sleep_cb);
 #endif
 
 		for (uint32_t erase_addr = start_addr; erase_addr <= (start_addr + erase_len);) {
@@ -370,6 +374,8 @@ static void cli_flash_erase_test_with_ble(char *pcWriteBuffer, int xWriteBufferL
 	}
 	os_memcpy(pcWriteBuffer, msg, os_strlen(msg));
 }
+#endif
+
 
 #define FLASH_CMD_CNT (sizeof(s_flash_commands) / sizeof(struct cli_command))
 DRV_CLI_CMD_EXPORT static const struct cli_command s_flash_commands[] = {
@@ -379,8 +385,9 @@ DRV_CLI_CMD_EXPORT static const struct cli_command s_flash_commands[] = {
 #endif
 #if CONFIG_SYS_CPU0
 	{"flash_partition", "flash_partition {show}", cli_flash_partition_cmd},
-#endif
 	{"flash_erase_test", "cli_flash_erase_test with ble connecting", cli_flash_erase_test_with_ble},
+#endif
+
 };
 
 int bk_flash_register_cli_test_feature(void)
