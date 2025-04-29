@@ -489,6 +489,7 @@ int httpclient_recv(httpclient_t *client, char *buf, int min_len, int max_len, i
 
 }
 
+#if 0
 /*
  * when bt INT effect the OTA update
  */
@@ -626,6 +627,7 @@ static int ble_callback_deal_handler(uint32_t deal_flash_time)
 
     return ret_val;
 }
+#endif
 
 #if HTTP_WR_TO_FLASH
 
@@ -1341,7 +1343,7 @@ int httpclient_common(httpclient_t *client, const char *url, int port, const cha
 		utils_time_countdown_ms(&timer, timeout_ms);
 #ifdef CONFIG_HTTP_OTA_WITH_BLE
 #if CONFIG_BLUETOOTH
-        bk_ble_register_sleep_state_callback(ble_sleep_cb);
+        //bk_ble_register_sleep_state_callback(ble_sleep_cb);
 #endif
 #endif
 		if ((NULL != client_data->response_buf)
