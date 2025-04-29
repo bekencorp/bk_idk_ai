@@ -1644,7 +1644,11 @@ size_t xPortPointerSize(void * pv)
             configASSERT((pxLink->xBlockSize & xBlockAllocatedBit) != 0);
             configASSERT(pxLink->pxNextFreeBlock == NULL);
 
+            #if CONFIG_MEM_DEBUG
+            sz = pxLink->wantedSize;
+            #else
             sz = (pxLink->xBlockSize & ~xBlockAllocatedBit) - xHeapStructSize;
+            #endif
         }
         (void) xTaskResumeAll();
     }
