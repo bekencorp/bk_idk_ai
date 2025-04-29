@@ -341,7 +341,7 @@ extern "C" {
 #endif
 
 //#if (CONFIG_AUDIO_OPUS_TEST && (CONFIG_SYS_CPU0) && CONFIG_FATFS)
-#if (CONFIG_AUDIO_OPUS_TEST && (CONFIG_SYS_CPU0))
+#if (CONFIG_AUDIO_OPUS_TEST)
 #define CLI_CFG_OPUS         1
 #endif
 
