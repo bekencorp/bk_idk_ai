@@ -429,7 +429,7 @@ void entry_main(void)
 	bk_set_printf_enable(0);
 #endif
 
-	if(components_init())
+	if(components_early_init())
 		return;
 
 #if (CONFIG_FREERTOS_TRACE)
