@@ -27,6 +27,7 @@ typedef enum {
     VOLUME_DOWN,
     SHUT_DOWN,
     POWER_ON,
+    IR_MODE_SWITCH,	//image recognition mode switch
     CONFIG_NETWORK,
     BRIGHTNESS_ADD,
     AI_AGENT_CONFIG,
