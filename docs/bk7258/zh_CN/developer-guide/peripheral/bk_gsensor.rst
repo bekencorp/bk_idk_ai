@@ -8,7 +8,7 @@ Gsensor概述
 
 Gsensor 是高精度数字三轴加速度传感器，当前已经适配了SC7A20传感器。使用I2C进行数据传输，对X、Y、Z轴的采集数据进行分析。
 
-.. figure:: ../../../_static/gsensor_sc7a20.png
+.. figure:: ../../../../common/_static/gsensor_sc7a20.png
     :align: center
     :alt: gsensor_sc7a20
     :figclass: align-center

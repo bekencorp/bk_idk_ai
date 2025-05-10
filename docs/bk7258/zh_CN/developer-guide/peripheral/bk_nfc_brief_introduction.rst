@@ -100,7 +100,7 @@ MFRC522与M1卡之间数据交互的顺序流程是:1、先进行初始化(配�
   -1) 第一种为主动测试:板端有个task会默认定期只进行寻卡操作;
     - 1.1)板端有个task会默认定期进行寻卡操作，(如不想执行该task,可把该行代码注释掉;路径是:projects/beken_genie/main/app_main.c)
 
-    .. figure:: ../../../_static/nfc_task.png
+    .. figure:: ../../../../common/_static/nfc_task.png
         :align: center
         :alt: nfc_task
         :figclass: align-center
@@ -109,7 +109,7 @@ MFRC522与M1卡之间数据交互的顺序流程是:1、先进行初始化(配�
 
     - 1.2)若无NFC卡靠近或没有安装天线。会定期打印如下log (nfc request fail);
 
-    .. figure:: ../../../_static/fail.png
+    .. figure:: ../../../../common/_static/fail.png
         :align: center
         :alt: fail
         :figclass: align-center
@@ -118,14 +118,14 @@ MFRC522与M1卡之间数据交互的顺序流程是:1、先进行初始化(配�
 
     -1.3)此时可将NFC卡靠近板端(前提是板端要安装上天线如下图)可完成寻卡操作，会定期打印如下log ("nfc request ok以及nfc post ok");
 
-    .. figure:: ../../../_static/antenna.png
+    .. figure:: ../../../../common/_static/antenna.png
         :align: center
         :alt: antenna
         :figclass: align-center
 
         图3 天线图
 
-    .. figure:: ../../../_static/success.png
+    .. figure:: ../../../../common/_static/success.png
         :align: center
         :alt: success(:
         :figclass: align-center
@@ -135,7 +135,7 @@ MFRC522与M1卡之间数据交互的顺序流程是:1、先进行初始化(配�
   -2) 第二种为手动测试:需要手动发送cli命令来进行NFC测试;(路径是:bk_avdk/bk_idk/components/bk_nfc/mfrc522_test.c)
     - 2.1)因为板端有个task会定期在进行寻卡操作，所以需要先delete该task,通过发送以下命令:nfc_cmd_test deinit 
 
-    .. figure:: ../../../_static/deinit.png
+    .. figure:: ../../../../common/_static/deinit.png
         :align: center
         :alt: deinit
         :figclass: align-center
@@ -145,7 +145,7 @@ MFRC522与M1卡之间数据交互的顺序流程是:1、先进行初始化(配�
     - 2.2) 支持一键cli命令完成nfc所有测试(寻卡、防碰撞、选定卡片、密码验证、读取数据):
     - 测试命令:nfc_test
 
-    .. figure:: ../../../_static/nfc_test.png
+    .. figure:: ../../../../common/_static/nfc_test.png
         :align: center
         :alt: nfc_test
         :figclass: align-center
@@ -155,7 +155,7 @@ MFRC522与M1卡之间数据交互的顺序流程是:1、先进行初始化(配�
     - 2.3) 也支持分步测试，
     - step1:即cli命令完成nfc初始化:nfc_cmd_test init
 
-    .. figure:: ../../../_static/nfc_init.png
+    .. figure:: ../../../../common/_static/nfc_init.png
         :align: center
         :alt: nfc_init
         :figclass: align-center
@@ -164,7 +164,7 @@ MFRC522与M1卡之间数据交互的顺序流程是:1、先进行初始化(配�
 
     - step2:即cli命令完成nfc进行寻卡:nfc_cmd_test request
 
-    .. figure:: ../../../_static/nfc_request.png
+    .. figure:: ../../../../common/_static/nfc_request.png
         :align: center
         :alt: nfc_request
         :figclass: align-center
@@ -173,7 +173,7 @@ MFRC522与M1卡之间数据交互的顺序流程是:1、先进行初始化(配�
 
     - step3:即cli命令完成nfc防碰撞:nfc_cmd_test anticoll
 
-    .. figure:: ../../../_static/nfc_anticoll.png
+    .. figure:: ../../../../common/_static/nfc_anticoll.png
         :align: center
         :alt: anticoll
         :figclass: align-center
@@ -182,7 +182,7 @@ MFRC522与M1卡之间数据交互的顺序流程是:1、先进行初始化(配�
 
     - step4:即cli命令完成nfc选定卡片:nfc_cmd_test select
 
-    .. figure:: ../../../_static/nfc_select.png
+    .. figure:: ../../../../common/_static/nfc_select.png
         :align: center
         :alt: nfc_select
         :figclass: align-center
@@ -191,7 +191,7 @@ MFRC522与M1卡之间数据交互的顺序流程是:1、先进行初始化(配�
 
     - step5:即cli命令完成nfc密码验证:nfc_cmd_test authState
 
-    .. figure:: ../../../_static/nfc_authstate.png
+    .. figure:: ../../../../common/_static/nfc_authstate.png
         :align: center
         :alt: nfc_authState
         :figclass: align-center
@@ -201,7 +201,7 @@ MFRC522与M1卡之间数据交互的顺序流程是:1、先进行初始化(配�
 
     - step6:即cli命令完成nfc写数据:nfc_write_test write 'a'
 
-    .. figure:: ../../../_static/nfc_write.png
+    .. figure:: ../../../../common/_static/nfc_write.png
         :align: center
         :alt: nfc_write
         :figclass: align-center
@@ -211,7 +211,7 @@ MFRC522与M1卡之间数据交互的顺序流程是:1、先进行初始化(配�
     
     - step7:即cli命令完成nfc读取数据:nfc_write_test read 0
 
-    .. figure:: ../../../_static/nfc_read.png
+    .. figure:: ../../../../common/_static/nfc_read.png
         :align: center
         :alt: nfc_read
         :figclass: align-center

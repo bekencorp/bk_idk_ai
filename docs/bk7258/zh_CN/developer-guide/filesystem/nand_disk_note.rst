@@ -14,7 +14,7 @@ nand磁盘连接注意事项
 
 在windows平台上，第一次对nand磁盘进行格式化时，可能由于没有文件系统，没有办法直接格式化。在文件浏览器中只出现盘符，而无法格式化，如下图。
 
-.. figure:: ../../../_static/disk_fomat_computer.png
+.. figure:: ../../../../common/_static/disk_fomat_computer.png
     :align: center
     :alt: nand disk not formatted.
     :figclass: align-center
@@ -23,7 +23,7 @@ nand磁盘连接注意事项
 
 出现这种情况时，需要打开磁盘管理窗口，并找到nand磁盘，如下图。
 
-.. figure:: ../../../_static/disk_fomat_disk_manager.png
+.. figure:: ../../../../common/_static/disk_fomat_disk_manager.png
     :align: center
     :alt: disk management windows.
     :figclass: align-center
@@ -32,14 +32,14 @@ nand磁盘连接注意事项
 
 通过新建卷来进行格式化磁盘，文件系统格式选择FAT32，并设置盘符和分配单元大小。
 
-.. figure:: ../../../_static/disk_fomat_new_disk.png
+.. figure:: ../../../../common/_static/disk_fomat_new_disk.png
     :align: center
     :alt: add disk for nand disk .
     :figclass: align-center
 
     add disk for nand disk 
 
-.. figure:: ../../../_static/disk_fomat_type.png
+.. figure:: ../../../../common/_static/disk_fomat_type.png
     :align: center
     :alt: set file system format for nand disk.
     :figclass: align-center
@@ -48,7 +48,7 @@ nand磁盘连接注意事项
 
 之后再文件管理器中即可正常使用nand磁盘，如下图。
 
-.. figure:: ../../../_static/disk_fomat_normal.png
+.. figure:: ../../../../common/_static/disk_fomat_normal.png
     :align: center
     :alt: normal nand disk.
     :figclass: align-center
