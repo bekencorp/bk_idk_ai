@@ -35,25 +35,45 @@ __BT_SRAM_SIZE = CONFIG_BT_REUSE_MEDIA_MEM_SIZE;
 __BT_SRAM_SIZE = 0;
 #endif
 
-__CPU1_APP_RAM_BASE = __BT_SRAM_BASE + __BT_SRAM_SIZE;
-__CPU1_APP_RAM_SIZE = CONFIG_CPU1_APP_RAM_SIZE - __BT_SRAM_SIZE;
+__AEC_SRAM_BASE = __PRIMARY_APP_RAM_BASE + CONFIG_CPU0_SPE_RAM_SIZE + __BT_SRAM_SIZE;
+#if CONFIG_AUD_AI_NS_USE_STATIC_SRAM
+__AEC_SRAM_SIZE = (96 << 10);
+#else
+__AEC_SRAM_SIZE = 0;
+#endif
+/*****************************************************************************
+The follow four shared memory address area mapping to the same physical memory 
+    0x08000000 ~ 0x080a0000  ---- instruction area, recommend put sram code  
+    0x18000000 ~ 0x180a0000  ---- instruction area, recommend put sram code 
+    0x28000000 ~ 0x280a0000  ---- data area, recommend put sram data 
+    0x38000000 ~ 0x380a0000  ---- data area, recommend put sram data 
+******************************************************************************/
+__CPU1_APP_IRAM_OFFSET = 0x20000000;
 
-__AEC_BUFF_SIZE = (96 << 10);
-__AEC_BUFF_BASE = SOC_SRAM0_DATA_BASE + (640 << 10) - __AEC_BUFF_SIZE;
+__CPU1_APP_RAM_BASE = __BT_SRAM_BASE + __BT_SRAM_SIZE + __AEC_SRAM_SIZE;
+__CPU1_APP_RAM_SIZE = CONFIG_CPU1_APP_RAM_SIZE - __BT_SRAM_SIZE - __AEC_SRAM_SIZE;
+
+__CPU1_APP_IRAM_BASE = __CPU1_APP_RAM_BASE - __CPU1_APP_IRAM_OFFSET;  /*0x08000000 = 0x28000000 - __CPU1_APP_IRAM_OFFSET*/
+__CPU1_APP_IRAM_SIZE = __CPU1_APP_RAM_SIZE;
+__SRAM_TOTLE_SIZE = (640 << 10);
+__SRAM_CONFIG_SIZE = CONFIG_CPU0_SPE_RAM_SIZE + CONFIG_CPU1_APP_RAM_SIZE + CONFIG_CPU2_APP_RAM_SIZE;
 
 
 MEMORY
 {
   FLASH (rx)            : ORIGIN = (SOC_FLASH_DATA_BASE + CONFIG_PRIMARY_CPU1_APP_VIRTUAL_CODE_START), LENGTH = CONFIG_PRIMARY_CPU1_APP_VIRTUAL_CODE_SIZE
+  IRAM (rx)             : ORIGIN = __CPU1_APP_IRAM_BASE, LENGTH = __CPU1_APP_IRAM_SIZE
 #if (CONFIG_BT_REUSE_MEDIA_MEMORY)
   SRAM_BT (rwx)         : ORIGIN = __BT_SRAM_BASE, LENGTH = __BT_SRAM_SIZE 
+#endif
+#if (CONFIG_AUD_AI_NS_USE_STATIC_SRAM)
+  SRAM_AEC (rwx)         : ORIGIN = __AEC_SRAM_BASE, LENGTH = __AEC_SRAM_SIZE 
 #endif
   RAM (rwx)             : ORIGIN = __CPU1_APP_RAM_BASE, LENGTH = __CPU1_APP_RAM_SIZE
 
   ITCM (rwx)            : ORIGIN = SOC_ITCM_DATA_BASE + __MPU_PROTECT_SIZE, LENGTH = CONFIG_ITCM_SIZE - __MPU_PROTECT_SIZE
   DTCM (rwx)            : ORIGIN = SOC_DTCM_DATA_BASE, LENGTH = CONFIG_DTCM_SIZE
   SWAP (rwx)            : ORIGIN = __PRIMARY_APP_RAM_BASE + CONFIG_CPU0_SPE_RAM_SIZE - __SWAP_SIZE, LENGTH = __SWAP_SIZE
-  AEC (rwx)             : ORIGIN = __AEC_BUFF_BASE, LENGTH = __AEC_BUFF_SIZE
 
   PSRAM (rwx)           : ORIGIN = SOC_PSRAM_DATA_BASE, LENGTH = 0x4000000
 }
@@ -132,14 +152,13 @@ SECTIONS
     {
         . = ALIGN(4);
         __copy_table_start__ = .;
-        LONG (__etext)
+        LONG (__iram_flash_begin)
         LONG (__iram_start__)
-        LONG ((__data_end__ - __iram_start__) / 4)
+        LONG ((__iram_end__ - __iram_start__) / 4)
 
-        /* Add each additional data section here */
-        LONG (__etext2)
-        LONG (__data2_start__)
-        LONG ((__data2_end__ - __data2_start__) / 4)
+        LONG (__data_flash_begin)
+        LONG (__data_start__)
+        LONG ((__data_end__ - __data_start__) / 4)        
 
         LONG (__dtcm_data)
         LONG (__dtcm_start__)
@@ -178,6 +197,18 @@ SECTIONS
     } > SRAM_BT AT > FLASH
 #endif
 
+#if (CONFIG_AUD_AI_NS_USE_STATIC_SRAM)
+    .sram_aec (NOLOAD):
+    {
+        . = ALIGN(32);
+        PROVIDE(__aec_bss = LOADADDR(.sram_aec));
+        _aec_bss_start = .;
+        KEEP(*(.aec_bss*))
+        KEEP(*(.aec_bss))
+        . = ALIGN(4);
+        _aec_bss_end = .;
+    } > SRAM_AEC
+#endif
     .itcm :
     {
         . = ALIGN(4);
@@ -207,11 +238,10 @@ SECTIONS
         __dtcm_end__ = .;
     } > DTCM AT > FLASH
 
-    .data :
+    .iram :
     {
         . = ALIGN(512);
-        PROVIDE(__etext = LOADADDR(.data));
-        PROVIDE(__iram_flash_begin = LOADADDR(.data));
+        PROVIDE(__iram_flash_begin = LOADADDR(.iram));
         __iram_start__ = .;
 
         . = ALIGN(512);
@@ -223,6 +253,17 @@ SECTIONS
         *(.iram)
         . = ALIGN(4);
         __iram_end__ = .;
+    } > IRAM AT > FLASH
+    .ramcode :
+    {
+        . = . +  SIZEOF(.iram);
+        . = ALIGN(512);
+    } > RAM AT > FLASH
+
+    .data :
+    {
+        PROVIDE(__etext = LOADADDR(.data));
+        PROVIDE(__data_flash_begin = LOADADDR(.data));
 
         . = ALIGN(4);
         __data_start__ = .;
@@ -236,8 +277,8 @@ SECTIONS
         __data_end__ = .;
     } > RAM AT > FLASH
 
-    _data_flash_begin = LOADADDR(.data);
-    _data_ram_begin = ADDR(.data);
+    _data_flash_begin = __data_flash_begin;
+    _data_ram_begin = __data_start__;
     _data_ram_end = .;
 
     s_rom_end = LOADADDR(.data) + SIZEOF(.data);
@@ -305,15 +346,7 @@ SECTIONS
         _swap_end = .;
     } > SWAP AT > FLASH
 
-    .aec_buff ORIGIN(AEC) (NOLOAD):
-    {
-        . = ALIGN(4);
-        _aec_bss_start = .;
-        KEEP(*(.aec_bss*))
-        KEEP(*(.aec_bss))
-        . = ALIGN(4);
-        _aec_bss_end = .;
-    } > AEC
+
 
     .video.cache.data :
     {

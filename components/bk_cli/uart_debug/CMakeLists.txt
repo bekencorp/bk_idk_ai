@@ -11,6 +11,7 @@ set(srcs
 	command_ate_vdddig.c
 	command_line.c
 	command_table.c
+	command_audio_debug.c
 	udebug.c)
 endif()
 

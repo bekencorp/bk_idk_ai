@@ -61,7 +61,7 @@
 #define SYS_ANA_REG19_MICDACIH_DEFAULT_VAL                     (0x00)
 #define SYS_ANA_REG19_MICSINGLEEN_DEFAULT_VAL                  (0x00)
 #define SYS_ANA_REG19_DCCOMPEN_DEFAULT_VAL                     (0x00)
-#define SYS_ANA_REG19_MICGAIN_DEFAULT_VAL                      (CONFIG_MIC1_ANA_GAIN_VALUE)
+#define SYS_ANA_REG19_MICGAIN_DEFAULT_VAL                      (0x8)
 #define SYS_ANA_REG19_MICDACEN_DEFAULT_VAL                     (0x00)
 #define SYS_ANA_REG19_STG2LSEN1V_DEFAULT_VAL                   (0x00)
 #define SYS_ANA_REG19_OPENLOOPCAL1V_DEFAULT_VAL                (0x00)
@@ -283,6 +283,36 @@ static uint32_t ana_reg27_value_cal(void)
 
 #endif //#if CONFIG_SOC_BK7236XX
 
+bk_err_t bk_aud_set_ana_mic1_gain(uint8_t ana_mic1_gain)
+{
+	uint32_t reg_val;
+	reg_val = sys_hal_get_ana_reg27_value();
+	reg_val &= ~((0xF & SYS_ANA_REG27_MICGAIN_MASK) << SYS_ANA_REG27_MICGAIN_POS);
+	reg_val |= ((ana_mic1_gain & SYS_ANA_REG27_MICGAIN_MASK) << SYS_ANA_REG27_MICGAIN_POS);
+	sys_hal_set_ana_reg27_value(reg_val);
+	return BK_OK;
+}
+
+
+bk_err_t bk_aud_set_ana_mic0_gain(uint8_t ana_mic0_gain)
+{
+	uint32_t reg_val;
+	reg_val = sys_hal_get_ana_reg19_value();
+	reg_val &= ~((0xF & SYS_ANA_REG19_MICGAIN_MASK) << SYS_ANA_REG19_MICGAIN_POS);
+	reg_val |= ((ana_mic0_gain & SYS_ANA_REG19_MICGAIN_MASK) << SYS_ANA_REG19_MICGAIN_POS);
+	sys_hal_set_ana_reg19_value(reg_val);
+	return BK_OK;
+}
+
+bk_err_t bk_aud_set_ana_dac_gain(uint8_t ana_dac_gain)
+{
+	uint32_t reg_val;
+	reg_val = sys_hal_get_ana_reg20_value();
+	reg_val &= ~((0xF & SYS_ANA_REG20_DACG_MASK) << SYS_ANA_REG20_DACG_POS);
+	reg_val |= ((ana_dac_gain & SYS_ANA_REG20_DACG_MASK) << SYS_ANA_REG20_DACG_POS);
+	sys_hal_set_ana_reg20_value(reg_val);
+	return BK_OK;
+}
 bk_err_t bk_aud_clk_config(aud_clk_t clk)
 {
 	if (clk == AUD_CLK_APLL) {

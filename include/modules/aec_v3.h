@@ -150,6 +150,8 @@ typedef struct _AECContext
     int16_t  ec_guard;
     int16_t  spcnt;
     int16_t  dcnt;
+    int16_t  spcnt2;
+    int16_t  dcnt2;
     int16_t  Astep;
     int16_t  dist;
     int16_t  phs_s0;
@@ -194,10 +196,10 @@ typedef struct _AECContext
     int16_t drc_pos[6];
     int16_t ec_coe[MaxBand];
     int16_t SubBand[MaxBand];
-    int16_t SPthr[7];
+    int16_t SPthr[14];
     int32_t syn[FFT_LEN_NB];
     int32_t Rbuf[FFT_LEN_NB * BD + 20];
-    int32_t Sold[2];
+    int32_t Sold[4];
     int32_t Sbuf[FFT_LEN_NB * BD];
 
     int32_t Ramp[FFT_LEN_NB_HF * BD + 1];
@@ -207,7 +209,7 @@ typedef struct _AECContext
     int32_t tmp3[(FFT_LEN_NB_HF + 1) * 2 * BD];
     #if AEC_NS_ENABLE
     int32_t   nspara[8];
-    int16_t   nspara_step[7];
+    int16_t   nspara_step[6];
     NSContext VADInfo;
     NSContext NsInfo;
     #endif

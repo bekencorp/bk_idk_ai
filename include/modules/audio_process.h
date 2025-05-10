@@ -24,6 +24,7 @@ typedef struct _app_eq_para_t
 
 typedef struct _app_eq_t
 {
+    uint8_t eq_en;
     uint32_t framecnt;
     uint32_t filters;
     int32_t globle_gain;
@@ -31,20 +32,84 @@ typedef struct _app_eq_t
 }app_eq_t;
 
 
+typedef struct _app_aud_sys_config_t
+{
+    uint8_t mic0_digital_gain;
+    uint8_t mic0_analog_gain;
+    uint8_t mic1_digital_gain;
+    uint8_t mic1_analog_gain;
+ 
+    uint8_t speaker_chan0_digital_gain;
+    uint8_t speaker_chan0_analog_gain;
+    uint8_t speaker_chan1_digital_gain;
+    uint8_t speaker_chan1_analog_gain;
+ 
+    uint8_t dmic_enable;
+    uint8_t dual_mic_enable;
+    uint8_t main_mic_select;
+    uint8_t extend[7];
+    
+    uint8_t adc_sample_rate;
+    uint8_t dac_sample_rate;
+    
+}app_aud_sys_config_t;
+
+
+typedef struct _app_aud_aec_config_t
+{
+    uint8_t aec_enable;
+    uint8_t ec_filter;
+    uint16_t init_flags;
+
+    uint8_t ns_filter;
+    int8_t  ref_scale;
+    uint8_t drc_gain;
+    uint8_t voice_vol;
+
+    uint32_t ec_depth;
+    uint32_t mic_delay;
+
+    uint8_t ns_level;
+    uint8_t ns_para;
+    uint8_t ai_ns_enable;
+    uint8_t vad_enable;
+
+    int16_t vad_start_threshold;
+    int16_t vad_stop_threshold;
+    int16_t vad_silence_threshold;
+    int16_t vad_eng_threshold;
+
+    uint8_t dual_mic_enable;
+    uint8_t rsvd[3];
+    
+}app_aud_aec_config_t;
+
+
 typedef struct _app_aud_para_t
 {
+    app_aud_sys_config_t sys_config_voice;
     app_eq_t eq_dl_voice;
     app_eq_t eq_ul_voice;
+    app_aud_aec_config_t aec_config_voice;
+    
 }app_aud_para_t;
 
 
-
+typedef bk_err_t (*bk_aud_intf_update_sys_config_cb_t)(app_aud_sys_config_t *sys_config_ptr);
+typedef bk_err_t (*bk_aud_intf_update_aec_config_cb_t)(app_aud_aec_config_t *aec_config_ptr);
+typedef bk_err_t (*bk_aud_intf_update_ul_eq_para_cb_t)(app_eq_t *ul_eq_para_ptr);
+typedef bk_err_t (*bk_aud_intf_update_dl_eq_para_cb_t)(app_eq_t *dl_eq_para_ptr);
+extern app_aud_para_t aud_para;
 
 void app_aud_eq_init(app_eq_t  *cust_eq_coe_ptr, uint32_t eq_id);
 void app_aud_eq_process(int16_t *buff, uint16_t size, uint32 eq_id);
 bk_err_t audio_para_init(app_aud_para_t *aud_para_ptr);
 void voice_dl_process(int16 *buf, uint32 sample_points);
-void voice_dl_process_init(void);
+void voice_process_init();
+void voice_ul_post_process(int16 *buf, uint32 sample_points);
+void voice_ul_pre_process(int16 *buf, uint32 sample_points);
+
+
 #ifdef __cplusplus
 }
 #endif
