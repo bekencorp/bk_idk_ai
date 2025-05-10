@@ -53,7 +53,7 @@ static void nfc_repuire_card_task(void *arg)
 	    RC522_Config('A');
         if(bk_mfrc522_request(MFRC522_PICC_REQALL, Card_Type1) == 0)
         {
-            MFRC522_LOGD("nfc repuest ok \r\n:");
+            MFRC522_LOGD("nfc request ok \r\n:");
             status =  bk_mfrc522_read_card_id(&uid, 0) ;
             if(status == MI_OK)
             {
@@ -76,7 +76,7 @@ static void nfc_repuire_card_task(void *arg)
                 os_memset(uid.uidByte, 0, 7);
                 nfc_input_event_handler(NFC_INPUT_CARD_ID, uid.uidByte);
             }
-            MFRC522_LOGE("nfc repuest fail \r\n:");
+            MFRC522_LOGE("nfc request fail \r\n:");
             bk_mfrc522_set_low_power();
             bk_pm_module_vote_ctrl_external_ldo(GPIO_CTRL_LDO_MODULE_NFC, CONFIG_LDO3V3_CTRL_GPIO, GPIO_OUTPUT_STATE_LOW);
             s_fail_times   = 0;
