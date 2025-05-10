@@ -1,14 +1,21 @@
 menu "QSPI"
-		config QSPI
-			bool "Enable QSPI"
-			default n
+	config QSPI
+		bool "Enable QSPI"
+		default n
 
-		config QSPI_STATIS
-			bool "Enable QSPI Statis"
-			default y
+	config QSPI_STATIS
+		bool "Enable QSPI Statis"
+		default y
 
-		config QSPI_FLASH_GD
-			bool "Enable GD Flash"
-			default n
+	config QSPI_FLASH_GD
+		bool "Enable GD Flash"
+		default n
+
+	config QSPI_LINE_MODE
+		int "qspi line mode choose"
+		range 1 8
+		default 4
+		help
+		The value should be changed if need to change qspi line mode
 endmenu
 
