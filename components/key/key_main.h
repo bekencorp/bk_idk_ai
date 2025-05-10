@@ -16,7 +16,7 @@
 #endif
 
 #define GPIO_TEST_ID           GPIO23
-#define KEY_TMR_DURATION       5
+#define KEY_TMR_DURATION       6
 
 typedef enum KEY_ITEM_T {
 	KEY_COMBO_S1S2_CONFIG_NET = 0,

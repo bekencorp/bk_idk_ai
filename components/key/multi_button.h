@@ -3,11 +3,18 @@
 
 #include "stdint.h"
 #include "string.h"
+#include <components/log.h>
 
+
+#define BUTTON_TAG "button"
+#define BUTTON_LOGI(...) BK_LOGI(BUTTON_TAG, ##__VA_ARGS__)
+#define BUTTON_LOGW(...) BK_LOGW(BUTTON_TAG, ##__VA_ARGS__)
+#define BUTTON_LOGE(...) BK_LOGE(BUTTON_TAG, ##__VA_ARGS__)
+#define BUTTON_LOGD(...) BK_LOGD(BUTTON_TAG, ##__VA_ARGS__)
 //According to your need to modify the constants.
-#define TICKS_INTERVAL    5	//ms
+#define TICKS_INTERVAL    6	//ms
 #define DEBOUNCE_TICKS    3	//MAX 8
-#define SHORT_TICKS       (100 /TICKS_INTERVAL)
+#define SHORT_TICKS       (96 /TICKS_INTERVAL)
 #define LONG_TICKS        (3000 /TICKS_INTERVAL)
 
 
