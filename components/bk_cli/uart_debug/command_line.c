@@ -681,20 +681,22 @@ static int bkreg_run_command_implement(const char *content, int cnt)
 	}
 	break;
 
-	case BEKEN_LED_EQ_BUTTON: {
-	     extern void app_eq_dbg(uint8_t* params);
-         app_eq_dbg(&pHCIrxBuf->param[0]);
-		}
-	break;
-	case BEKEN_SET_AEC_PARA: {
-          //todo
+	case BEKEN_SET_EQ_CONFIG_VOICE_PARA: {
+			extern void app_eq_dbg(uint8_t* params);
+			app_eq_dbg(&pHCIrxBuf->param[0]);
 		}
 	break;
 	case BEKEN_SET_SYS_CONFIG_VOICE_PARA: {
-          //todo
+			extern void app_sys_config_dbg(uint8_t* params);
+			app_sys_config_dbg(&pHCIrxBuf->param[0]);
 		}
 	break;
-	
+	case BEKEN_SET_AEC_CONFIG_VOICE_PARA: {
+			extern void app_aec_para_dbg(uint8_t* params);
+			app_aec_para_dbg(&pHCIrxBuf->param[0]);
+		}
+	break;
+
 	default:
 		pHCItxBuf->total = 1;
 		pHCItxBuf->param[0] = pHCIrxBuf->cmd;
