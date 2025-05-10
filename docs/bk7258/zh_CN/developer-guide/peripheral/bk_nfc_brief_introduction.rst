@@ -97,6 +97,9 @@ MFRC522与M1卡之间数据交互的顺序流程是:1、先进行初始化(配�
 以工程beken_genie为例来介绍NFC的测试使用流程，首先编译工程beken_genie:make bk7258 PROJECT=beken_genie,编译成功之后，烧录build目录下的all-app.bin;
 烧录成功之后，即可测试。NFC卡的测试可细分为两种:
 
+  .. important::
+    nfc的功能默认是关闭的，若想开启(以工程beken_genie为例)，请在projects/beken_genie/config/bk7258/config中将宏CONFIG_NFC_ENABLE设置成y。
+
   -1) 第一种为主动测试:板端有个task会默认定期只进行寻卡操作;
     - 1.1)板端有个task会默认定期进行寻卡操作，(如不想执行该task,可把该行代码注释掉;路径是:projects/beken_genie/main/app_main.c)
 

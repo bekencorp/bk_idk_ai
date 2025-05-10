@@ -99,6 +99,9 @@ The sequence of data interactions between MFRC522 and M1 cards is as follows: 1.
 Using the bekengenie project as an example, this section introduces the NFC testing procedure. First, compile the bekengenie project: make bk7258 PROJECT=bekengenie. After successful compilation, burn the all-app.bin file from the build directory.
 NFC Card Testing The NFC card testing can be divided into two types:
 
+  .. important::
+    The NFC function is disabled by default. To enable it (for example, in the bekken_genie project), please go to projects/beken_genie/config/bk7258/config and set the macro CONFIG_NFC_ENABLE to 'y'.
+
   -1) Active Testing:The board has a task that periodically performs card detection by default;
     - 1.1)A task is enabled by default on the board to periodically perform a card detection operation. If you do not want to run this task, you can comment out the corresponding line of code, which can be found in the following file path: projects/beken_genie/main/app_main.c
 
