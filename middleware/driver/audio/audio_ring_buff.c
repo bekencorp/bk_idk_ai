@@ -78,7 +78,14 @@ uint32_t ring_buffer_read(RingBufferContext* rb, uint8_t* buffer, uint32_t size)
 
     if(wp >= rb->rp)
     {
-        remain_bytes = wp - rb->rp;
+        if(true == rb->full_flag)
+        {
+            remain_bytes = rb->capacity;
+        }
+        else
+        {
+            remain_bytes = wp - rb->rp;
+        }
 
         if(required_bytes > remain_bytes)
         {
