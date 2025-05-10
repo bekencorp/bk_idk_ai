@@ -26,3 +26,4 @@ User and Developer Guide
    Write Examples <examples/index>
    Documentation <documentation/index>
    File System <filesystem/index>
+   create_new_project_rule<create_new_project_rule/index>

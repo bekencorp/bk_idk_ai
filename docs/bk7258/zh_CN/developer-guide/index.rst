@@ -26,3 +26,4 @@ User and Developer Guide
    用例编写 <examples/index>
    文档系统 <documentation/index>
    文件系统 <filesystem/index>
+   新建工程介绍<create_new_project_rule/index>
