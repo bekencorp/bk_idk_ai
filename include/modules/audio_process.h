@@ -108,8 +108,8 @@ void voice_dl_process(int16 *buf, uint32 sample_points);
 void voice_process_init();
 void voice_ul_post_process(int16 *buf, uint32 sample_points);
 void voice_ul_pre_process(int16 *buf, uint32 sample_points);
-
-
+app_aud_para_t * get_app_aud_cust_para(void);
+void aud_tras_update_tx_size(int tx_size);
 #ifdef __cplusplus
 }
 #endif
