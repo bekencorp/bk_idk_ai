@@ -15,9 +15,6 @@
 #include "common/bk_err.h"
 #include "bk_private/bk_ota_private.h"
 
-#include "gpio_driver.h"
-#include <driver/gpio.h>
-
 #ifndef OTA_TAG
 #define OTA_TAG	"OTA"
 #endif
@@ -379,10 +376,7 @@ int ota_update_with_display_open(void)
 	int ret = BK_OK;
 
 	lvgl_app_deinit();
-	//audio_turn_off();
-	gpio_dev_unmap(50);
-	bk_gpio_enable_output(50);
-	bk_gpio_set_output_low(50);
+	audio_turn_off();
 	if(media_app_ota_disp_open() != BK_OK)
 	{
 		os_printf("open disp failed. \r\n");
