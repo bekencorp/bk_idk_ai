@@ -684,16 +684,19 @@ static int bkreg_run_command_implement(const char *content, int cnt)
 	case BEKEN_SET_EQ_CONFIG_VOICE_PARA: {
 			extern void app_eq_dbg(uint8_t* params);
 			app_eq_dbg(&pHCIrxBuf->param[0]);
+			found = 0;
 		}
 	break;
 	case BEKEN_SET_SYS_CONFIG_VOICE_PARA: {
 			extern void app_sys_config_dbg(uint8_t* params);
 			app_sys_config_dbg(&pHCIrxBuf->param[0]);
+			found = 0;
 		}
 	break;
 	case BEKEN_SET_AEC_CONFIG_VOICE_PARA: {
 			extern void app_aec_para_dbg(uint8_t* params);
 			app_aec_para_dbg(&pHCIrxBuf->param[0]);
+			found = 0;
 		}
 	break;
 

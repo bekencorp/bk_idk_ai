@@ -2,7 +2,8 @@
 #include <os/mem.h>
 #include <os/str.h>
 #include <modules/audio_process.h>
-
+#include "bk_uart.h"
+#include "lib_adapter.h"
 
 //#define AUD_DBG_TOOL_PRT  os_printf
 #define AUD_DBG_TOOL_PRT  os_null_printf
@@ -13,15 +14,19 @@ bk_aud_intf_update_aec_config_cb_t bk_aud_intf_update_aec_config_cb = NULL;
 bk_aud_intf_update_ul_eq_para_cb_t bk_aud_intf_update_ul_eq_para_cb = NULL;
 bk_aud_intf_update_dl_eq_para_cb_t bk_aud_intf_update_dl_eq_para_cb = NULL;
 
-
 static app_eq_t *eq_dbg_eq_para = NULL;
 static app_aud_aec_config_t *aec_dbg_aec_para = NULL;
 static app_aud_sys_config_t *sys_dbg_sys_para = NULL;
+static app_aud_para_t * p_aud_para = NULL;
+
+void bk_aud_debug_get_audpara(app_aud_para_t * aud_para_ptr)
+{
+	p_aud_para = aud_para_ptr;
+}
 
 void bk_aud_debug_register_update_dl_eq_para_cb(bk_aud_intf_update_dl_eq_para_cb_t dl_eq_para_cb)
 {
     bk_aud_intf_update_dl_eq_para_cb = dl_eq_para_cb;
-    AUD_DBG_TOOL_PRT("bk_aud_debug_register_update_dl_eq_para_cb %p\r\n",dl_eq_para_cb);
 }
 
 void bk_aud_debug_register_update_ul_eq_para_cb(bk_aud_intf_update_ul_eq_para_cb_t ul_eq_para_cb)
@@ -140,6 +145,36 @@ void app_sys_config_dbg(uint8_t* params)
 	AUD_DBG_TOOL_PRT("app_sys_config_dbg 0x%x\r\n", params[0]);
 	switch(params[0])
 	{
+		case 0xF0:
+		{
+	#if (!CONFIG_SHELL_ASYNCLOG)
+			uint32_t i = 0;
+			uint32_t port = bkreg_tx_get_uart_port();
+	#endif
+			uint32_t tx_len = 12;
+			uint8_t tmp[32] = {0};
+			tmp[0] = 0x01;
+			tmp[1] = 0xe0;
+			tmp[2] = 0xfc;
+			tmp[3] = tx_len - 4;
+			tmp[4] = 0xb3;
+			tmp[5] = 0xf9;
+			tmp[6] = p_aud_para->sys_config_voice.mic0_digital_gain;
+			tmp[7] = p_aud_para->sys_config_voice.mic0_analog_gain;
+			tmp[8] = p_aud_para->sys_config_voice.mic1_analog_gain;
+			tmp[9] = p_aud_para->sys_config_voice.speaker_chan0_digital_gain;
+			tmp[10] = p_aud_para->sys_config_voice.speaker_chan0_analog_gain;
+			tmp[11] = p_aud_para->sys_config_voice.main_mic_select;
+
+	#if CONFIG_SHELL_ASYNCLOG
+			shell_log_raw_data((uint8_t *)&tmp[0], tx_len);
+	#else
+			for (i = 0; i < tx_len; i ++) {
+				uart_write_byte(port, tmp[i]);
+			}
+	#endif //#if CONFIG_SHELL_ASYNCLOG
+		}
+			break;
 		case 0xF9:
 		{
 			if(sys_dbg_sys_para == NULL)
@@ -147,14 +182,20 @@ void app_sys_config_dbg(uint8_t* params)
 
 			if(sys_dbg_sys_para)
 			{
-				sys_dbg_sys_para->mic0_digital_gain = params[1];
-				sys_dbg_sys_para->mic0_analog_gain  = params[2];
-				sys_dbg_sys_para->mic1_analog_gain  = params[3];
-
+				sys_dbg_sys_para->mic0_digital_gain          = params[1];
+				sys_dbg_sys_para->mic0_analog_gain           = params[2];
+				sys_dbg_sys_para->mic1_analog_gain           = params[3];
 				sys_dbg_sys_para->speaker_chan0_digital_gain = params[4];
 				sys_dbg_sys_para->speaker_chan0_analog_gain  = params[5];
+				sys_dbg_sys_para->main_mic_select            = params[6];
 
-				sys_dbg_sys_para->main_mic_select = params[6];
+				p_aud_para->sys_config_voice.mic0_digital_gain           = sys_dbg_sys_para->mic0_digital_gain;
+				p_aud_para->sys_config_voice.mic0_analog_gain            = sys_dbg_sys_para->mic0_analog_gain;
+				p_aud_para->sys_config_voice.mic1_analog_gain            = sys_dbg_sys_para->mic1_analog_gain;
+				p_aud_para->sys_config_voice.speaker_chan0_digital_gain  = sys_dbg_sys_para->speaker_chan0_digital_gain;
+				p_aud_para->sys_config_voice.speaker_chan1_analog_gain   = sys_dbg_sys_para->speaker_chan0_analog_gain;
+				p_aud_para->sys_config_voice.main_mic_select             = sys_dbg_sys_para->main_mic_select;
+
 			#if 1
 				BK_LOG_RAW("rcv sys_params: ");
 				for(uint32_t i = 1; i < 7; i++)
@@ -189,6 +230,52 @@ void app_aec_para_dbg(uint8_t* params)
 	AUD_DBG_TOOL_PRT("app_aec_para_dbg 0x%x\r\n", params[0]);
 	switch(params[0])
 	{
+		case 0xF0:
+		{
+	#if (!CONFIG_SHELL_ASYNCLOG)
+			uint32_t i = 0;
+			uint32_t port = bkreg_tx_get_uart_port();
+	#endif
+			uint32_t tx_len = 0x1d;
+			uint8_t tmp[32] = {0};
+			tmp[0] = 0x01;
+			tmp[1] = 0xe0;
+			tmp[2] = 0xfc;
+			tmp[3] = tx_len - 4;
+			tmp[4] = 0xb4;
+			tmp[5] = 0xff;
+			tmp[6]  = p_aud_para->aec_config_voice.aec_enable;
+			tmp[7]  = p_aud_para->aec_config_voice.ec_filter;
+			tmp[8]  = (p_aud_para->aec_config_voice.init_flags>>8)&0xFF;
+			tmp[9]  = (p_aud_para->aec_config_voice.init_flags)&0xFF;
+			tmp[10] = p_aud_para->aec_config_voice.ns_filter;
+			tmp[11] = p_aud_para->aec_config_voice.ref_scale;
+			tmp[12] = p_aud_para->aec_config_voice.drc_gain;
+			tmp[13] = p_aud_para->aec_config_voice.voice_vol;
+			tmp[14] = p_aud_para->aec_config_voice.ec_depth;
+			tmp[15] = p_aud_para->aec_config_voice.mic_delay;
+			tmp[16] = p_aud_para->aec_config_voice.ns_level;
+			tmp[17] = p_aud_para->aec_config_voice.ns_para;
+			tmp[18] = p_aud_para->aec_config_voice.ai_ns_enable;
+			tmp[19] = p_aud_para->aec_config_voice.vad_enable;
+			tmp[20] = (p_aud_para->aec_config_voice.vad_start_threshold>>8)&0xFF;
+			tmp[21] = (p_aud_para->aec_config_voice.vad_start_threshold)&0xFF;
+			tmp[22] = (p_aud_para->aec_config_voice.vad_stop_threshold>>8)&0xFF;
+			tmp[23] = (p_aud_para->aec_config_voice.vad_stop_threshold)&0xFF;
+			tmp[24] = (p_aud_para->aec_config_voice.vad_silence_threshold>>8)&0xFF;
+			tmp[25] = (p_aud_para->aec_config_voice.vad_silence_threshold)&0xFF;
+			tmp[26] = (p_aud_para->aec_config_voice.vad_eng_threshold>>8)&0xFF;
+			tmp[27] = (p_aud_para->aec_config_voice.vad_eng_threshold)&0xFF;
+			tmp[28] = p_aud_para->aec_config_voice.dual_mic_enable;
+		#if CONFIG_SHELL_ASYNCLOG
+			shell_log_raw_data((uint8_t *)&tmp[0], tx_len);
+		#else
+			for (i = 0; i < tx_len; i ++) {
+				uart_write_byte(port, tmp[i]);
+			}
+		#endif //#if CONFIG_SHELL_ASYNCLOG
+		}
+			break;
 		case 0xFF:
 		{
 			if(aec_dbg_aec_para == NULL)
@@ -198,22 +285,42 @@ void app_aec_para_dbg(uint8_t* params)
 			{
 				aec_dbg_aec_para->aec_enable = params[1];
 				aec_dbg_aec_para->ec_filter  = params[2];
-				aec_dbg_aec_para->init_flags = params[3];
-				aec_dbg_aec_para->ns_filter  = params[4];
-				aec_dbg_aec_para->ref_scale  = params[5];
-				aec_dbg_aec_para->drc_gain   = params[6];
-				aec_dbg_aec_para->voice_vol  = params[7];
-				aec_dbg_aec_para->ec_depth   = params[8];
-				aec_dbg_aec_para->mic_delay  = params[9];
-				aec_dbg_aec_para->ns_level   = params[10];
-				aec_dbg_aec_para->ns_para    = params[11];
-				aec_dbg_aec_para->ai_ns_enable = params[12];
-				aec_dbg_aec_para->vad_enable = params[13];
-				aec_dbg_aec_para->vad_start_threshold = (params[14]<<8)|(params[15]);
-				aec_dbg_aec_para->vad_stop_threshold  = (params[16]<<8)|(params[17]);
-				aec_dbg_aec_para->vad_silence_threshold = (params[18]<<8)|(params[19]);
-				aec_dbg_aec_para->vad_eng_threshold     = (params[20]<<8)|(params[21]);
-				aec_dbg_aec_para->dual_mic_enable = params[22];
+				aec_dbg_aec_para->init_flags = (params[3]<<8)|(params[4]);
+				aec_dbg_aec_para->ns_filter  = params[5];
+				aec_dbg_aec_para->ref_scale  = params[6];
+				aec_dbg_aec_para->drc_gain   = params[7];
+				aec_dbg_aec_para->voice_vol  = params[8];
+				aec_dbg_aec_para->ec_depth   = params[9];
+				aec_dbg_aec_para->mic_delay  = params[10];
+				aec_dbg_aec_para->ns_level   = params[11];
+				aec_dbg_aec_para->ns_para    = params[12];
+				aec_dbg_aec_para->ai_ns_enable = params[13];
+				aec_dbg_aec_para->vad_enable = params[14];
+				aec_dbg_aec_para->vad_start_threshold = (params[15]<<8)|(params[16]);
+				aec_dbg_aec_para->vad_stop_threshold  = (params[17]<<8)|(params[18]);
+				aec_dbg_aec_para->vad_silence_threshold = (params[19]<<8)|(params[20]);
+				aec_dbg_aec_para->vad_eng_threshold     = (params[21]<<8)|(params[22]);
+				aec_dbg_aec_para->dual_mic_enable = params[23];
+
+				p_aud_para->aec_config_voice.aec_enable            = aec_dbg_aec_para->aec_enable;
+				p_aud_para->aec_config_voice.ec_filter             = aec_dbg_aec_para->ec_filter;
+				p_aud_para->aec_config_voice.init_flags            = aec_dbg_aec_para->init_flags;
+				p_aud_para->aec_config_voice.ns_filter             = aec_dbg_aec_para->ns_filter;
+				p_aud_para->aec_config_voice.ref_scale             = aec_dbg_aec_para->ref_scale;
+				p_aud_para->aec_config_voice.drc_gain              = aec_dbg_aec_para->drc_gain;
+				p_aud_para->aec_config_voice.voice_vol             = aec_dbg_aec_para->voice_vol;
+				p_aud_para->aec_config_voice.ec_depth              = aec_dbg_aec_para->ec_depth;
+				p_aud_para->aec_config_voice.mic_delay             = aec_dbg_aec_para->mic_delay;
+				p_aud_para->aec_config_voice.ns_level              = aec_dbg_aec_para->ns_level;
+				p_aud_para->aec_config_voice.ns_para               = aec_dbg_aec_para->ns_para;
+				p_aud_para->aec_config_voice.ai_ns_enable          = aec_dbg_aec_para->ai_ns_enable;
+				p_aud_para->aec_config_voice.vad_enable            = aec_dbg_aec_para->vad_enable;
+				p_aud_para->aec_config_voice.vad_start_threshold   = aec_dbg_aec_para->vad_start_threshold;
+				p_aud_para->aec_config_voice.vad_stop_threshold    = aec_dbg_aec_para->vad_stop_threshold;
+				p_aud_para->aec_config_voice.vad_silence_threshold = aec_dbg_aec_para->vad_silence_threshold;
+				p_aud_para->aec_config_voice.vad_eng_threshold     = aec_dbg_aec_para->vad_eng_threshold;
+				p_aud_para->aec_config_voice.dual_mic_enable       = aec_dbg_aec_para->dual_mic_enable;
+
 			#if 1
 				BK_LOG_RAW("rcv aec_params: ");
 				for(uint32_t i = 1; i < 23; i++)
@@ -222,6 +329,7 @@ void app_aec_para_dbg(uint8_t* params)
 				}
 				BK_LOG_RAW("\n");
 			#endif
+
 				if(bk_aud_intf_update_aec_config_cb)
 				{
 					bk_aud_intf_update_aec_config_cb(aec_dbg_aec_para);
