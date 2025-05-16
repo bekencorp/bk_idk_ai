@@ -71,13 +71,8 @@ void bk_modem_dte_handle_modem_check(void)
         // disc state will be set to wait modem conn
         if (bk_modem_get_state() != MODEM_CHECK)
         {
-            if (bk_modem_get_state() == WAIT_MODEM_CONN)
-            {
-                BK_MODEM_LOGI("%s: disc occur \r\n", __func__);
-                return;
-            }
-            temp_flag = 0;
-            break;
+            BK_MODEM_LOGI("%s: not handle in state %d \r\n", __func__, bk_modem_get_state());
+            return;
         }
 
         bk_modem_env.bk_modem_ppp_mode = PPP_CMD_MODE;
