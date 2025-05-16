@@ -477,6 +477,7 @@ static void bk_cdc_demo_task(beken_thread_arg_t arg)
 			switch (msg.type)
 			{
 				case CDC_STATUS_OPEN:
+					g_cdc_close = 0;
 					bk_usb_cdc_send_ipc_cmd(CPU0_OPEN_USB_CDC);
 					break;
 				case CDC_STATUS_CLOSE:
