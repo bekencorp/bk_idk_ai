@@ -179,7 +179,7 @@ void bk_modem_dte_handle_ppp_start(void)
         if (!bk_modem_dce_check_attach())
         {
             temp_flag = 2;
-            goto retry;
+            goto enter_flight_mode;
         }  
         
         if (!bk_modem_dce_start_ppp())
@@ -209,9 +209,26 @@ void bk_modem_dte_handle_ppp_start(void)
         goto retry;
     }
 
+enter_flight_mode:
+    if (!bk_modem_dce_enter_flight_mode())
+     {
+         temp_flag = 6;
+         goto retry;
+     }
+     else
+     {
+         rtos_delay_milliseconds(1000);
+     }
+
+     if (!bk_modem_dce_exit_flight_mode())
+     {
+         temp_flag = 7;
+         goto retry;
+     }
+
 retry:
     BK_MODEM_LOGI("%s: ppp dail fail%d\r\n", __func__, temp_flag);    
-    if ((temp_flag == 2) || (temp_flag == 3))
+    if ((temp_flag == 2) || (temp_flag == 3) || (temp_flag > 5))
     {
         bk_modem_usbh_close();
         bk_modem_power_off_modem();    
