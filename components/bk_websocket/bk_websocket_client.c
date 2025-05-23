@@ -1380,7 +1380,7 @@ void websocket_client_task(beken_thread_arg_t *thread_param)
 				}
 				 if ( bk_tick_get_ms() - client->pingpong_tick_ms > WEBSOCKET_PINGPONG_TIMEOUT_SEC*1000) {
 					 if (client->wait_for_pong_resp) {
-						BK_LOGE(TAG, "Error, no PONG received for more than %d seconds after PING\r\n", client->pingpong_tick_ms);
+						BK_LOGD(TAG, "Error, no PONG received for more than %d seconds after PING\r\n", client->pingpong_tick_ms);
 						break;
 					 }
 				 }
@@ -1389,7 +1389,7 @@ void websocket_client_task(beken_thread_arg_t *thread_param)
 					BK_LOGD(TAG, "Read poll timeout: skipping read()...\r\n");
 					break;
 				 }
-				 //client->ping_tick_ms = bk_tick_get_ms();
+				 client->ping_tick_ms = bk_tick_get_ms();
 				 rtos_lock_mutex(&client->mutex);
 				 if (ws_client_recv(client) == BK_FAIL) {
 					BK_LOGE(TAG, "Error receive data\r\n");
