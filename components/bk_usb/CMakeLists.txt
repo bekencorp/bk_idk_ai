@@ -26,6 +26,11 @@ if (CONFIG_CHERRY_USB)
 		list(APPEND srcs
 			CherryUSB/core/usbd_core.c
 		)
+		if (CONFIG_VFS)
+			list(APPEND srcs
+				CherryUSB/class/msc/usb_vfs.c
+			)
+		endif()
 		if (CONFIG_USBD_MSC)
 			list(APPEND srcs
 				CherryUSB/class/msc/usbd_msc.c
@@ -232,7 +237,7 @@ endif() # CONFIG_SYS_CPU0
 
 
 
-armino_component_register(SRCS "${srcs}" INCLUDE_DIRS "${incs}" PRIV_REQUIRES bk_common driver bk_modem)
+armino_component_register(SRCS "${srcs}" INCLUDE_DIRS "${incs}" PRIV_REQUIRES bk_common driver bk_modem bk_vfs)
 
 if (CONFIG_MUSB_MHDRC)
 target_compile_definitions(${COMPONENT_LIB}
