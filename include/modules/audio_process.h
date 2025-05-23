@@ -22,13 +22,30 @@ typedef struct _app_eq_para_t
     int32_t    b[3];
 }app_eq_para_t;
 
+typedef struct _app_eq_load_para_t
+{
+	uint32_t freq;
+	uint32_t gain;
+	uint32_t q_val;
+	uint8_t  type;
+	uint8_t  enable;
+}app_eq_load_para_t;
+
+typedef struct _app_eq_load_t
+{
+	uint32_t f_gain;
+	uint32_t samplerate;
+	app_eq_load_para_t eq_load_para[16];
+}app_eq_load_t;
+
 typedef struct _app_eq_t
 {
-    uint8_t eq_en;
-    uint32_t framecnt;
-    uint32_t filters;
-    int32_t globle_gain;
-    app_eq_para_t eq_para[16];
+	uint8_t eq_en;
+	uint32_t framecnt;
+	uint32_t filters;
+	int32_t globle_gain;
+	app_eq_para_t eq_para[16];
+	app_eq_load_t eq_load;
 }app_eq_t;
 
 
