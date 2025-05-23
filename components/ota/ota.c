@@ -371,12 +371,16 @@ int bk_ota_swap_execute_partition(void)
 }
 
 #if CONFIG_OTA_DISPLAY_PICTURE_DEMO
+extern void bk_sconf_trans_stop(void);
+extern void bk_sconf_trans_start(void);
 int ota_update_with_display_open(void)
 {
 	int ret = BK_OK;
 
+	bk_sconf_trans_stop();
 	lvgl_app_deinit();
 	audio_turn_off();
+
 	if(media_app_ota_disp_open() != BK_OK)
 	{
 		os_printf("open disp failed. \r\n");
@@ -463,6 +467,7 @@ int bk_http_ota_download(const char *uri)
 		OTA_LOGE("request epoch time from remote server failed.ret:%d\r\n",ret);
 		ota_input_event_handler(EVT_OTA_FAIL);
 	#if CONFIG_OTA_DISPLAY_PICTURE_DEMO
+		bk_sconf_trans_start();
 		if(media_app_ota_disp_close() != BK_OK)
 		{
 			OTA_LOGE("disp close failed.ret:%d\r\n",ret);
