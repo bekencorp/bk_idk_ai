@@ -63,6 +63,44 @@ bk_err_t bk_aud_rsp_deinit(void);
 bk_err_t bk_aud_rsp_process(int16_t *in_addr, uint32_t *in_len, int16_t *out_addr, uint32_t *out_len);
 
 /**
+ * @brief     Init audio resample of multi-instance
+ *
+ * @param cfg audio resample configuration 
+ * @param rsp_handler resampler handler 
+ *
+ * @return
+ *    - BK_OK: succeed
+ *    - others: other errors.
+ */
+bk_err_t bk_aud_rsp_init_multi_instance(aud_rsp_cfg_t cfg, void **rsp_handler);
+
+/**
+ * @brief     Deinit audio resample
+ *
+ * @param rsp_handler resampler handler
+ *
+ * @return
+ *    - BK_OK: succeed
+ *    - others: other errors.
+ */
+bk_err_t bk_aud_rsp_deinit_multi_instance(void *rsp_handler);
+
+/**
+ * @brief     Process audio resample
+ *
+ * @param in_addr the address of data need to resample
+ * @param in_len the address of data need to resample
+ * @param out_addr the address of data output
+ * @param out_len the length of data processed by resample
+ * @param rsp_handler resampler handler
+ *
+ * @return
+ *    - BK_OK: succeed
+ *    - others: other errors.
+ */
+bk_err_t bk_aud_rsp_process_multi_instance(int16_t *in_addr, uint32_t *in_len, int16_t *out_addr, uint32_t *out_len, void *rsp_handler);
+
+/**
  * @}
  */
 
