@@ -126,7 +126,7 @@ task.h is included from an application file. */
 #define MEM_OVERFLOW_TAG        0xcd
 #define MEM_OVERFLOW_WORD_TAG   0xcdcdcdcd
 
-#define MEM_HEAD_WORD_TAG       0
+#define MEM_HEAD_WORD_TAG       0xFFFFEEEE
 
 #if CONFIG_MEM_DEBUG
 #define MEM_CHECK_TAG_LEN      0x4

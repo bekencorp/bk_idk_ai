@@ -3328,7 +3328,7 @@ void vTaskSwitchContext( void )
          * optimised asm code. */
         taskSELECT_HIGHEST_PRIORITY_TASK(); /*lint !e9079 void * is used as this macro is used with timers and co-routines too.  Alignment is known to be fine as the type of the pointer stored and retrieved is the same. */
         traceTASK_SWITCHED_IN();
-#if CONFIG_FREERTOS_TASK_RECORDER
+    #if FREERTOS_TASK_RECORDER
         {  
             s_task_recorder[s_task_cnt].tick = xTickCount;
             s_task_recorder[s_task_cnt].time = GET_AON_RTC_TIME;  
