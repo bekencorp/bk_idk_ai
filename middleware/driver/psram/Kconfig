@@ -73,5 +73,10 @@ menu "PSRAM"
 		bool "Select Psram PSRAM_APS128XXO_OB9"
 		default n
 
+	config MEMORY_PRIORITIZE_PSRAM
+		depends on PSRAM_AS_SYS_MEMORY
+		bool "malloc relates function, prioritize malloc memory from PSRAM"
+		default n
+
 endmenu
 
