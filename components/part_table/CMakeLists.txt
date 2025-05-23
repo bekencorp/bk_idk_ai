@@ -97,6 +97,7 @@ list(APPEND bk7258xx_supported_projects
 	"beken_genie"
 	"beken_genie_ab"
 	"soundhub"
+	"soundhub_wss"
 	"ai_dashboard"
 	"rock_paper_scissors"
 	"phy/cert_test"
