@@ -142,12 +142,33 @@ CONFIG_FLASH_TEST=y
 CONFIG_NEW_MAC_POLICY=y
 #@ Enable Beken Mac Addr Check
 CONFIG_BK_MAC_ADDR_CHECK=y
+
+#
+# Mbedtls
+#
 #@ Enable Mbedtls
-CONFIG_MBEDTLS=y
+CONFIG_MBEDTLS=n
 #@ Enable Full Mbedtls
 CONFIG_FULL_MBEDTLS=n
-
-
+#@ Enable mbedtls v3.5.2
+CONFIG_PSA_MBEDTLS=y
+#@ Enable use PSA crypto
+CONFIG_MBEDTLS_USE_PSA_CRYPTO=n
+#@ Enable mbedtls accelerator
+CONFIG_MBEDTLS_ACCELERATOR=n
+#@ Enable hardware crypto engine
+CONFIG_TRUSTENGINE=y
+#@ Enable TE200 entropy
+CONFIG_TE200_ENTROPY=y
+#@ Set mbedtls log level: OFF/ERROR/WARNING/INFO/DEBUG
+CONFIG_MBEDTLS_LOG_LEVEL="OFF"
+#@ Always enable encp
+CONFIG_AON_ENCP=y
+#@ Enable psa mbedtls test
+CONFIG_PSA_MBEDTLS_TEST=n
+#@ Enable security engine cli
+CONFIG_TRUSTENGINE_TEST=n
+# end of Mbedtls
 
 #
 # USB configuration
