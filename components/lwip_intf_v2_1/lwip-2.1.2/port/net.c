@@ -510,6 +510,7 @@ void *net_get_pan_handle(void)
 #endif
 
 #if CONFIG_LWIP_PPP_SUPPORT
+#include "ppp/ppp.h"
 void *net_get_ppp_netif_handle(void)
 {
 	return &g_ppp.netif;
@@ -523,6 +524,17 @@ void *net_get_ppp_pcb_handle(void)
 void net_set_ppp_pcb_handle(void *ppp)
 {
 	g_ppp.arg = ppp;
+}
+
+uint32_t ppp_ip_is_start(void)
+{
+	ppp_pcb *ppp = net_get_ppp_pcb_handle();
+
+	if (ppp) {
+		if (ppp->err_code == PPPERR_NONE)
+			return true;
+	}
+	return false;
 }
 #endif
 
@@ -974,6 +986,9 @@ int net_get_if_addr(struct wlan_ip_config *addr, void *intrfc_handle)
 #endif
 #ifdef CONFIG_NET_PAN
 			|| if_handle == &g_pan
+#endif
+#if CONFIG_LWIP_PPP_SUPPORT
+			|| if_handle == &g_ppp
 #endif
 			) {
 			/* STA or ETH Mode */

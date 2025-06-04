@@ -11,7 +11,7 @@
 extern void make_tcp_server_command(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **argv);
 
 static const char *ifname[NETIF_IF_COUNT] = {
-	"sta", "ap", "bridge", "eth", "pan",
+	"sta", "ap", "bridge", "eth", "pan", "ppp"
 };
 
 static inline const char *if_idx_name(netif_if_t ifx)
@@ -52,6 +52,10 @@ static void ip_cmd_show_ip(int ifx)
 #if CONFIG_NET_PAN
 		BK_LOG_ON_ERR(bk_netif_get_ip4_config(NETIF_IF_PAN, &config));
 		CLI_DUMP_IP(" ", NETIF_IF_PAN, &config);
+#endif
+#if CONFIG_LWIP_PPP_SUPPORT
+		BK_LOG_ON_ERR(bk_netif_get_ip4_config(NETIF_IF_PPP, &config));
+		CLI_DUMP_IP(" ", NETIF_IF_PPP, &config);
 #endif
 	}
 }

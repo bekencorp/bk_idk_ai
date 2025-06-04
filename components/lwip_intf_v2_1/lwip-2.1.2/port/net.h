@@ -52,6 +52,7 @@ int net_pan_remove_netif(void);
 void *net_get_ppp_netif_handle(void);
 void *net_get_ppp_pcb_handle(void);
 void net_set_ppp_pcb_handle(void *ppp);  
+uint32_t ppp_ip_is_start(void);
 #endif
 #if LWIP_NETIF_LOOPBACK
 void bk_netif_trigger_loopnetif_msg(void);
