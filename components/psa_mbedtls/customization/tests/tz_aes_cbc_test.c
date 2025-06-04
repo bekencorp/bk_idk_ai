@@ -208,7 +208,6 @@ static int decrypt_cbc_aes(void)
 
 int tz_aes_cbc_test_main(void)
 {
-#if CUSTOMER_CBC_AES_TEST
 	mbedtls_aes_context ctx = {0};
 	unsigned char key[1]    = {2};
 	unsigned int keybits    = 256;
@@ -246,6 +245,5 @@ int tz_aes_cbc_test_main(void)
 	mode  = MBEDTLS_AES_DECRYPT;
 	tz_mbedtls_aes_crypt_cbc(&ctx,mode,length,&iv[0],output,decrypted_text);
 	printf("decrypted test:%s\r\n",decrypted_text);
-#endif
 	return APP_SUCCESS;
 }

@@ -1522,6 +1522,9 @@ int mbedtls_ecp_mul_restartable( mbedtls_ecp_group *grp, mbedtls_ecp_point *R,
     ECP_VALIDATE_RET( m   != NULL );
     ECP_VALIDATE_RET( P   != NULL );
 
+    if( f_rng == NULL )
+        return( MBEDTLS_ERR_ECP_BAD_INPUT_DATA );
+
     return( ecp_mul_restartable_internal( grp, R, m, P, f_rng, p_rng, rs_ctx ) );
 }
 

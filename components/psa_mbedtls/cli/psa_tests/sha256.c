@@ -15,6 +15,8 @@
 #include <string.h>
 #include <psa/crypto.h>
 #include <psa/crypto_extra.h>
+#include <modules/pm.h>
+#include "crypto_test.h"
 
 #define APP_SUCCESS		(0)
 #define APP_ERROR		(-1)
@@ -33,7 +35,32 @@ static uint8_t m_plain_text[CRYPTO_EXAMPLE_SHA256_TEXT_SIZE] = {
 	"perform a SHA-256 hashing operation."
 };
 
+#define MAX_TEXT_SIZE 8192
 static uint8_t m_hash[CRYPTO_EXAMPLE_SHA256_SIZE];
+static uint8_t *s_plain_text_p = NULL;
+
+static int test_init(void)
+{
+	s_plain_text_p = os_malloc(MAX_TEXT_SIZE);
+
+	if (!s_plain_text_p) {
+		BK_LOGE(TAG, "Failed to alloc memory...\r\n");
+		return -1;
+	}
+
+	os_memset(s_plain_text_p, 0xaa, MAX_TEXT_SIZE);
+
+	return 0;
+}
+
+static void test_deinit(void)
+{
+	if (s_plain_text_p) {
+		os_free(s_plain_text_p);
+		s_plain_text_p = NULL;
+	}
+}
+
 
 static int crypto_init(void)
 {
@@ -182,4 +209,102 @@ int sha256_main(void)
 	BK_LOGI(TAG, APP_SUCCESS_MESSAGE);
 
 	return APP_SUCCESS;
+}
+
+static int hash_singlepart_sha256_perf(uint32_t data_len)
+{
+	uint32_t olen;
+	psa_status_t status;
+	uint64_t start, end;
+
+	BK_LOGI(TAG, "Hashing using SHA256...\r\n");
+
+	crypto_lock();
+	start = crypto_get_time();
+	/* Calculate the SHA256 hash */
+	status = psa_hash_compute(PSA_ALG_SHA_256, s_plain_text_p, data_len, m_hash, sizeof(m_hash), (size_t *)&olen);
+	if (status != PSA_SUCCESS) {
+		crypto_unlock();
+		BK_LOGI(TAG, "psa_hash_compute failed! (Error: %d)\r\n", status);
+		return APP_ERROR;
+	}
+	end = crypto_get_time();
+	crypto_unlock();
+	crypto_perf_log("SHA256", "120M", 0, data_len, end - start);
+
+	BK_LOGI(TAG, "Hashing successful!\r\n");
+
+	return APP_SUCCESS;
+}
+
+static int verify_sha256_perf(uint32_t data_len)
+{
+	uint64_t start, end;
+	psa_status_t status;
+
+	BK_LOGI(TAG, "Verifying the SHA256 hash...\r\n");
+
+	crypto_lock();
+	start = crypto_get_time();
+
+	/* Verify the hash */
+	status = psa_hash_compare(PSA_ALG_SHA_256, s_plain_text_p, data_len, m_hash, sizeof(m_hash));
+	if (status != PSA_SUCCESS) {
+		crypto_unlock();
+		BK_LOGI(TAG, "psa_hash_compare failed! (Error: %d)\r\n", status);
+		return APP_ERROR;
+	}
+
+	end = crypto_get_time();
+	crypto_unlock();
+	crypto_perf_log("SHA256_VERIFY", "120M", 0, data_len, end - start);
+
+	BK_LOGI(TAG, "SHA256 verification successful!\r\n");
+	return APP_SUCCESS;
+}
+
+int sha256_perf_main(void)
+{
+	uint32_t cpu_freq_list[] = {PM_CPU_FRQ_120M, PM_CPU_FRQ_240M};
+	uint32_t data_len_list[] = {32, 1024, 4096};
+	uint32_t cpu;
+	uint32_t data;
+	int status;
+
+	BK_LOGI(TAG, "SHA256 perf test\r\n");
+
+	if (test_init() != 0) {
+		goto _error;
+	}
+
+	status = crypto_init();
+	if (status != APP_SUCCESS) {
+		goto _error;
+	}
+
+	for (data = 0; data < sizeof(data_len_list)/sizeof(uint32_t); data++) {
+		for (cpu = 0; cpu < sizeof(cpu_freq_list)/sizeof(uint32_t); cpu++) {
+			crypto_set_cpu_freq(cpu_freq_list[cpu]);
+			status = hash_singlepart_sha256_perf(data_len_list[data]);
+			if (status != APP_SUCCESS) {
+				goto _error;
+			}
+		
+			status = verify_sha256_perf(data_len_list[data]);
+			if (status != APP_SUCCESS) {
+				goto _error;
+			}
+		}
+	}
+
+	BK_LOGI(TAG, APP_SUCCESS_MESSAGE);
+	BK_LOGI(TAG, "SHA256 perf test OK\r\n");
+	test_deinit();
+
+	return APP_SUCCESS;
+
+_error:
+	test_deinit();
+	BK_LOGI(TAG, APP_ERROR_MESSAGE);
+	return APP_ERROR;
 }

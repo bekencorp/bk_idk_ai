@@ -58,24 +58,6 @@ int ps_generate_key_manage(char *names, uint32_t id)
 	return 0;
 }
 
-#if CONFIG_DEBUG_NEW_PS
-int ps_aes_encrypt_decrypt(char *names)
-{
-	tz_ps_aes_cbc_encrypt(names,m_plain_text,sizeof(m_plain_text),m_encrypted_text,sizeof(m_encrypted_text));
-
-	tz_ps_aes_cbc_decrypt(names,m_encrypted_text,sizeof(m_encrypted_text),m_decrypted_text,sizeof(m_decrypted_text));
-
-	/* Check the validity of the decryption */
-	if (memcmp(m_decrypted_text,m_plain_text,CRYPTO_EXAMPLE_AES_MAX_TEXT_SIZE) != 0)
-	{
-		BK_LOGE(TAG, "Error: Decrypted text doesn't match the plaintext\r\n");
-		return APP_ERROR;
-	}
-
-	BK_LOGI(TAG, "Decryption successful!\r\n");
-	return APP_SUCCESS;
-}
-#else
 int ps_aes_encrypt_decrypt(char *names)
 {
 	psa_status_t status;
@@ -170,7 +152,7 @@ int ps_aes_encrypt_decrypt(char *names)
 
 	return APP_SUCCESS;
 }
-#endif
+
 int ps_get_key_attributes(char *names)
 {
 	psa_status_t status;
@@ -255,4 +237,4 @@ int ps_get_key_id_by_name(char *names)
 	BK_LOGI(TAG, "(name: %s get key_id: %d)\r\n",names, key_id);
 	return 0;
 }
-
+

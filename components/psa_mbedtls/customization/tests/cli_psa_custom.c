@@ -15,8 +15,6 @@
 #include "cli.h"
 #include <os/mem.h>
 #include "tz_test.h"
-#include "tfm_otp_nsc.h"
-#include "_otp.h"
 
 static void cli_psa_help(void)
 {
@@ -91,7 +89,6 @@ static void cli_psa_key_ladder_cmd(char *pcWriteBuffer, int xWriteBufferLen, int
 	if (argc < 2) {
 		return;
 	}
-
 	if (os_strcmp(argv[1], "cbc") == 0) {
 		os_printf("key_ladder cbc test ret =%d\r\n ",te200_key_ladder_aes_cbc_main());
 	}else if (os_strcmp(argv[1], "ecb") == 0) {
@@ -103,59 +100,6 @@ static void cli_psa_key_ladder_cmd(char *pcWriteBuffer, int xWriteBufferLen, int
 	
 }
 #endif
-static void cli_psa_key_config_cmd(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **argv)
-{
-	int ret = 0;
-
-	/*model key*/
-	uint8_t model_key[] = {0x3d, 0x00, 0x03, 0x22, 0xbd, 0x7d, 0x2b, 0xd6,
-                           0x41, 0x68, 0xc1, 0xde, 0x15, 0x14, 0xcb, 0x73};
-
-	printf("model key write:\r\n");
-	bk_otp_update_nsc(1,OTP_MODEL_KEY,model_key,16);
-	ret = bk_otp_read_nsc(OTP_MODEL_KEY);
-	if(ret != 0)
-	{
-		printf("%s write model key fail ret:%d\r\n",__func__,ret);
-	}
-	/*ek2*/
-	printf("ek2 write:\r\n");
-	uint8_t ek2[] = {0x38, 0x41, 0xcb, 0xdc, 0x2a, 0xe7, 0x87, 0x72,
-                     0x48, 0x64, 0x7f, 0x35, 0xf5, 0x0a, 0x76, 0x0c};
-
-
-	bk_otp_update_nsc(2,OTP_EK_2,ek2,16);
-	ret = bk_otp_read_nsc(OTP_EK_2);
-	if(ret != 0)
-	{
-		printf("%s write ek2 fail ret:%d\r\n",__func__,ret);
-	}
-	/*ek3*/
-	printf("ek3 write:\r\n");
-	uint8_t ek3[] = {0xe5, 0x2e, 0x76, 0x27, 0x44, 0x40, 0x5b, 0x9e,
-                     0xed, 0xed, 0xfc, 0x2d, 0xd6, 0x66, 0x05, 0x50};
-
-	bk_otp_update_nsc(2,OTP_EK_3,ek3,16);
-	ret = bk_otp_read_nsc(OTP_EK_3);
-	if(ret != 0)
-	{
-		printf("%s write ek3 fail ret:%d\r\n",__func__,ret);
-	}
-
-	/*ek11*/
-	printf("ek11 write:\r\n");
-	uint8_t ek11[] = {0xb5, 0x8c, 0xd0, 0xe8, 0xfb, 0x9a, 0xb8, 0x3b,
-					0xa4, 0xd1, 0xb0, 0x46, 0x25, 0xfe, 0xe6, 0x24,
-					0xd6, 0xca, 0xff, 0xf8, 0x90, 0x25, 0x31, 0xe2,
-					0x29, 0xd9, 0x58, 0xb5, 0xd7, 0x29, 0x1c, 0x7d};
-	bk_otp_update_nsc(2,OTP_EK_11,ek11,32);
-	ret = bk_otp_read_nsc(OTP_EK_11);
-	if(ret != 0)
-	{
-		printf("%s write ek11 fail ret:%d\r\n",__func__,ret);
-	}
-}
-
 
 #define PSA_CUSTOMIZATION_CMD_CNT (sizeof(s_psa_customization_commands) / sizeof(struct cli_command))
 static const struct cli_command s_psa_customization_commands[] = {
@@ -166,7 +110,6 @@ static const struct cli_command s_psa_customization_commands[] = {
 #if CONFIG_TFM_DUBHE_KEY_LADDER_NSC
 	{"key_ladder", "key_ladder [cbc|ecb]", cli_psa_key_ladder_cmd},
 #endif
-	{"psa_key_config", "psa_key_config ", cli_psa_key_config_cmd},
 };
 int cli_psa_customization_init(void)
 {

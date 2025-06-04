@@ -2521,22 +2521,6 @@ void mbedtls_rsa_free(mbedtls_rsa_context *ctx)
 #define RSA_PT  "\xAA\xBB\xCC\x03\x02\x01\x00\xFF\xFF\xFF\xFF\xFF" \
                 "\x11\x22\x33\x0A\x0B\x0C\xCC\xDD\xDD\xDD\xDD\xDD"
 
-#if defined(MBEDTLS_PKCS1_V15)
-static int myrand(void *rng_state, unsigned char *output, size_t len)
-{
-#if !defined(__OpenBSD__) && !defined(__NetBSD__)
-    size_t i;
-
-    for (i = 0; i < len; ++i) {
-        output[i] = rand();
-    }
-#else
-    arc4random_buf(output, len);
-#endif /* !OpenBSD && !NetBSD */
-
-    return 0;
-}
-#endif /* MBEDTLS_PKCS1_V15 */
 
 /*
  * Checkup routine

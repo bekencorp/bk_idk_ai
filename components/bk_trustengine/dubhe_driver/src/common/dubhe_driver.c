@@ -122,7 +122,7 @@ static void dubhe_lv_init(void)
 {
     pm_cb_conf_t enter = {dubhe_lv_enter, NULL};
     pm_cb_conf_t exit = {dubhe_lv_exit, NULL};
-    bk_pm_sleep_register_cb(PM_MODE_LOW_VOLTAGE, PM_DEV_ID_SECURE_WORLD, &enter, &exit);
+    bk_pm_sleep_register_cb(PM_MODE_LOW_VOLTAGE, PM_DEV_ID_SHANHAI, &enter, &exit);
 }
 
 static void te200_isr(void)

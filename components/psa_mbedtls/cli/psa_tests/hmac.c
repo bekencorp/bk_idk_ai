@@ -16,6 +16,8 @@
 #include <stdlib.h>
 #include <psa/crypto.h>
 #include <psa/crypto_extra.h>
+#include "crypto_test.h"
+#include <modules/pm.h>
 
 #define APP_SUCCESS		(0)
 #define APP_ERROR		(-1)
@@ -33,8 +35,30 @@ static uint8_t m_plain_text[CRYPTO_EXAMPLE_HMAC_TEXT_SIZE] = {
 };
 
 static uint8_t hmac[CRYPTO_EXAMPLE_HMAC_KEY_SIZE];
-
 static psa_key_id_t key_id;
+static uint8_t *s_plain_text_p = 0;
+
+static int test_init(void)
+{
+	s_plain_text_p = os_malloc(8192);
+
+	if (!s_plain_text_p) {
+		BK_LOGE(TAG, "Failed to alloc memory...\r\n");
+		return -1;
+	}
+
+	os_memset(s_plain_text_p, 0xaa, 8192);
+
+	return 0;
+}
+
+static void test_deinit(void)
+{
+	if (s_plain_text_p) {
+		os_free(s_plain_text_p);
+		s_plain_text_p = NULL;
+	}
+}
 
 static int crypto_init(void)
 {
@@ -62,7 +86,7 @@ static int crypto_finish(void)
 	return APP_SUCCESS;
 }
 
-int generate_key(void)
+int generate_key(uint32_t key_len)
 {
 	psa_status_t status;
 
@@ -76,7 +100,7 @@ int generate_key(void)
 	psa_set_key_lifetime(&key_attributes, PSA_KEY_LIFETIME_VOLATILE);
 	psa_set_key_algorithm(&key_attributes, PSA_ALG_HMAC(PSA_ALG_SHA_256));
 	psa_set_key_type(&key_attributes, PSA_KEY_TYPE_HMAC);
-	psa_set_key_bits(&key_attributes, 256);
+	psa_set_key_bits(&key_attributes, key_len);
 
 	/* Generate a random key. The key is not exposed to the application,
 	 * we can use it to encrypt/decrypt using the key handle
@@ -174,7 +198,7 @@ int hmac_main(void)
 		return APP_ERROR;
 	}
 
-	status = generate_key();
+	status = generate_key(256);
 	if (status != APP_SUCCESS) {
 		BK_LOGI(TAG, APP_ERROR_MESSAGE);
 		return APP_ERROR;
@@ -201,4 +225,151 @@ int hmac_main(void)
 	BK_LOGI(TAG, APP_SUCCESS_MESSAGE);
 
 	return APP_SUCCESS;
+}
+
+int hmac_sign_perf(uint32_t key_len, uint32_t data_len)
+{
+	uint32_t olen;
+	psa_status_t status;
+	psa_mac_operation_t operation = PSA_MAC_OPERATION_INIT;
+	uint64_t start, end;
+
+	BK_LOGI(TAG, "Signing using HMAC ...\r\n");
+	crypto_lock();
+	start = crypto_get_time();
+	
+	/* Initialize the HMAC signing operation */
+	status = psa_mac_sign_setup(&operation, key_id, PSA_ALG_HMAC(PSA_ALG_SHA_256));
+	if (status != PSA_SUCCESS) {
+		BK_LOGI(TAG, "psa_mac_sign_setup failed! (Error: %d)\r\n", status);
+		goto _error;
+	}
+
+	/* Perform the HMAC signing */
+	status = psa_mac_update(&operation, s_plain_text_p, data_len);
+	if (status != PSA_SUCCESS) {
+		BK_LOGI(TAG, "psa_mac_update failed! (Error: %d)\r\n", status);
+		goto _error;
+	}
+
+	/* Finalize the HMAC signing */
+	status = psa_mac_sign_finish(&operation, hmac, sizeof(hmac), (size_t *)&olen);
+	if (status != PSA_SUCCESS) {
+		BK_LOGI(TAG, "psa_mac_sign_finish failed! (Error: %d)\r\n", status);
+		goto _error;
+	}
+
+	BK_LOGI(TAG, "Signing successful!\r\n");
+	end = crypto_get_time();
+	crypto_unlock();
+	crypto_perf_log("HMAC_SIGN", "120M", key_len, data_len, end - start);
+	return APP_SUCCESS;
+
+_error:
+	crypto_unlock();
+	return APP_ERROR;
+}
+
+int hmac_verify_perf(uint32_t key_len, uint32_t data_len)
+{
+	uint64_t start, end;
+	psa_status_t status;
+	psa_mac_operation_t operation = PSA_MAC_OPERATION_INIT;
+
+	BK_LOGI(TAG, "Verifying the HMAC signature...\r\n");
+
+	crypto_lock();
+	start = crypto_get_time();
+
+	/* Initialize the HMAC verification operation */
+	status = psa_mac_verify_setup(&operation, key_id, PSA_ALG_HMAC(PSA_ALG_SHA_256));
+	if (status != PSA_SUCCESS) {
+		BK_LOGI(TAG, "psa_mac_verify_setup failed! (Error: %d)\r\n", status);
+		goto _error;
+	}
+
+	/* Perform the HMAC verification */
+	status = psa_mac_update(&operation, s_plain_text_p, data_len);
+	if (status != PSA_SUCCESS) {
+		BK_LOGI(TAG, "psa_mac_update failed! (Error: %d)\r\n", status);
+		goto _error;
+	}
+
+	/* Finalize the HMAC verification */
+	status = psa_mac_verify_finish(&operation, hmac, sizeof(hmac));
+	if (status != PSA_SUCCESS) {
+		BK_LOGI(TAG, "psa_mac_verify_finish failed! (Error: %d)\r\n", status);
+		goto _error;
+	}
+
+	end = crypto_get_time();
+	crypto_unlock();
+	crypto_perf_log("HMAC_VERIFY", "120M", key_len, data_len, end - start);
+
+	BK_LOGI(TAG, "HMAC verified successfully!\r\n");
+
+	return APP_SUCCESS;
+
+_error:
+	crypto_unlock();
+	return APP_ERROR;
+}
+
+int hmac_perf_main(void)
+{
+	uint32_t key_len_list[] = {128, 192, 256};
+	uint32_t data_len_list[] = {256, 512, 1024, 2048, 4096};
+	uint32_t cpu_freq_list[] = {PM_CPU_FRQ_120M, PM_CPU_FRQ_240M};
+	uint32_t cpu;
+	uint32_t key;
+	uint32_t data;
+	int status;
+
+	BK_LOGI(TAG, "HMAC perf test\r\n");
+
+	if (test_init() != 0) {
+		goto _error;
+	}
+
+	status = crypto_init();
+	if (status != APP_SUCCESS) {
+		goto _error;
+	}
+
+	for (key = 0; key < sizeof(key_len_list)/sizeof(uint32_t); key++) {
+		for (data = 0; data < sizeof(data_len_list)/sizeof(uint32_t); data++) {
+			for (cpu = 0; cpu < sizeof(cpu_freq_list)/sizeof(uint32_t); cpu++) {
+				crypto_set_cpu_freq(cpu_freq_list[cpu]);
+				status = generate_key(key_len_list[key]);
+				if (status != APP_SUCCESS) {
+					goto _error;
+				}
+			
+				status = hmac_sign_perf(key_len_list[key], data_len_list[data]);
+				if (status != APP_SUCCESS) {
+					goto _error;
+				}
+			
+				status = hmac_verify_perf(key_len_list[key], data_len_list[data]);
+				if (status != APP_SUCCESS) {
+					goto _error;
+				}
+			
+				status = crypto_finish();
+				if (status != APP_SUCCESS) {
+					goto _error;
+				}
+			}
+		}
+	}
+
+	BK_LOGI(TAG, APP_SUCCESS_MESSAGE);
+	BK_LOGI(TAG, "HMAC perf test end\r\n");
+	test_deinit();
+	return APP_SUCCESS;
+
+_error:
+	test_deinit();
+	BK_LOGI(TAG, APP_ERROR_MESSAGE);
+	return APP_ERROR;
 }

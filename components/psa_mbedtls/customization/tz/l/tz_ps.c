@@ -29,7 +29,6 @@
 #define KEY_STORAGE_NUM_MAX (16)
 #define KEY_NAME_LENGTH_MAX (16)
 
-#define PS_AES_IV_SIZE      (16)
 typedef struct
 {	
 	char names[KEY_NAME_LENGTH_MAX];
@@ -243,95 +242,5 @@ int ps_key_destroy_by_names(char *names)
 	}
 	BK_LOGI(TAG, "key %s destroy \r\n", names);
 
-	return 0;
-}
-int tz_ps_aes_cbc_encrypt(char *names,uint8_t * pInBuf,const uint32_t in_len,uint8_t *pOutBuf,const uint32_t out_len)
-{
-	psa_status_t status;
-	psa_cipher_operation_t operation = PSA_CIPHER_OPERATION_INIT;
-	uint32_t olen;
-	uint8_t aes_iv[PS_AES_IV_SIZE];
-	uint32_t id;
-
-	status = ps_key_get_id_by_name(names, &id);
-	if(status != 0)
-	{
-		BK_LOGE(TAG, "psa_ps_set failed! (key id: %d Error: %d)\r\n",id, status);
-		return -1;
-	}
-
-	/* Setup the encryption operation */
-	status = psa_cipher_encrypt_setup(&operation, id, PSA_ALG_CBC_NO_PADDING);
-	if (status != 0) {
-		BK_LOGE(TAG, "psa_cipher_encrypt_setup failed! (Error: %d)\r\n", status);
-		return -1;
-	}
-
-	/* Generate an IV */
-	status = psa_cipher_generate_iv(&operation, aes_iv, PS_AES_IV_SIZE, (size_t *)&olen);
-	if (status != 0) {
-		BK_LOGE(TAG, "psa_cipher_generate_iv failed! (Error: %d)\r\n", status);
-		return -1;
-	}
-
-	/* Perform the encryption */
-	status = psa_cipher_update(&operation,pInBuf,in_len, pOutBuf, out_len, (size_t *)&olen);
-	if (status != 0) {
-		BK_LOGE(TAG, "psa_cipher_update failed! (Error: %d)\r\n", status);
-		return -1;
-	}
-
-	/* Finalize the encryption */
-	status = psa_cipher_finish(&operation, pOutBuf + olen,
-							   out_len - olen,
-							   (size_t *)&olen);
-	if (status != 0) {
-		BK_LOGE(TAG, "psa_cipher_finish failed! (Error: %d)\r\n", status);
-		return -1;
-	}
-
-	BK_LOGI(TAG, "Encryption successful!\r\n");
-	return 0;
-}
-int tz_ps_aes_cbc_decrypt(char *names,uint8_t * pInBuf,const uint32_t in_len,uint8_t *pOutBuf,const uint32_t out_len)
-{
-	psa_status_t status;
-	psa_cipher_operation_t operation = PSA_CIPHER_OPERATION_INIT;
-	uint32_t olen;
-	uint8_t aes_iv[PS_AES_IV_SIZE];
-	uint32_t id;
-	status = ps_key_get_id_by_name(names, &id);
-	if(status != PSA_SUCCESS)
-	{
-		BK_LOGE(TAG, "psa_ps_set failed! (key id: %d Error: %d)\r\n",id, status);
-		return -1;
-	}
-	/* Setup the decryption operation */
-	memset(&operation, 0x0, sizeof(psa_cipher_operation_t));
-	status = psa_cipher_decrypt_setup(&operation, id, PSA_ALG_CBC_NO_PADDING);
-	if (status != 0) {
-		BK_LOGE(TAG, "psa_cipher_decrypt_setup failed! (Error: %d)\r\n", status);
-		return -1;
-	}
-	/* Set the IV generated in encryption */
-	status = psa_cipher_set_iv(&operation, aes_iv, PS_AES_IV_SIZE);
-	if (status != 0) {
-		BK_LOGE(TAG, "psa_cipher_set_iv failed! (Error: %d)\r\n", status);
-		return -1;
-	}
-	/* Perform the decryption */
-	status = psa_cipher_update(&operation, pInBuf,in_len, pOutBuf,out_len, (size_t *)&olen);
-	if (status != 0) 
-	{
-		BK_LOGE(TAG, "psa_cipher_update failed! (Error: %d)\r\n", status);
-		return -1;
-	}
-	/* Finalize the decryption */
-	status = psa_cipher_finish(&operation, pOutBuf + olen, out_len - olen,(size_t *)&olen);
-	if (status != 0)
-	{
-		BK_LOGE(TAG, "psa_cipher_finish failed! (Error: %d)\r\n", status);
-		return -1;
-	}
 	return 0;
 }

@@ -96,9 +96,9 @@ int tz_mbedtls_asymmetric_keygen(mbedtls_pk_context *pk_key, int key_idx, int ty
 {
 	return hal_tz_asymmetric_keygen(pk_key,key_idx,type);
 }
-void tz_mbedtls_pk_init(mbedtls_pk_context *ctx)
+int  tz_mbedtls_pk_init(mbedtls_pk_context *ctx)
 {
-	hal_tz_pk_init(ctx);
+	return hal_tz_pk_init(ctx);
 }
 void tz_mbedtls_pk_free(mbedtls_pk_context *ctx)
 {

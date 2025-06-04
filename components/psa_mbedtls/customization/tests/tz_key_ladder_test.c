@@ -45,29 +45,23 @@ static uint8_t key_ladder_plain_text[KEY_LADDER_TEST_TEXT_SIZE] = {
 static uint8_t m_encrypted_text[KEY_LADDER_TEST_TEXT_SIZE];
 static uint8_t m_decrypted_text[KEY_LADDER_TEST_TEXT_SIZE];
 
+
 int te200_key_ladder_aes_cbc_main(void)
 {
 	key_ladder_context_t ctx;
 	int ret =0;
 
-	ctx.key_id = 8; //need to do
+	//ctx.key_id = ; need to do 
 	ctx.mode = AES_OPERATION_ENCRYPT;
 	memcpy(ctx.iv, input_iv, 16);
-	//memcpy(ctx.iv, 0x0, 16);
-
-	//extern int aes_cbc_encrypt_data(uint8_t *input, uint32_t input_len, uint8_t *output);
-	//ret = aes_cbc_encrypt_data(key_ladder_plain_text, sizeof(key_ladder_plain_text), m_encrypted_text);
 	ret = dubhe_key_ladder_crypt_aes_cbc(&ctx, sizeof(key_ladder_plain_text), key_ladder_plain_text, m_encrypted_text);
 	if(ret < 0){
 		BK_LOGE(TAG, "dubhe_key_ladder_aes_crypt_cbc enc fail! (Error: %d)\r\n", ret);
 		return -1;
 	}
 
-	ctx.key_id = 8; //need to do
 	ctx.mode = AES_OPERATION_DECRYPT;
 	memcpy(ctx.iv, input_iv, 16);
-	//extern int aes_cbc_decrypt_data(uint8_t *input, uint32_t input_len, uint8_t *output);
-	//ret = aes_cbc_decrypt_data(m_encrypted_text, sizeof(m_encrypted_text),m_decrypted_text);
 	ret = dubhe_key_ladder_crypt_aes_cbc(&ctx, sizeof(m_encrypted_text), m_encrypted_text, m_decrypted_text);
 	if(ret < 0){
 		BK_LOGE(TAG, "dubhe_key_ladder_aes_crypt_cbc dec fail! (Error: %d)\r\n", ret);
@@ -81,10 +75,6 @@ int te200_key_ladder_aes_cbc_main(void)
 			os_printf("Error: Decrypted text doesn't match the plaintext\r\n");
 			return -1;
 		}
-		else
-		{
-			os_printf("%s successful\r\n",__func__);
-		}
 
 	return 0;
 } 
@@ -94,14 +84,14 @@ int te200_key_ladder_aes_ecb_main(void)
 	key_ladder_context_t ctx;
 	int ret =0;
 
-	ctx.key_id = 8; //need to do 
+	//ctx.key_id = ; need to do 
 	ctx.mode = AES_OPERATION_ENCRYPT;
 	ret = dubhe_key_ladder_crypt_aes_ecb(&ctx, sizeof(key_ladder_plain_text), key_ladder_plain_text, m_encrypted_text);
 	if(ret < 0){
 		BK_LOGE(TAG, "dubhe_key_ladder_aes_crypt_cbc enc fail! (Error: %d)\r\n", ret);
 		return -1;
 	}
-    ctx.key_id = 8; 
+
 	ctx.mode = AES_OPERATION_DECRYPT;
 	ret = dubhe_key_ladder_crypt_aes_ecb(&ctx, sizeof(m_encrypted_text), m_encrypted_text, m_decrypted_text);
 	if(ret < 0){

@@ -29,10 +29,6 @@
 #include <psa/crypto.h>
 #include <psa/crypto_extra.h>
 
-#include <psa/crypto.h>
-
-#include "tfm_dubhe_key_ladder_nsc.h"
-
 
 #define APP_SUCCESS		                                       (0)
 #define APP_ERROR                                              (-1)
@@ -459,7 +455,7 @@ int hal_tz_pk_parse_key(mbedtls_pk_context *pk,
 					            const unsigned char *pwd, 
 					            size_t pwdlen)
 {
-	//mbedtls_pk_parse_key(pk,(const unsigned char *)key,keylen,pwd,pwdlen,NULL, NULL);
+	mbedtls_pk_parse_key(pk,(const unsigned char *)key,keylen,pwd,pwdlen,NULL, NULL);
 
 	//psa_import_key();
 	return 0;
@@ -607,37 +603,8 @@ int hal_tz_generate_random(unsigned char *output, size_t output_len)
 		return APP_ERROR;
 	}
 }
-static uint8_t input_iv[16] = {//random
-	0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66,
-	0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66};
-int aes_cbc_encrypt_data(uint8_t *input, uint32_t input_len, uint8_t *output)
-{
-    key_ladder_context_t ctx;
-    int ret =0;
-    ctx.key_id = 8;//OTP_EK_11;
-    ctx.mode = AES_OPERATION_ENCRYPT;
-    memcpy(ctx.iv, input_iv, 16);
-    ret = dubhe_key_ladder_crypt_aes_cbc(&ctx, input_len, input, output);
-    if(ret < 0)
-    {
-        os_printf("%s enc fail! (Error: %d)\r\n",__func__,ret);
-        return -1;
-    }
-    return 0;
-}
 
-int aes_cbc_decrypt_data(uint8_t *input, uint32_t input_len, uint8_t *output)
-{
-    int ret =0;
-    key_ladder_context_t ctx;
-    ctx.key_id = 8;//OTP_EK_11;
-    ctx.mode = AES_OPERATION_DECRYPT;
-    memcpy(ctx.iv, input_iv, 16);
-    ret = dubhe_key_ladder_crypt_aes_cbc(&ctx, input_len, input, output);
-    if(ret < 0)
-    {
-        os_printf("%s fail! (Error: %d)\r\n",__func__,ret);
-        return -1;
-    }
-    return 0;
-}
+
+/***************************************************adapt psa asymmetrical end ***************************************************/
+
+

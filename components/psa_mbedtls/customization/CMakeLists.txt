@@ -142,7 +142,7 @@ list(APPEND incs
 
 list(APPEND srcs
 	#customization
-	#customization/tz/l/tz_mbedtls.c
+	customization/tz/l/tz_mbedtls.c
 	customization/tz/l/hal_tz.c
 )
 endif()

@@ -95,8 +95,11 @@ static const int ssl_default_ciphersuites[] = {
 
 int psa_tls_client_main(void)
 {
-    int ret = 1, len;
+
+#ifdef MBEDTLS_ERROR_C
     int exit_code = MBEDTLS_EXIT_FAILURE;
+#endif
+    int ret = 1, len;
     mbedtls_net_context server_fd;
     uint32_t flags;
     unsigned char buf[1024];
@@ -291,7 +294,9 @@ int psa_tls_client_main(void)
 
     mbedtls_ssl_close_notify(&ssl);
 
+#ifdef MBEDTLS_ERROR_C
     exit_code = MBEDTLS_EXIT_SUCCESS;
+#endif
 
 exit:
 
@@ -313,5 +318,6 @@ exit:
     mbedtls_psa_crypto_free();
 #endif /* MBEDTLS_USE_PSA_CRYPTO */
 
-    mbedtls_exit(exit_code);
+    //mbedtls_exit(exit_code);
+    return 0;
 }

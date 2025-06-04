@@ -80,8 +80,6 @@ static int encrypt_aes_gcm(void)
 
 #if CONFIG_TFM_AES_GCM_NSC
 	status = psa_aes_gcm_encrypt(&s_aes_gcm_context, s_plain_text, plaintext_len, s_encrypted_text);
-    //extern 	int encData(const u8 * const pBuf, const size_t len, const u8 *pOutBuf);
-	//status = encData(s_plain_text, plaintext_len, s_encrypted_text);
 #endif
 	if (status != PSA_SUCCESS) 
 	{
@@ -103,8 +101,6 @@ static int decrypt_aes_gcm(void)
 	BK_LOGI(TAG, "s_aes_gcm_context.out_length :0x%x ...\r\n",s_aes_gcm_context.out_length);
 #if CONFIG_TFM_AES_GCM_NSC
 	status = psa_aes_gcm_decrypt(&s_aes_gcm_context, s_encrypted_text, s_aes_gcm_context.out_length, s_decrypted_text);
-	//extern int decData(const u8 * pBuf, const u32 len, const u8 *pOutBuf) ;
-	//status = decData(s_encrypted_text, sizeof(s_encrypted_text), s_decrypted_text) ;
 #endif
 
 	if (status != PSA_SUCCESS) {

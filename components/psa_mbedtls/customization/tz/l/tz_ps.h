@@ -8,36 +8,7 @@ enum psa_storage_status_e{
 /* key storage */
 #define KEY_STORAGE_NUM_MAX (16)
 #define KEY_NAME_LENGTH_MAX (16)
-/**
- *  @brief AES-CBC encrypt data function with a trustzone random key.
- *  @param[in]  names     key names
- *  @param[in]  pInBuf    input data
- *  @param[in]  in_len    length of the input data 
- *  @param[out] pOutBuf   encrypted data
- *  @param[in]  out_len   length of the output data 
- *  @note   Some details need to know before setting:
- *          - AES keylen must be 16bytes(128bits), 24bytes(192bits) or 32bytes(256bits).
- *
- *
- *  @return      value == 0     success
- *  @return      value < 0      fail(Refer to ERRNO)
- */
-int tz_ps_aes_cbc_encrypt(char *names,uint8_t * pInBuf,const uint32_t in_len,uint8_t *pOutBuf,const uint32_t out_len);
-/**
- *  @brief AES-CBC decrypt data function with a trustzone random key.
- *  @param[in]  names     key names
- *  @param[in]  pInBuf    input data
- *  @param[in]  in_len    length of the input data
- *  @param[out] pOutBuf   encrypted data 
- *  @param [in] out_len   length of the output data 
- *  @note   Some details need to know before setting:
- *          - AES keylen must be 16bytes(128bits), 24bytes(192bits) or 32bytes(256bits).
- *
- *
- *  @return      value == 0     success
- *  @return      value < 0      fail(Refer to ERRNO)
- */
-int tz_ps_aes_cbc_decrypt(char *names,uint8_t * pInBuf,const uint32_t in_len,uint8_t *pOutBuf,const uint32_t out_len);
+
 /**
  * @brief key protect storage
  *

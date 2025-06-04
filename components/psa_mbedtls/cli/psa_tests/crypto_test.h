@@ -27,6 +27,14 @@ int psa_tls_client_main(void);
 int sha256_main(void);
 int sha384_main(void);
 
+int aes_cbc_perf_main(void);
+int aes_gcm_perf_main(void);
+int ecdh_perf_main(void);
+int ecdsa_perf_main(void);
+int hmac_perf_main(void);
+int sha256_perf_main(void);
+int sha384_perf_main(void);
+
 /*key manage test begin*/
 int generate_key_manage(void);
 int aes_encrypt_decrypt(void);
@@ -34,6 +42,12 @@ int get_key_attributes(void);
 int destroy_key(uint32_t id);
 /*key manage test finish*/
 
+void crypto_lock(void);
+void crypto_unlock(void);
+uint64_t crypto_get_time(void);
+uint32_t crypto_diff_time(uint64_t end, uint64_t begin);
+void crypto_perf_log(const char* type, const char* cpu_freq, uint32_t key_len, uint32_t len, uint32_t time);
+int crypto_set_cpu_freq(uint32_t freq);
 
 #ifdef __cplusplus
 }

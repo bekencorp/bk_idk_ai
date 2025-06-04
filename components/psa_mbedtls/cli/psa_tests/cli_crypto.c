@@ -19,6 +19,7 @@
 static void cli_psa_help(void)
 {
 	CLI_LOGI("psa_crypto [aes_cbc|aes_gcm|ecdh|ecdsa|hmac|tls_client\r\n");
+	CLI_LOGI("psa_crypto_perf [aes_cbc|aes_gcm|ecdh|ecdsa|hmac|tls_client\r\n");
 	CLI_LOGI("psa_aes_key [genkey|encdec|attr|destroy\r\n");
 }
 
@@ -49,6 +50,38 @@ static void cli_psa_crypto_cmd(char *pcWriteBuffer, int xWriteBufferLen, int arg
 	}
 }
 
+static void cli_psa_crypto_perf_cmd(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **argv)
+{
+	int ret = 0;
+
+	if (argc < 2) {
+		return;
+	}
+
+	if (os_strcmp(argv[1], "aes_cbc") == 0) {
+		ret = aes_cbc_perf_main();
+	} else if (os_strcmp(argv[1], "aes_gcm") == 0) {
+		ret = aes_gcm_perf_main();
+	} else if (os_strcmp(argv[1], "ecdsa") == 0) {
+		ret = ecdsa_main();
+	} else if (os_strcmp(argv[1], "hmac") == 0) {
+		ret = hmac_perf_main();
+	} else if (os_strcmp(argv[1], "sha256") == 0) {
+		ret = sha256_perf_main();
+	} else if (os_strcmp(argv[1], "sha384") == 0) {
+		ret = sha384_perf_main();
+	} else {
+		ret = -1;
+	}
+
+	if (ret == 0) {
+		CLI_LOGI("crypto perf test OK\r\n");
+	} else {
+		CLI_LOGI("crypto perf test NOK\r\n");
+	}
+}
+
+
 static void cli_psa_key_manage_cmd(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **argv)
 {
 	if (argc < 2) {
@@ -76,6 +109,7 @@ static void cli_psa_key_manage_cmd(char *pcWriteBuffer, int xWriteBufferLen, int
 #define PSA_CRYPTO_CMD_CNT (sizeof(s_psa_crypto_commands) / sizeof(struct cli_command))
 static const struct cli_command s_psa_crypto_commands[] = {
 	{"psa_crypto", "psa_crypto [aes_cbc|aes_gcm|ecdh|ecdsa|hmac|sha256|sha384|tls_client]", cli_psa_crypto_cmd},
+	{"psa_crypto_perf", "psa_crypto_perf [aes_cbc|aes_gcm|ecdh|ecdsa|hmac|sha256|sha384|tls_client]", cli_psa_crypto_perf_cmd},
 	{"psa_aes_key", "psa_aes_key [genkey|encdec|attr|destroy", cli_psa_key_manage_cmd},
 };
 

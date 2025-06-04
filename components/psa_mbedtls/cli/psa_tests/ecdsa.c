@@ -16,6 +16,8 @@
 #include <stdlib.h>
 #include <psa/crypto.h>
 #include <psa/crypto_extra.h>
+#include <modules/pm.h>
+#include "crypto_test.h"
 
 #define APP_SUCCESS		(0)
 #define APP_ERROR		(-1)
@@ -145,6 +147,7 @@ static int sign_message(void)
 {
 	uint32_t output_len;
 	psa_status_t status;
+	uint64_t start, end;
 
 	BK_LOGI(TAG, "Signing a message using ECDSA...\r\n");
 
@@ -160,6 +163,9 @@ static int sign_message(void)
 		return APP_ERROR;
 	}
 
+	crypto_lock();
+	start = crypto_get_time();
+
 	/* Sign the hash */
 	status = psa_sign_hash(keypair_id,
 			       PSA_ALG_ECDSA(PSA_ALG_SHA_256),
@@ -173,6 +179,11 @@ static int sign_message(void)
 		return APP_ERROR;
 	}
 
+	end = crypto_get_time();
+	crypto_unlock();
+	crypto_perf_log("ECDSA_SIGN_HASH", "120M", 0, 32, end - start);
+
+
 	BK_LOGI(TAG, "Message signed successfully!\r\n");
 
 	return APP_SUCCESS;
@@ -180,9 +191,13 @@ static int sign_message(void)
 
 static int verify_message(void)
 {
+	uint64_t start, end;
 	psa_status_t status;
 
 	BK_LOGI(TAG, "Verifying ECDSA signature...\r\n");
+
+	crypto_lock();
+	start = crypto_get_time();
 
 	/* Verify the signature of the hash */
 	status = psa_verify_hash(pub_key_id,
@@ -195,6 +210,10 @@ static int verify_message(void)
 		BK_LOGI(TAG, "psa_verify_hash failed! (Error: %d)\r\n", status);
 		return APP_ERROR;
 	}
+	end = crypto_get_time();
+	crypto_unlock();
+	crypto_perf_log("ECDSA_VERIFY_HASH", "120M", 0, 32, end - start);
+
 
 	BK_LOGI(TAG, "Signature verification was successful!\r\n");
 
@@ -203,6 +222,8 @@ static int verify_message(void)
 
 int ecdsa_main(void)
 {
+	uint32_t cpu_freq_list[] = {PM_CPU_FRQ_120M, PM_CPU_FRQ_240M};
+	uint32_t cpu;
 	int status;
 
 	BK_LOGI(TAG, "Starting ECDSA example...\r\n");
@@ -213,34 +234,37 @@ int ecdsa_main(void)
 		return APP_ERROR;
 	}
 
-	status = generate_ecdsa_keypair();
-	if (status != APP_SUCCESS) {
-		BK_LOGI(TAG, APP_ERROR_MESSAGE);
-		return APP_ERROR;
-	}
-
-	status = import_ecdsa_pub_key();
-	if (status != APP_SUCCESS) {
-		BK_LOGI(TAG, APP_ERROR_MESSAGE);
-		return APP_ERROR;
-	}
-
-	status = sign_message();
-	if (status != APP_SUCCESS) {
-		BK_LOGI(TAG, APP_ERROR_MESSAGE);
-		return APP_ERROR;
-	}
-
-	status = verify_message();
-	if (status != APP_SUCCESS) {
-		BK_LOGI(TAG, APP_ERROR_MESSAGE);
-		return APP_ERROR;
-	}
-
-	status = crypto_finish();
-	if (status != APP_SUCCESS) {
-		BK_LOGI(TAG, APP_ERROR_MESSAGE);
-		return APP_ERROR;
+	for (cpu = 0; cpu < sizeof(cpu_freq_list)/sizeof(uint32_t); cpu++) {
+		crypto_set_cpu_freq(cpu_freq_list[cpu]);
+		status = generate_ecdsa_keypair();
+		if (status != APP_SUCCESS) {
+			BK_LOGI(TAG, APP_ERROR_MESSAGE);
+			return APP_ERROR;
+		}
+	
+		status = import_ecdsa_pub_key();
+		if (status != APP_SUCCESS) {
+			BK_LOGI(TAG, APP_ERROR_MESSAGE);
+			return APP_ERROR;
+		}
+	
+		status = sign_message();
+		if (status != APP_SUCCESS) {
+			BK_LOGI(TAG, APP_ERROR_MESSAGE);
+			return APP_ERROR;
+		}
+	
+		status = verify_message();
+		if (status != APP_SUCCESS) {
+			BK_LOGI(TAG, APP_ERROR_MESSAGE);
+			return APP_ERROR;
+		}
+	
+		status = crypto_finish();
+		if (status != APP_SUCCESS) {
+			BK_LOGI(TAG, APP_ERROR_MESSAGE);
+			return APP_ERROR;
+		}
 	}
 
 	BK_LOGI(TAG, APP_SUCCESS_MESSAGE);
