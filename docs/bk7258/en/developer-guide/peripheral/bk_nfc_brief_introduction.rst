@@ -3,17 +3,17 @@ Nfc brief introduction
 
 :link_to_translation:`zh_CN:[中文]`
 
-一.Overview
+1.Overview
 ----------------------------
 
 This document provides an overview of the NFC usage process to better analyze and solve problems.
 
-二.Introduction to the NFC Module
+2.Introduction to the NFC Module
 ----------------------------------
 
 The MFRC522 is a highly integrated read/write IC designed for contactless communication at 13.56MHz. The MFRC522 reader supports ISO/IEC 14443 A/MIFARE and NTAG standards, with host interfaces including SPI, I2C, and UART. Currently, we use the UART protocol for communication with the MFRC522.
 
-三.Working Process of MFRC522
+3.Working Process of MFRC522
 ------------------------------
 
 In general, the process can be summarized into the following parts: card detection, anti-collision, card selection, password verification, and data reading.
@@ -30,7 +30,7 @@ In general, the process can be summarized into the following parts: card detecti
 - Data Reading: This involves data communication between the MFRC522 and the M1 radio card.
 
 
-三.Introduction to NFC-related APIs
+4.Introduction to NFC-related APIs
 ------------------------------------
 
 The sequence of data interactions between MFRC522 and M1 cards is as follows: 1. Initialization (configure card type), 2. Card detection, 3. Anti-collision, 4. Card selection, 5. Password verification, 6. Data reading.
@@ -94,7 +94,7 @@ The sequence of data interactions between MFRC522 and M1 cards is as follows: 1.
         - @param pData -[out] write data，16bytes
         - @return  Status value, MI OK - success; MI_ERR - failure
 
-三.NFC Testing Command Introduction
+5.NFC Testing Command Introduction
 ------------------------------------
 Using the bekengenie project as an example, this section introduces the NFC testing procedure. First, compile the bekengenie project: make bk7258 PROJECT=bekengenie. After successful compilation, burn the all-app.bin file from the build directory.
 NFC Card Testing The NFC card testing can be divided into two types:
@@ -212,8 +212,8 @@ NFC Card Testing The NFC card testing can be divided into two types:
         :figclass: align-center
 
         Fig12 nfc_write
-    
-    
+
+
     - step7:Read data using the CLI command:nfc_write_test read 0
 
     .. figure:: ../../../../common/_static/nfc_read.png
