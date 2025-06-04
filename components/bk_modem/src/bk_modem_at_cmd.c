@@ -25,9 +25,11 @@
 
 
 static beken_semaphore_t g_modem_at_semaphore = NULL;
+beken2_timer_t func_proc = {0};
 uint8_t g_modem_at_cmd_buf[AT_CMD_LEN_MAX];
 uint8_t g_modem_at_rsp_buf[AT_RSP_LEN_MAX];
 bool g_modem_at_timer_cb_handle = false;
+
 
 bk_err_t bk_modem_at_init(void)
 {
@@ -101,17 +103,26 @@ static bk_err_t bk_modem_at_rsp_analysis(uint8_t *cmd,uint8_t *resp)
 	}
 }
 
-static void bk_modem_at_timeout_cb(void* ptr)
+static void bk_modem_at_timeout_cb(void* larg, void* rarg)
 {
 	BK_MODEM_LOGI("AT command_timer is too long\r\n");
+
+	g_modem_at_timer_cb_handle = true;
 
 	if (g_modem_at_semaphore == NULL)
 	{
 		BK_MODEM_LOGI("at_semaphore is deinited.\r\n");
+		if(rtos_is_oneshot_timer_init(&func_proc))
+		{
+			bk_err_t ret = rtos_deinit_oneshot_timer(&func_proc);
+			if(ret!=0)
+			{
+				BK_MODEM_LOGE("AT deinit timer failed\r\n");
+			}
+		}
 		return;
 	}
 
-	g_modem_at_timer_cb_handle = true;
 	int ret = rtos_set_semaphore(&g_modem_at_semaphore);
 	if (ret) 
 	{
@@ -161,13 +172,12 @@ bk_err_t bk_modem_at_cmd_send(const char *cmd, uint8_t max_retry, uint32_t timeo
 
 	BK_MODEM_LOGI("at cmd send: len=%d, cmd=%s\r\n", len, at_cmd_buf);
 
-	beken_timer_t func_proc = {0};//protect the function in case of function time is too long >15s
-	ret = rtos_init_timer(&func_proc,timeout,bk_modem_at_timeout_cb,NULL); 
+	ret = rtos_init_oneshot_timer(&func_proc,timeout,bk_modem_at_timeout_cb,NULL,NULL);
 	if(ret != BK_OK){
 		BK_MODEM_LOGI("init timer failed\r\n");
 		return BK_FAIL;
 	}
-	rtos_start_timer(&func_proc);
+	rtos_start_oneshot_timer(&func_proc);
 	g_modem_at_timer_cb_handle = false;
 
 	while (retry--)
@@ -210,20 +220,18 @@ bk_err_t bk_modem_at_cmd_send(const char *cmd, uint8_t max_retry, uint32_t timeo
 		}
 	}
 	
-	if(rtos_is_timer_init(&func_proc))
+	if(rtos_is_oneshot_timer_init(&func_proc))
 	{
-		ret = rtos_stop_timer(&func_proc);
+		ret = rtos_stop_oneshot_timer(&func_proc);
 		if(ret!=0)
 		{
 			BK_MODEM_LOGE("AT stop timer failed\r\n");
 		}
-		else
+
+		ret = rtos_deinit_oneshot_timer(&func_proc);
+		if(ret!=0)
 		{
-			ret = rtos_deinit_timer(&func_proc);	
-			if(ret!=0)
-			{
-				BK_MODEM_LOGE("AT deinit timer failed\r\n");
-			}
+			BK_MODEM_LOGE("AT deinit timer failed\r\n");
 		}
 	}
 
