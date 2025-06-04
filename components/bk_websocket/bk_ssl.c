@@ -355,6 +355,16 @@ static int mbedtls_bk_entropy_poll(void *data, unsigned char *output, size_t len
 }
 #endif
 
+static void my_debug( void *ctx, int level,
+                      const char *file, int line,
+                      const char *str )
+{
+    ((void) level);
+
+   // mbedtls_fprintf( (FILE *) ctx, "%s:%04d: %s", file, line, str );
+    ///fflush(  (FILE *) ctx  );
+    bk_printf("[mbed]%s:%04d: %s\r\n", file, line, str);
+}
 bk_err_t bk_ws_create_mbedtls_handle(const char *hostname, size_t hostlen, const void *cfg, bk_tls_t *tls)
 {
 
@@ -365,6 +375,7 @@ bk_err_t bk_ws_create_mbedtls_handle(const char *hostname, size_t hostlen, const
 	mbedtls_ctr_drbg_init(&tls->ctr_drbg);
 	mbedtls_ssl_config_init(&tls->conf);
 	mbedtls_entropy_init(&tls->entropy);
+	mbedtls_ssl_conf_dbg(&tls->conf, my_debug, 0);
 
 	if (tls->role == BK_TLS_CLIENT) {
 		BK_LOGD(TAG, "BK_TLS_CLIENT\r\n");

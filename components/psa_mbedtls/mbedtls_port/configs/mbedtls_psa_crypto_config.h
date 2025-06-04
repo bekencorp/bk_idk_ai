@@ -216,6 +216,13 @@
  */
 #define MBEDTLS_PLATFORM_MEMORY
 
+#if defined( MBEDTLS_PLATFORM_MEMORY )
+extern void *tls_mbedtls_mem_calloc(size_t n, size_t size);
+extern void tls_mbedtls_mem_free(void *ptr);
+#define MBEDTLS_PLATFORM_STD_CALLOC             tls_mbedtls_mem_calloc
+#define MBEDTLS_PLATFORM_STD_FREE               tls_mbedtls_mem_free
+#endif
+
 /**
  * \def MBEDTLS_PLATFORM_NO_STD_FUNCTIONS
  *
@@ -3890,8 +3897,8 @@
 #define os_calloc(nmemb,size)   ((size) && (nmemb) > (~( unsigned int) 0)/(size))?0:os_zalloc((nmemb)*(size))
 /* To use the following function macros, MBEDTLS_PLATFORM_C must be enabled. */
 /* MBEDTLS_PLATFORM_XXX_MACRO and MBEDTLS_PLATFORM_XXX_ALT cannot both be defined */
-#define MBEDTLS_PLATFORM_CALLOC_MACRO        os_calloc /**< Default allocator macro to use, can be undefined. See MBEDTLS_PLATFORM_STD_CALLOC for requirements. */
-#define MBEDTLS_PLATFORM_FREE_MACRO            os_free /**< Default free macro to use, can be undefined. See MBEDTLS_PLATFORM_STD_FREE for requirements. */
+//#define MBEDTLS_PLATFORM_CALLOC_MACRO        os_calloc /**< Default allocator macro to use, can be undefined. See MBEDTLS_PLATFORM_STD_CALLOC for requirements. */
+//#define MBEDTLS_PLATFORM_FREE_MACRO            os_free /**< Default free macro to use, can be undefined. See MBEDTLS_PLATFORM_STD_FREE for requirements. */
 //#define MBEDTLS_PLATFORM_EXIT_MACRO            exit /**< Default exit macro to use, can be undefined */
 //#define MBEDTLS_PLATFORM_SETBUF_MACRO      setbuf /**< Default setbuf macro to use, can be undefined */
 //#define MBEDTLS_PLATFORM_TIME_MACRO            time /**< Default time macro to use, can be undefined. MBEDTLS_HAVE_TIME must be enabled */
@@ -4131,6 +4138,18 @@
 
 #else //CONFIG_FULL_MBEDTLS
 
+#define MBEDTLS_PLATFORM_MEMORY
+#if defined( MBEDTLS_PLATFORM_MEMORY )
+extern void *tls_mbedtls_mem_calloc(size_t n, size_t size);
+extern void tls_mbedtls_mem_free(void *ptr);
+#define MBEDTLS_PLATFORM_STD_CALLOC             tls_mbedtls_mem_calloc
+#define MBEDTLS_PLATFORM_STD_FREE               tls_mbedtls_mem_free
+#endif
+#define MBEDTLS_PLATFORM_STD_SNPRINTF        snprintf
+#define os_calloc(nmemb,size)   ((size) && (nmemb) > (~( unsigned int) 0)/(size))?0:os_zalloc((nmemb)*(size))
+//#define MBEDTLS_PLATFORM_CALLOC_MACRO        os_calloc /**< Default allocator macro to use, can be undefined. See MBEDTLS_PLATFORM_STD_CALLOC for requirements. */
+//#define MBEDTLS_PLATFORM_FREE_MACRO            os_free /**< Default free macro to use, can be undefined. See MBEDTLS_PLATFORM_STD_FREE for requirements. */
+#define MBEDTLS_PLATFORM_PRINTF_MACRO        os_printf /**< Default printf macro to use, can be undefined */
 #define MBEDTLS_HAVE_ASM
 #define MBEDTLS_ENTROPY_HARDWARE_ALT
 #define MBEDTLS_AES_ROM_TABLES
@@ -4150,7 +4169,17 @@
 #define MBEDTLS_ERROR_STRERROR_DUMMY
 #define MBEDTLS_NO_PLATFORM_ENTROPY
 #define MBEDTLS_PKCS1_V15
+//#define MBEDTLS_PKCS1_V21
+//#define MBEDTLS_GENPRIME
 
+#if CONFIG_MBEDTLS_TEST
+#define MBEDTLS_SELF_TEST
+#endif
+#if defined(CONFIG_AGORA_IOT_SDK)
+#define MBEDTLS_CHACHA20_C
+#define MBEDTLS_CHACHAPOLY_C
+#define MBEDTLS_POLY1305_C
+#endif
 #define MBEDTLS_SSL_ALL_ALERT_MESSAGES
 #define MBEDTLS_SSL_MAX_FRAGMENT_LENGTH
 #define MBEDTLS_SSL_PROTO_TLS1_2
@@ -4162,8 +4191,6 @@
 #define MBEDTLS_BASE64_C
 #define MBEDTLS_BIGNUM_C
 #define MBEDTLS_CCM_C
-#define MBEDTLS_GCM_C
-#define MBEDTLS_NIST_KW_C
 #define MBEDTLS_CIPHER_C
 #define MBEDTLS_CMAC_C
 #define MBEDTLS_CTR_DRBG_C
@@ -4172,8 +4199,9 @@
 #define MBEDTLS_ECDSA_C
 #define MBEDTLS_ECP_C
 #define MBEDTLS_ENTROPY_C
-#define MBEDTLS_ECP_FIXED_POINT_OPTIM 0
 #define MBEDTLS_HKDF_C
+//#define MBEDTLS_MD_C
+#define MBEDTLS_MD5_C
 #define MBEDTLS_OID_C
 #define MBEDTLS_PEM_PARSE_C
 #define MBEDTLS_PK_C
@@ -4184,14 +4212,13 @@
 #define MBEDTLS_RSA_C
 #define MBEDTLS_SHA1_C
 #define MBEDTLS_SHA256_C
-#define MBEDTLS_SHA512_C
+#define MBEDTLS_SHA384_C
 #define MBEDTLS_SSL_CLI_C
 #define MBEDTLS_SSL_TLS_C
 #define MBEDTLS_X509_USE_C
 #define MBEDTLS_X509_CRT_PARSE_C
-#define MBEDTLS_NET_C
 #define MBEDTLS_SSL_OUT_CONTENT_LEN             8192
-#define MBEDTLS_SSL_DTLS_MAX_BUFFERING          16384
+#define MBEDTLS_SSL_DTLS_MAX_BUFFERING             16384
 
 #ifndef MBEDTLS_PLATFORM_SNPRINTF_ALT
 #define MBEDTLS_PLATFORM_SNPRINTF_ALT
@@ -4199,12 +4226,10 @@
 
 #define MBEDTLS_THREADING_ALT
 #define MBEDTLS_THREADING_C
-#define MBEDTLS_PLATFORM_MEMORY
-#define MBEDTLS_PLATFORM_STD_SNPRINTF        snprintf
-#define os_calloc(nmemb,size)   ((size) && (nmemb) > (~( unsigned int) 0)/(size))?0:os_zalloc((nmemb)*(size))
-#define MBEDTLS_PLATFORM_CALLOC_MACRO        os_calloc /**< Default allocator macro to use, can be undefined. See MBEDTLS_PLATFORM_STD_CALLOC for requirements. */
-#define MBEDTLS_PLATFORM_FREE_MACRO            os_free /**< Default free macro to use, can be undefined. See MBEDTLS_PLATFORM_STD_FREE for requirements. */
-#define MBEDTLS_PLATFORM_PRINTF_MACRO        os_printf /**< Default printf macro to use, can be undefined */
+
+#define MBEDTLS_NET_C
+#define MBEDTLS_NIST_KW_C
+
 
 #endif //CONFIG_FULL_MBEDTLS
 
@@ -4226,6 +4251,7 @@
 #if defined(MBEDTLS_USER_CONFIG_FILE)
 #include MBEDTLS_USER_CONFIG_FILE
 #endif
+
 
 // #include "mbedtls/check_config.h"
 

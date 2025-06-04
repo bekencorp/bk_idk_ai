@@ -16,5 +16,5 @@ if(CONFIG_WEBSOCKET)
 endif()
 armino_component_register(SRCS "${srcs}"
 	INCLUDE_DIRS "${incs}"
-	PRIV_REQUIRES mbedtls bk_wifi bk_common lwip_intf_v2_1
+	PRIV_REQUIRES mbedtls psa_mbedtls bk_wifi bk_common lwip_intf_v2_1
 	)
