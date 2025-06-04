@@ -295,9 +295,9 @@ void bk_mfrc522_reset(void)
 #if NFC_DEBUG_CODE
     // 需先保持高电平，后给个下降沿
     mfrc522_gpio_write(MFRC522_RST_LOW);
-    delay_ms(5);
+    rtos_delay_milliseconds(5);
     mfrc522_gpio_write(MFRC522_RST_HIGH);
-    delay_ms(100);
+    rtos_delay_milliseconds(100);
 #endif
     uint32_t speed = 0;
     for(int i =0 ;i<2;i++) //loops twice to read all the dirty data in fifo.

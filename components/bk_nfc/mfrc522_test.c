@@ -52,7 +52,7 @@ static int nfc_test_main(void)
 					MFRC522_LOGI("Unknown Card\n\r");
 					continue;
 			}
-			//delay_ms(10);
+			//rtos_delay_milliseconds(10);
 			status = bk_mfrc522_anticoll(Card_ID);//����ײ
 			if(status != MI_OK){
 				MFRC522_LOGE("Anticoll Error\n\r");

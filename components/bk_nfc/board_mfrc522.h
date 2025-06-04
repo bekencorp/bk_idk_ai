@@ -226,5 +226,4 @@ void bk_mfrc522_clear_bit_mask(uint8_t reg, uint8_t mask);
 void RC522_Config(unsigned char Card_Type);
 void mfrc522_init(void);
 char PcdHalt(void);
-extern void delay_ms(UINT32 ms);
 #endif /* _BOARD_MFRC522_H_ */
