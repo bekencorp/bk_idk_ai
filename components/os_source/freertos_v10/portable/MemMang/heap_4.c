@@ -765,7 +765,7 @@ static inline void show_mem_info(BlockLink_t *pxLink)
 		pxLink->line);
 #endif
 
-#if CONFIG_WDT_EN
+// #if CONFIG_WDT_EN
 #if (CONFIG_TASK_WDT)
 	bk_task_wdt_feed();
 #endif
@@ -776,7 +776,7 @@ static inline void show_mem_info(BlockLink_t *pxLink)
 	bk_int_aon_wdt_feed();
 #endif
 
-#endif //CONFIG_WDT_EN
+// #endif //CONFIG_WDT_EN
 }
 
 static inline void mem_overflow_check(BlockLink_t *pxLink)
