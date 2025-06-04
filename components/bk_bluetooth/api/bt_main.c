@@ -91,6 +91,8 @@ bt_err_t bk_bluetooth_init(void)
         return ret;
     }
 
+    bk_int_set_priority(INT_SRC_BTDM, 0);
+
 #if !CONFIG_BTDM_CONTROLLER_ONLY
     ret = bluetooth_host_init();
     if (ret)
