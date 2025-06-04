@@ -40,8 +40,14 @@ OTP2: Readable and programmable OTP2 area, where 0x000~0x2FF is divided into 767
 +++++++++++++++++++++++++++++++++++++++
 
 - 1）Firstly, the driver code path for otp2 is located at bk_idk/middleware/driver/otp/otp_driver_v1_1.c;
-- 2) If customers want to use otp2, they need to configure the structure array otp_ahb_map[] with { name, allocated_size, offset, privilege } accordingly;
-- 3) Among these, name field needs to be added in sequence in the enumeration structure otp2_id_t;
+- 2) If you need to add a specific size partition in otp2, take BK7258 as an example, you only need to add the corresponding content of [id, name, size, offset, end, privilege, security] in middleware/boards/bk7258/csv/otp2.csv. For reference, see the end of the article;
+- 3) The tools in the SDK will automatically generate relevant header files during compilation. There is no need to manually modify the content in the header file. The generated header file content is as follows.
+
+.. figure:: picture/otp_header.png
+    :align: center
+    :alt: 8
+    :figclass: align-center
+
 - 4) After configuring the above settings, customers can use CLI commands to test. The related test code path is: bk_idk/component/bk_cl/cli_otp.c (for example, the test command is otp_ahb read item size)
 
 Structure Array otp_ahb_map Configuration Introduction
@@ -63,7 +69,7 @@ Structure Array otp_ahb_map Configuration Introduction
     - offset: offset from the base address
     - privilege: set the permissions of the access area
 
-- 2) Corresponding name fields can be added in sequence in the otp2_id_t structure; specific path is include/driver/otp_types.h
+- 2) The name field is stored in otp2_id_t; specific path is ../_build/_otp.h
 
 
 .. figure:: picture/otp2_id_t.png
@@ -71,17 +77,16 @@ Structure Array otp_ahb_map Configuration Introduction
     :alt: 8
     :figclass: align-center
 
-- 3) Currently, the usage area of otp2 is as follows: specific path is bk_idk/middleware/driver/otp/otp_driver_v1_1.c
-
-.. figure:: picture/otp_ahb_map.png
-    :align: center
-    :alt: 8
-    :figclass: align-center
-
 
 .. note::
 
-    - Taking name=OTP_EXAMPLE as an example to introduce how to configure otp2,
-    - Firstly, add a self-defined name field such as OTP_EXAMPLE in the otp2_id_t structure;
-    - Secondly, configure the size of allocated_size, that is, the required allocated byte size space; (in decimal size)
-    - The offset size equals (the allocated_size of the previous name field + the offset of the previous field) (in hexadecimal)
+    - Take name=OTP_CUSTOMER_KEY2 as an example to introduce how to configure otp2
+    - First, add id 6 to the opt2.csv file, and increase it in sequence; add a self-defined name field, such as OTP_CUSTOMER_KEY2;
+    - Secondly, you need to configure the size, that is, the byte size space that needs to be allocated. If the size is 256 bytes, size is 256; (decimal size)
+    - offset size is equal to (end of the previous name field) (hexadecimal)
+    - permission is OTP_READ_WRITE, security is FALSE;
+
+.. figure:: picture/otp2_csv.png
+    :align: center
+    :alt: 8
+    :figclass: align-center

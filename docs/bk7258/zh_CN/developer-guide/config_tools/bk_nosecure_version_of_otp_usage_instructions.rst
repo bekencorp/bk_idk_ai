@@ -38,10 +38,16 @@ OTP2:可读可编程的OTP2区域，0x000~0x2FF被分为767个小分区。其存
 二、Otp2的驱动使用介绍
 +++++++++++++++++++++++++++++
 
-- 1）首先，otp2的驱动代码路径在bk_idk/middleware/driver/otp/otp_driver_v1_1.c；
-- 2）客户如果想使用otp2，需要配置结构体数组中otp_ahb_map[]的{ name,  allocated_size ,  offset ,  privilege }即可；
-- 3）其中，name字段，需要在枚举结构otp2_id_t中按顺序增加相应的字段即可；
-- 3）配置好上述的配置之后，可以使用cli命令进行测试, 相关的测试代码路径是：bk_idk/component/bk_cl/cli_otp.c  (例如 测试命令是otp_ahb read item size)
+- 1）首先，otp2的驱动代码路径在 ``bk_idk/middleware/driver/otp/otp_driver_v1_1.c``；
+- 2）若需要在otp2中增加特定大小分区使用，以BK7258为例，只需要在 ``middleware/boards/bk7258/csv/otp2.csv`` 中添加[id,name,size,offset,end,privilege,security]所对应内容即可，参考见文末；
+- 3）SDK里的工具会在编译的时候自动生成相关头文件，无需手动修改头文件中的内容，生成后的头文件内容如下。位于../_build/_otp.c
+
+.. figure:: picture/otp_header.png
+    :align: center
+    :alt: 8
+    :figclass: align-center
+
+- 4）配置好上述的配置之后，可以使用cli命令进行测试, 相关的测试代码路径是： ``bk_idk/components/bk_cli/cli_otp.c`` (例如 测试命令是otp_ahb read item size)
 
 .. note::
 
@@ -50,7 +56,7 @@ OTP2:可读可编程的OTP2区域，0x000~0x2FF被分为767个小分区。其存
 结构体数组otp_ahb_map配置介绍
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- 1）结构体数组otp_ahb_map的结构体如下：具体路径是bk_idk/middleware/driver/otp/otp_driver.h
+- 1）结构体数组otp_ahb_map的结构体如下：具体路径是 ``bk_idk/middleware/driver/otp/otp_driver.h``
 
 .. figure:: picture/otp_item.png
     :align: center
@@ -64,23 +70,23 @@ OTP2:可读可编程的OTP2区域，0x000~0x2FF被分为767个小分区。其存
     - offset：相对基地址的偏移量
     - privilege：设定访问区域的权限
 
-- 2）otp2_id_t中按顺序增加相应的name字段即可；具体路径是include/driver/otp_types.h
+- 2）otp2_id_t中存放的是name字段；工具自动生成的路径是 ``../_build/_otp.h``
 
 .. figure:: picture/otp2_id_t.png
     :align: center
     :alt: 8
     :figclass: align-center
 
-- 3）目前，otp2的使用区域情况如下：具体路径是bk_idk/middleware/driver/otp/otp_driver_v1_1.c
-
-.. figure:: picture/otp_ahb_map.png
-    :align: center
-    :alt: 8
-    :figclass: align-center
 
 .. note::
 
-     - 以name=OTP_EXAMPLE举例介绍如何配置otp2，
-     - 首先，在otp2_id_t结构中中增加自行定义的name字段，如OTP_EXAMPLE；
-     - 其次，配置allocated_size的大小，即所需要分配的字节大小空间；（十进制大小）
-     - offset大小等于（前一个name字段的allocated_size + 前一个字段的offset） （十六进制）
+     - 以name=OTP_CUSTOMER_KEY2举例介绍如何配置otp2
+     - 首先，在opt2.csv文件中新增id为6，按照顺序依次增加；增加自行定义的name字段，如OTP_CUSTOMER_KEY2；
+     - 其次，需要配置size的大小，即所需要分配的字节大小空间。若大小为256字节，则size为256；（十进制大小）
+     - offset大小等于（前一个name字段的end） （十六进制）
+     - 权限为OTP_READ_WRITE，安全为FALSE；
+
+.. figure:: picture/otp2_csv.png
+    :align: center
+    :alt: 8
+    :figclass: align-center
