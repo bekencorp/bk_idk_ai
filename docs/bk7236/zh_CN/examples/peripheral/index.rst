@@ -6,7 +6,7 @@
 .. toctree::
    :maxdepth: 1
 
-   i2c <bk_i2c>
-   pwm <bk_pwm>
+   I2C <bk_i2c>
+   PWM <bk_pwm>
    SDIO <bk_sdio>
    SPI <bk_spi>
