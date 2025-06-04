@@ -119,7 +119,7 @@ static void usbh_cdc_acm_match_funtion(struct usbh_cdc_acm *cdc_acm_class, char 
 	else if (os_strcasecmp("at", p) == 0)
 		cdc_acm_class->function = USBH_CDC_FUNCTION_AT;
 	else
-		USB_LOG_WRN("Need Match New Function Pattern!n");
+		USB_LOG_WRN("Need Match New Function Pattern!\r\n");
 }
 
 static int usbh_cdc_acm_connect(struct usbh_hubport *hport, uint8_t intf)
@@ -332,6 +332,14 @@ static int usbh_cdc_data_connect(struct usbh_hubport *hport, uint8_t intf)
 		ret = usbh_control_transfer(hport->ep0, setup, ep0_buffer);
 		if (ret < 0) {
 			USB_LOG_ERR("Failed to get string,errorcode:%d\r\n", ret);
+#if CONFIG_USB_CDC_MODEM         
+                	extern beken2_timer_t acm_count_dev_onetimer;
+                	if (rtos_is_oneshot_timer_running(&acm_count_dev_onetimer))
+			{
+				rtos_stop_oneshot_timer(&acm_count_dev_onetimer);
+			}
+#endif                    
+                    return ret;
 		}
 		usbh_cdc_get_string(ep0_buffer, &ttt[0]);
 		usbh_cdc_acm_match_funtion(cdc_acm_class, &ttt[0]);

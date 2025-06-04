@@ -592,7 +592,7 @@ static void bk_usb_acm_upload_rcv_data(uint32_t len)
 void bk_cdc_acm_main(void)
 {
 	int32_t ret = BK_OK;
-	rtos_init_oneshot_timer(&acm_count_dev_onetimer,5,bk_usb_acm_count_dev_callback,(void *)0,(void *)0);
+	rtos_init_oneshot_timer(&acm_count_dev_onetimer,CONFIG_USBHOST_CONTROL_TRANSFER_TIMEOUT+100,bk_usb_acm_count_dev_callback,(void *)0,(void *)0);
 
 	while (1)
 	{
@@ -612,7 +612,7 @@ void bk_cdc_acm_main(void)
 					{
 						int32_t idx = bk_usb_acm_find_ppp_dev();
 						if (idx < 0) {
-							USB_CDC_LOGE("Can't find dev!!!!");
+							USB_CDC_LOGE("Can't find dev!!!!\r\n");
 							BK_ASSERT(idx >= 0);
 						}
 						g_cdc_data_tol->idx = idx;
@@ -929,6 +929,10 @@ void bk_usb_get_cdc_instance(struct usbh_hubport *hport, uint8_t intf, uint32_t 
 		USB_CDC_LOGI("bk_usb_get_cdc_instance %d, device:0x%x, intf:%d\r\n", acm_cnt, usb_device,  g_cdc_data_device[acm_cnt]->intf);
 		acm_cnt++;
 	} 
+	else
+	{
+		USB_CDC_LOGI("bk_usb_get_cdc_instance %d, discard class %d, intf:%d\r\n", acm_cnt, class, intf);
+	}
 }
 
 void bk_usb_cdc_connect_notify(struct usbh_hubport *hport, uint8_t intf, uint32_t class)
