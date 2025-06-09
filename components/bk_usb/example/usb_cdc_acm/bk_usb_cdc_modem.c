@@ -232,46 +232,58 @@ static int32_t bk_cdc_acm_modem_write_handle(char *p_tx, uint32_t l_tx)
 		return ret;
 	}
 
-    	uint8_t * p_buf = NULL;
-    	uint8_t rd = g_multi_acm_total->p_data->p_cdc_data_tx->rd;
-    	uint8_t wd = g_multi_acm_total->p_data->p_cdc_data_tx->wd;
-        
-    	while (1)
-    	{
-    		uint8_t t_rd = g_multi_acm_total->p_data->p_cdc_data_tx->rd;
-    		if (rd == t_rd)
-    			break;
-    		else
-    			rd = t_rd;
-    	}
-        
-    	while (1)
-    	{
-    		if (!_is_full(wd, rd))
-    		{
-    			g_cdc_tx_block = 0;
-    			break;
-    		} 
-    		else 
-    		{
-    			g_cdc_tx_block++;
-    			if (g_cdc_tx_block > (2*CDC_TX_CIRBUFFER_NUM))
-    			{
-    	    	    	    	LOGE("g_cdc_tx_block:%d, w:%d, r:%d\n", g_cdc_tx_block, wd, rd);
-    			}
-    			rtos_delay_milliseconds(2);
-    		}
-    		rd = g_multi_acm_total->p_data->p_cdc_data_tx->rd;
-    	}
+	uint8_t * p_buf = NULL;
+	uint8_t rd = g_multi_acm_total->p_data->p_cdc_data_tx->rd;
+	uint8_t wd = g_multi_acm_total->p_data->p_cdc_data_tx->wd;
 
-    	wd = (wd+1)&(CDC_TX_CIRBUFFER_NUM-1);
+	while (1)
+	{
+		uint8_t t_rd = g_multi_acm_total->p_data->p_cdc_data_tx->rd;
+		if (rd == t_rd)
+			break;
+		else
+			rd = t_rd;
+	}
 
-    	p_buf = g_multi_acm_total->p_data->p_cdc_data_tx->data[wd]->data;
-    	g_multi_acm_total->p_data->p_cdc_data_tx->data[wd]->len = l_tx;
-    	os_memcpy(p_buf, p_tx, l_tx);
+	uint8_t segment_cnt = (l_tx + CDC_TX_MAX_SIZE - 1)/CDC_TX_MAX_SIZE;
+	uint32_t ops = 0;
+	int data_cnt = 0;
+	uint32_t data_len = 0;
 
-    	g_multi_acm_total->p_data->p_cdc_data_tx->wd = wd;
-    	bk_usb_cdc_send_ipc_cmd(CPU0_BULKOUT_USB_CDC_DATA);    	
+	while (1)
+	{
+		if (!_is_full(wd, rd))
+		{
+			wd = (wd+1)&(CDC_TX_CIRBUFFER_NUM-1);
+
+			data_len = (l_tx-ops > CDC_TX_MAX_SIZE)? CDC_TX_MAX_SIZE: (l_tx-ops);
+
+			p_buf = g_multi_acm_total->p_data->p_cdc_data_tx->data[wd]->data;
+			g_multi_acm_total->p_data->p_cdc_data_tx->data[wd]->len = data_len;
+			os_memcpy(p_buf, p_tx+ops, data_len);
+
+			ops += data_len;
+			data_cnt ++;
+			if (data_cnt == segment_cnt)
+			{
+				g_cdc_tx_block = 0;
+				break;
+			}
+		}
+		else
+		{
+			g_cdc_tx_block++;
+			if (g_cdc_tx_block > (2*CDC_TX_CIRBUFFER_NUM))
+			{
+				LOGE("g_cdc_tx_block:%d, w:%d, r:%d\n", g_cdc_tx_block, wd, rd);
+			}
+			rtos_delay_milliseconds(2);
+		}
+		rd = g_multi_acm_total->p_data->p_cdc_data_tx->rd;
+	}
+
+	g_multi_acm_total->p_data->p_cdc_data_tx->wd = wd;
+	bk_usb_cdc_send_ipc_cmd(CPU0_BULKOUT_USB_CDC_DATA);
 
 	return 0;
 }

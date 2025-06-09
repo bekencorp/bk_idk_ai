@@ -134,7 +134,7 @@ typedef struct
 #define CDC_CIRBUFFER_OUT 1
 
 #define CDC_RX_CIRBUFFER_NUM   32
-#define CDC_TX_CIRBUFFER_NUM   16
+#define CDC_TX_CIRBUFFER_NUM   48 //16
 
 typedef struct
 {

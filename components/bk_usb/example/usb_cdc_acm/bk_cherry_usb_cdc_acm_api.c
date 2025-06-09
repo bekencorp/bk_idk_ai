@@ -366,37 +366,13 @@ int32_t bk_cdc_acm_io_write_data(IPC_CDC_DATA_T *p_cdc_data)
 			USB_CDC_LOGE("acm_device is NULL!\r\n");
 			return -1;
 		}
-		bk_acm_trigger_tx();
-		if (tx_len > CDC_TX_MAX_SIZE)
-		{
-			uint32_t sum_len = tx_len;
-			uint32_t ops = 0;
-			uint32_t one_len = 0;
-			while(ops < sum_len)
-			{
-				one_len = CDC_TX_MAX_SIZE;
-				if((sum_len - ops) < CDC_TX_MAX_SIZE)
-				{
-					one_len = sum_len - ops;
-				}
-				ret = usbh_cdc_acm_bulk_out_transfer(acm_device, buf+ops, one_len, timeout);
 
-				if(ret == one_len)
-				{
-					ops+= one_len;
-				}
-				else
-				{
-					rtos_delay_milliseconds(2);
-					USB_CDC_LOGE("bk_cdc_acm_io_write_data seg timeout\r\n");                    
-				}
-				rtos_delay_milliseconds(2);                
-			}
-		}
-		else 
-		{
-			ret = usbh_cdc_acm_bulk_out_transfer(acm_device, buf, tx_len, timeout);
-		}
+		bk_acm_trigger_tx();
+		ret = usbh_cdc_acm_bulk_out_transfer(acm_device, buf, tx_len, timeout);
+		if(ret != tx_len)
+			USB_CDC_LOGE("bk_cdc_acm_io_write_data fail, ret %d\r\n", ret);
+
+		rtos_delay_milliseconds(2);
 	}
     
 	g_cdc_data_tol->p_data->p_cdc_data_tx->rd = rd;
