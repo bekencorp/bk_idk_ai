@@ -84,6 +84,7 @@ typedef enum
 typedef struct {
 	uint8_t  type;
 	uint32_t data;
+	uint32_t *param;
 }cdc_msg_t;
 
 #if 1

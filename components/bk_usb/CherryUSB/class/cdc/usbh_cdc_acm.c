@@ -321,7 +321,7 @@ static int usbh_cdc_data_connect(struct usbh_hubport *hport, uint8_t intf)
 	if (t_iInterface != 0)
 	{
 		char ttt[16] = {0};
-		uint8_t ep0_buffer[CONFIG_USBHOST_REQUEST_BUFFER_LEN];
+		uint8_t ep0_buffer[255];
 		struct usb_setup_packet *setup = &hport->setup;
 		/* Get string */
 		setup->bmRequestType = USB_REQUEST_DIR_IN | USB_REQUEST_STANDARD | USB_REQUEST_RECIPIENT_DEVICE;
@@ -338,7 +338,7 @@ static int usbh_cdc_data_connect(struct usbh_hubport *hport, uint8_t intf)
 			{
 				rtos_stop_oneshot_timer(&acm_count_dev_onetimer);
 			}
-#endif                    
+#endif
                     return ret;
 		}
 		usbh_cdc_get_string(ep0_buffer, &ttt[0]);

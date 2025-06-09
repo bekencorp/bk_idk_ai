@@ -15,10 +15,7 @@
 
 bk_usb_driver_comprehensive_ops cdc_usb_driver;
 
-static uint32_t temp_rx_cnt = 0;
-
 static uint32_t acm_cnt = 0;
-static uint32_t ipc_cdc_rx_len = 0;
 static uint8_t *g_rx_buf_temp = NULL;
 
 IPC_CDC_DATA_T *g_ipc_cdc_data = NULL;
@@ -33,6 +30,7 @@ static uint32_t g_acm_state = {0};
 
 static beken_queue_t acm_msg_queue   = NULL;
 static beken_queue_t acm_msg_rxqueue   = NULL;
+static beken_queue_t acm_msg_txqueue = NULL;
 
 static bk_err_t acm_send_msg(uint8_t type, uint32_t param)
 {
@@ -74,6 +72,25 @@ static bk_err_t acm_send_rxmsg(uint8_t type, uint32_t param)
 	return kGeneralErr;
 }
 
+static bk_err_t acm_send_txmsg(uint8_t type, uint32_t param)
+{
+	bk_err_t ret = kNoErr;
+	acm_msg_t msg;
+
+	if (acm_msg_txqueue)
+	{
+		msg.type = type;
+		msg.data = param;
+		ret = rtos_push_to_queue(&acm_msg_txqueue, &msg, BEKEN_NO_WAIT);
+		if (kNoErr != ret)
+		{
+			USB_CDC_LOGE("acm_send_txmsg Fail, ret:%d\n", ret);
+			return kNoResourcesErr;
+		}
+		return ret;
+	}
+	return kGeneralErr;
+}
 #if (USB_CDC_CP1_IPC)
 extern void ipc_cdc_send_cmd(u8 cmd, u8 *cmd_buf, u16 cmd_len, u8 * rsp_buf, u16 rsp_buf_len);
 
@@ -104,8 +121,8 @@ extern void bk_modem_usbh_bulkin_ind(uint8_t *p_rx, uint32_t l_rx);
 usb_osal_sem_t acm_event_wait;
 static beken_thread_t acm_class_task = NULL;
 static beken_thread_t acm_class_rxtask = NULL;
+static beken_thread_t acm_class_txtask = NULL;
 
-beken2_timer_t acm_debug_onetimer;
 beken2_timer_t acm_count_dev_onetimer;
 
 typedef struct
@@ -128,6 +145,7 @@ static uint32_t _is_full(uint8_t wd, uint8_t rd)
 }
 
 #endif
+static uint8_t g_first_rx_urb_set = 0;
 
 /*********************************************************************************************************/
 
@@ -168,25 +186,13 @@ void bk_cdc_acm_bulkin_callback(void *arg, int nbytes)
 {
 	if (nbytes > 0)
 	{
-		if (g_cdc_data_tol->mode == 1)
-		{
-			os_memcpy((g_rx_buf_temp+ipc_cdc_rx_len), g_cdc_data_tol->p_cmd->p_cdc_cmd_rx->rx_buf, nbytes);
-			ipc_cdc_rx_len += nbytes;
-			acm_send_rxmsg(ACM_UPLOAD_TIMER_IND, 0);
-			USB_CDC_LOGI("bk_cdc_acm_bulkin_callback, len:%d\n", ipc_cdc_rx_len);
-		}
-		else if (g_cdc_data_tol->mode == 2)
-		{
-			temp_rx_cnt++;
-			BK_ASSERT(temp_rx_cnt == 1);
-			uint8_t wd = g_cdc_data_tol->p_data->p_cdc_data_rx->wd;
-			wd = (wd+1)&(CDC_RX_CIRBUFFER_NUM-1);
-			g_cdc_data_tol->p_data->p_cdc_data_rx->data[wd]->len = nbytes;
-			g_cdc_data_tol->p_data->p_cdc_data_rx->wd = wd;
+		uint8_t wd = g_cdc_data_tol->p_data->p_cdc_data_rx->wd;
+		wd = (wd+1)&(CDC_RX_CIRBUFFER_NUM-1);
+		g_cdc_data_tol->p_data->p_cdc_data_rx->data[wd]->len = nbytes;
+		g_cdc_data_tol->p_data->p_cdc_data_rx->wd = wd;
 
-			acm_send_rxmsg(ACM_UPLOAD_TIMER_IND, 1);
-			acm_send_rxmsg(ACM_UPLOAD_IND, nbytes);
-		}
+		acm_send_rxmsg(ACM_UPLOAD_IND, nbytes);
+
 		acm_device->bulkin_urb.transfer_buffer_length = 0;
 	}
 	else if (nbytes < 0) {
@@ -202,19 +208,12 @@ void bk_cdc_acm_bulkout_callback(void *arg, int nbytes)
 		USB_CDC_LOGE("modem tx ERROR %d\n", nbytes);
 		return;
 	}
-	bk_acm_trigger_tx();
-	if (g_cdc_data_tol->mode == 1)
+
+	if (g_first_rx_urb_set == 0)
 	{
 		acm_send_rxmsg(ACM_BULKIN_IND, 0);
+		g_first_rx_urb_set = 1;
 	} 
-	else if (g_cdc_data_tol->mode == 2)
-	{
-		g_multi_acm.cdc_tx_state = 1;
-		if(g_multi_acm.cdc_tx_finish)
-		{
-			g_multi_acm.cdc_tx_finish = 0;
-		}
-	}
 }
 
 void bk_acm_trigger_rx(uint8_t *p_buf)
@@ -248,19 +247,9 @@ int32_t bk_cdc_acm_io_read(void)
 		return -1;
 	}
 
-	if (g_cdc_data_tol->mode == 1)
-	{
-		uint8_t *p_rx = g_cdc_data_tol->p_cmd->p_cdc_cmd_rx->rx_buf;
-		bk_acm_trigger_rx(p_rx);
-		ret = usbh_cdc_acm_bulk_in_transfer(acm_device, p_rx, CDC_RX_MAX_SIZE, 0);
-		if(ret < 0){
-			USB_CDC_LOGD("bk_cdc_acm_io_read is TIMEOUT! ret:%d\r\n", ret);
-		}
-	} else if (g_cdc_data_tol->mode == 2)
-	{
-		uint8_t * p_buf = NULL;
-		uint8_t rd = g_cdc_data_tol->p_data->p_cdc_data_rx->rd;
-		uint8_t wd = g_cdc_data_tol->p_data->p_cdc_data_rx->wd;
+    	uint8_t * p_buf = NULL;
+    	uint8_t rd = g_cdc_data_tol->p_data->p_cdc_data_rx->rd;
+    	uint8_t wd = g_cdc_data_tol->p_data->p_cdc_data_rx->wd;
     	while (1)
     	{
     		uint8_t t_rd = g_cdc_data_tol->p_data->p_cdc_data_rx->rd;
@@ -269,33 +258,36 @@ int32_t bk_cdc_acm_io_read(void)
     		else
     			rd = t_rd;
     	}
-		while (1)
-		{
-			if (!_is_full(wd, rd))
-			{
-				g_cdc_rx_block = 0;
-				break;
-			} else {
-				g_cdc_rx_block++;
-				//if (g_cdc_rx_block > 2*CDC_RX_CIRBUFFER_NUM)
-				{
-					USB_CDC_LOGE("g_cdc_rx_block:%d, r:%d, w:%d\n", g_cdc_rx_block, rd, wd);
-				}
-				rtos_delay_milliseconds(2);
-			}
-			rd = g_cdc_data_tol->p_data->p_cdc_data_rx->rd;
-			//wd = g_cdc_data_tol->p_data->p_cdc_data_rx->wd;
-		}
-		wd = ((wd+1)&(CDC_RX_CIRBUFFER_NUM-1));
-		p_buf = g_cdc_data_tol->p_data->p_cdc_data_rx->data[wd]->data;
-		temp_rx_cnt --;
-		BK_ASSERT(temp_rx_cnt == 0);
-		bk_acm_trigger_rx(p_buf);
-		ret = usbh_cdc_acm_bulk_in_transfer(acm_device, p_buf, CDC_RX_MAX_SIZE, 0);
-		if(ret < 0) {
-			USB_CDC_LOGD("bk_cdc_acm_io_read is TIMEOUT! ret:%d\r\n", ret);
-		}
-	}
+        
+    	while (1)
+    	{
+    	    	if (!_is_full(wd, rd))
+    	    	{
+    	    	    	g_cdc_rx_block = 0;
+    	    	    	break;
+    	    	} 
+    	    	else 
+    	    	{
+    	    	    	g_cdc_rx_block++;
+    	    	    	//if (g_cdc_rx_block > 2*CDC_RX_CIRBUFFER_NUM)
+    	    	    	{
+    	    	    	    	USB_CDC_LOGE("g_cdc_rx_block:%d, r:%d, w:%d\n", g_cdc_rx_block, rd, wd);
+    	    	    	}
+    	    	    	rtos_delay_milliseconds(2);
+    	    	}
+    	    	rd = g_cdc_data_tol->p_data->p_cdc_data_rx->rd;
+    	}
+        
+    	wd = ((wd+1)&(CDC_RX_CIRBUFFER_NUM-1));
+    	p_buf = g_cdc_data_tol->p_data->p_cdc_data_rx->data[wd]->data;
+
+    	bk_acm_trigger_rx(p_buf);
+    	ret = usbh_cdc_acm_bulk_in_transfer(acm_device, p_buf, CDC_RX_MAX_SIZE, 0);
+    	if(ret < 0)
+    	{
+    	    	USB_CDC_LOGD("bk_cdc_acm_io_read is TIMEOUT! ret:%d\r\n", ret);
+    	}
+
 	return ret;
 }
 
@@ -324,11 +316,10 @@ int32_t bk_cdc_acm_io_write_cmd(IPC_CDC_DATA_T *p_cdc_data)
 			if((sum_len - ops) < CDC_TX_MAX_SIZE)
 			{
 				one_len = sum_len - ops;
-			//	g_multi_acm.cdc_tx_finish[0] = 1;
 			}
 			ret = usbh_cdc_acm_bulk_out_transfer(acm_device, buf+ops, one_len, timeout);
 
-			if(ret == 0)
+			if(ret == one_len)
 			{
 				ops+= one_len;
 			}
@@ -336,19 +327,11 @@ int32_t bk_cdc_acm_io_write_cmd(IPC_CDC_DATA_T *p_cdc_data)
 			{
 				rtos_delay_milliseconds(3);
 			}
-		//	rtos_get_semaphore(&acm_tx_msg_sem, 1000);
-		//	rtos_delay_milliseconds(1);
-
-		//	while(!g_multi_acm.cdc_tx_state[0])
-		//	{
-		//		rtos_delay_milliseconds(2);
-		//	}
-		//	g_multi_acm.cdc_tx_state[0] = 0;
+					
 		}
-
 	}
-	else {
-	//	g_multi_acm.cdc_tx_finish[0] = 1;
+	else 
+	{
 		ret = usbh_cdc_acm_bulk_out_transfer(acm_device, (uint8_t *)buf, tx_len, timeout);
 	}
 	return ret;
@@ -395,35 +378,29 @@ int32_t bk_cdc_acm_io_write_data(IPC_CDC_DATA_T *p_cdc_data)
 				if((sum_len - ops) < CDC_TX_MAX_SIZE)
 				{
 					one_len = sum_len - ops;
-					g_multi_acm.cdc_tx_finish = 1;
 				}
 				ret = usbh_cdc_acm_bulk_out_transfer(acm_device, buf+ops, one_len, timeout);
 
-				if(ret == 0)
+				if(ret == one_len)
 				{
 					ops+= one_len;
 				}
 				else
 				{
-					rtos_delay_milliseconds(3);
-				}
-			//	rtos_get_semaphore(&acm_tx_msg_sem, 1000);
-			//	rtos_delay_milliseconds(1);
-				while(!g_multi_acm.cdc_tx_state)
-				{
 					rtos_delay_milliseconds(2);
+					USB_CDC_LOGE("bk_cdc_acm_io_write_data seg timeout\r\n");                    
 				}
-				g_multi_acm.cdc_tx_state = 0;
+				rtos_delay_milliseconds(2);                
 			}
-
 		}
-		else {
-			g_multi_acm.cdc_tx_finish = 1;
+		else 
+		{
 			ret = usbh_cdc_acm_bulk_out_transfer(acm_device, buf, tx_len, timeout);
 		}
-
-		g_cdc_data_tol->p_data->p_cdc_data_tx->rd = rd;
 	}
+    
+	g_cdc_data_tol->p_data->p_cdc_data_tx->rd = rd;
+    
 	return ret;
 }
 
@@ -431,40 +408,30 @@ int32_t bk_cdc_acm_io_write_data(IPC_CDC_DATA_T *p_cdc_data)
 int32_t bk_cdc_acm_io_write_t(IPC_CDC_DATA_T *p_cdc_data)
 {
 	int32_t ret = 0;
-	uint32_t mode = g_cdc_data_tol->mode;
-	USB_CDC_LOGD("[+]%s, mode:%d\r\n", __func__, mode);
 
-	if (mode == 1)
+	ret = bk_cdc_acm_io_write_data(p_cdc_data);
+	if (ret < 0) 
 	{
-		ret = bk_cdc_acm_io_write_cmd(p_cdc_data);
-		if (ret < 0) {
-			USB_CDC_LOGE("[-]%s, fail, ret:%d\r\n", __func__, ret);
-		}
-	} 
-	else if (mode == 2)
-	{
-		ret = bk_cdc_acm_io_write_data(p_cdc_data);
-		if (ret < 0) {
-			USB_CDC_LOGE("[-]%s, fail, ret:%d\r\n", __func__, ret);
-		}
+		USB_CDC_LOGE("[-]%s, fail, ret:%d\r\n", __func__, ret);
 	}
+
 	return ret;
 }
 
 int32_t bk_cdc_acm_io_read_t(void)
 {
-	uint32_t mode = g_cdc_data_tol->mode;
-	if (mode == 1 || mode == 2) {
-		bk_cdc_acm_io_read();
-	} else {
-		USB_CDC_LOGE("[-]%s, Error param\n", __func__);
+	int32_t ret = 0;
+	ret = bk_cdc_acm_io_read();
+	if (ret < 0) 
+	{
+		USB_CDC_LOGE("[-]%s, fail, ret:%d\r\n", __func__, ret);
 	}
 	return 1;
 }
 
 void bk_cdc_acm_bulkout(void)
 {
-	acm_send_msg(ACM_BULKOUT_IND, 0);
+	acm_send_txmsg(ACM_BULKOUT_IND, 0);
 }
 
 static void bk_usb_cdc_open_ind(void)
@@ -526,24 +493,6 @@ void bk_usb_cdc_param_init(IPC_CDC_DATA_T *p_cdc_data)
 	g_cdc_data_tol = (Multi_ACM_DEVICE_TOTAL_T *)p_cdc_data->p_info;
 
 	acm_send_msg(ACM_INIT_IND, 0);
-}
-
-static void bk_usb_acm_upload_callback(void *data1, void *data2)
-{
-	acm_send_rxmsg(ACM_UPLOAD_IND, 0);
-}
-
-static void bk_usb_acm_upload_checktimer(uint32 data)
-{
-	if (rtos_is_oneshot_timer_running(&acm_debug_onetimer))
-	{
-		rtos_stop_oneshot_timer(&acm_debug_onetimer);
-	}
-	if (data == 0)  // AT mode
-	{
-		rtos_start_oneshot_timer(&acm_debug_onetimer);
-		acm_send_rxmsg(ACM_BULKIN_IND, 0);
-	}
 }
 
 static void bk_usb_acm_count_dev_callback(void *data1, void *data2)
@@ -610,6 +559,7 @@ void bk_cdc_acm_main(void)
 					break;
 				case ACM_CONNECT_IND:
 					{
+						g_first_rx_urb_set = 0;                      
 						int32_t idx = bk_usb_acm_find_ppp_dev();
 						if (idx < 0) {
 							USB_CDC_LOGE("Can't find dev!!!!\r\n");
@@ -631,9 +581,6 @@ void bk_cdc_acm_main(void)
 						bk_usb_cdc_send_ipc_cmd(CPU1_UPDATE_USB_CDC_STATE);
 					}
 					break;
-				case ACM_BULKOUT_IND:
-					bk_cdc_acm_io_write_t(NULL);
-					break;
 				case ACM_EXIT_IND:
 					{
 						USB_CDC_LOGD("ACM_EXIT_IND\n");
@@ -653,29 +600,11 @@ void bk_cdc_acm_main(void)
 			}
 		}
 	}
-#if 0
-exit:
-	for (uint32_t i = 0; i < USB_CDC_DATA_DEV_NUM_MAX; i++)
-	{
-		if (g_ipc_cdc_data[i])
-			g_ipc_cdc_data[i] = NULL;
-	}
-	acm_cnt = 0;
-	acm_device = NULL;
-//	rtos_deinit_oneshot_timer(&acm_debug_onetimer);
-//
-//	/* free que and delete task */
-//	rtos_deinit_queue(&acm_msg_queue);
-//	acm_msg_queue = NULL;
-//	acm_class_task = NULL;
-//	rtos_delete_thread(NULL);
-#endif
 }
 
-void bk_cdc_acmrx_main(void)
+void bk_cdc_acm_rxmain(void)
 {
 	int32_t ret = BK_OK;
-	rtos_init_oneshot_timer(&acm_debug_onetimer,5,bk_usb_acm_upload_callback,(void *)0,(void *)0);
 
 	while (1)
 	{
@@ -689,30 +618,14 @@ void bk_cdc_acmrx_main(void)
 				case ACM_BULKIN_IND:
 					bk_cdc_acm_io_read_t();
 					break;
-				case ACM_UPLOAD_TIMER_IND:
-					bk_usb_acm_upload_checktimer((uint32_t)msg.data);
-					break;
 				case ACM_UPLOAD_IND:
 					{
-						if (g_cdc_data_tol->mode == 1)
+						uint32_t len = (uint32_t)msg.data;
+						if (len > 0)
 						{
-							if (ipc_cdc_rx_len > 0)
-							{
-								g_cdc_data_tol->p_cmd->p_cdc_cmd_rx->l_rx = ipc_cdc_rx_len;
-								os_memcpy(g_cdc_data_tol->p_cmd->p_cdc_cmd_rx->rx_buf, g_rx_buf_temp, ipc_cdc_rx_len);
-								bk_usb_cdc_send_ipc_cmd(CPU1_UPLOAD_USB_CDC_CMD);
-							}
-							ipc_cdc_rx_len = 0;
-						}
-						else if (g_cdc_data_tol->mode == 2)
-						{
-							uint32_t len = (uint32_t)msg.data;
-							if (len > 0)
-							{
-								bk_usb_cdc_send_ipc_cmd(CPU1_UPLOAD_USB_CDC_DATA);
-								acm_send_rxmsg(ACM_BULKIN_IND, 0);
-								USB_CDC_LOGD("[+]ACM_UPLOAD_DATAIND:%d \r\n", len);
-							}
+							bk_usb_cdc_send_ipc_cmd(CPU1_UPLOAD_USB_CDC_DATA);
+							acm_send_rxmsg(ACM_BULKIN_IND, 0);
+							USB_CDC_LOGD("[+]ACM_UPLOAD_DATAIND:%d \r\n", len);
 						}
 					}
 					break;
@@ -721,23 +634,28 @@ void bk_cdc_acmrx_main(void)
 			}
 		}
 	}
-#if 0
-exit:
-	for (uint32_t i = 0; i < USB_CDC_DATA_DEV_NUM_MAX; i++)
+}
+
+void bk_cdc_acm_txmain(void)
+{
+	int32_t ret = BK_OK;
+
+	while (1)
 	{
-		if (g_ipc_cdc_data[i])
-			g_ipc_cdc_data[i] = NULL;
+		acm_msg_t msg;
+		ret = rtos_pop_from_queue(&acm_msg_txqueue, &msg, BEKEN_WAIT_FOREVER);
+		if (kNoErr == ret)
+		{
+			switch (msg.type)
+			{
+				case ACM_BULKOUT_IND:
+					bk_cdc_acm_io_write_t(NULL);
+					break;
+				default:
+					break;
+			}
+		}
 	}
-	acm_cnt = 0;
-	acm_device = NULL;
-//	rtos_deinit_oneshot_timer(&acm_debug_onetimer);
-//
-//	/* free que and delete task */
-//	rtos_deinit_queue(&acm_msg_rxqueue);
-//	acm_msg_rxqueue = NULL;
-//	acm_class_rxtask = NULL;
-//	rtos_delete_thread(NULL);
-#endif
 }
 
 bk_err_t bk_cdc_acm_startup(void)
@@ -761,6 +679,13 @@ bk_err_t bk_cdc_acm_startup(void)
 			goto error;
 		}
 	}
+	if (acm_msg_txqueue == NULL) {
+		ret = rtos_init_queue(&acm_msg_txqueue, "acm_class_txqueue", sizeof(acm_msg_t), 64);
+		if (ret != kNoErr)
+		{
+			goto error;
+		}
+	}    
 	if (acm_class_task == NULL)
 	{
 		ret = rtos_create_thread(&acm_class_task,
@@ -768,7 +693,7 @@ bk_err_t bk_cdc_acm_startup(void)
 								"acm_class_task",
 								(beken_thread_function_t)bk_cdc_acm_main,
 								1024 * 4,
-								acm_msg_queue);
+								(beken_thread_arg_t)0);
 	}
 
 	if (acm_class_rxtask == NULL)
@@ -776,17 +701,29 @@ bk_err_t bk_cdc_acm_startup(void)
 		ret = rtos_create_thread(&acm_class_rxtask,
 								4,
 								"acm_class_rxtask",
-								(beken_thread_function_t)bk_cdc_acmrx_main,
+								(beken_thread_function_t)bk_cdc_acm_rxmain,
 								1024 * 4,
-								acm_msg_rxqueue);
+								(beken_thread_arg_t)0);
 	}
-    if (ret == kNoErr)
-    {
-        bk_pm_module_vote_cpu_freq(PM_DEV_ID_USB_1, PM_CPU_FRQ_480M);
-    }
-    else {
-        goto error;
-    }
+
+	if (acm_class_txtask == NULL)
+	{
+		ret = rtos_create_thread(&acm_class_txtask,
+								4,
+								"acm_class_txtask",
+								(beken_thread_function_t)bk_cdc_acm_txmain,
+								1024 * 4,
+								(beken_thread_arg_t)0);
+	}
+    
+	if (ret == kNoErr)
+	{
+		bk_pm_module_vote_cpu_freq(PM_DEV_ID_USB_1, PM_CPU_FRQ_480M);
+	}
+	else 
+	{
+		goto error;
+	}
 
 	return ret;
 
@@ -811,6 +748,16 @@ error:
 		rtos_delete_thread(&acm_class_rxtask);
 		acm_class_rxtask = NULL;
 	}
+	if (acm_msg_txqueue)
+	{
+		rtos_deinit_queue(&acm_msg_txqueue);
+		acm_msg_txqueue = NULL;
+	}
+	if (acm_class_txtask)
+	{
+		rtos_delete_thread(&acm_class_txtask);
+		acm_class_txtask = NULL;
+	}    
 
 	bk_pm_module_vote_cpu_freq(PM_DEV_ID_USB_1, PM_CPU_FRQ_DEFAULT);
 	return ret;

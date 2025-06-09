@@ -45,6 +45,8 @@ static beken_queue_t cdc_msg_queue = NULL;
 static beken_thread_t cdc_demo_task = NULL;
 static beken_queue_t cdc_msg_rxqueue = NULL;
 static beken_thread_t cdc_demo_rxtask = NULL;
+static beken_queue_t cdc_msg_txqueue = NULL;
+static beken_thread_t cdc_demo_txtask = NULL;
 
 static uint8_t g_cdc_close = 0;
 
@@ -97,6 +99,50 @@ static bk_err_t cdc_send_rxmsg(uint8_t type, uint32_t param)
 		ret = rtos_push_to_queue(&cdc_msg_rxqueue, &msg, 100);//BEKEN_NO_WAIT);
 		if (kNoErr != ret)
 		{
+			return kNoResourcesErr;
+		}
+		return ret;
+	}
+	return kGeneralErr;
+}
+
+static bk_err_t cdc_send_txmsg(uint8_t type, uint32_t data_len, uint32_t* p)
+{
+	bk_err_t ret = kNoErr;
+	cdc_msg_t msg;
+
+	if (cdc_msg_txqueue)
+	{
+		msg.type = type;
+		msg.data = data_len;
+
+        	if (data_len)
+        	{
+        		msg.param = os_malloc(data_len);
+
+        		if (msg.param)
+        		{
+        			os_memset((uint8_t *)msg.param, 0, data_len);
+        			os_memcpy((uint8_t *)msg.param, (uint8_t *)p, data_len);
+        		}
+        		else
+        		{
+        			LOGW("%s: msg %d alloc fail \n", __func__, type);
+        			return BK_FAIL;
+        		}
+        	}
+        	else
+        	{
+        		msg.param = (void *)p;                
+        	}
+             
+		ret = rtos_push_to_queue(&cdc_msg_txqueue, &msg, BEKEN_NO_WAIT);//BEKEN_NO_WAIT);
+		if (kNoErr != ret)
+		{
+          		if (data_len)
+          		{
+        			os_free(msg.param);
+          		}
 			return kNoResourcesErr;
 		}
 		return ret;
@@ -173,23 +219,23 @@ void bk_usb_cdc_close(void)
 
 int32_t bk_cdc_acm_modem_write(char *p_tx, uint32_t l_tx)
 {
+    cdc_send_txmsg(CDC_STATUS_BULKOUT_DATA, l_tx, (uint32_t*)p_tx);
+    return 0;
+}
+
+static int32_t bk_cdc_acm_modem_write_handle(char *p_tx, uint32_t l_tx)
+{
 	bk_err_t __maybe_unused ret = BK_FAIL;
-	if (l_tx > CDC_EXTX_MAX_SIZE) {
+	if (l_tx > CDC_EXTX_MAX_SIZE) 
+	{
 		LOGE("[+]%s, Transbuf overflow!\r\n", __func__);
+		return ret;
 	}
 
-	g_multi_acm_total->mode = bk_modem_get_mode();
-
-	if (g_multi_acm_total->mode == 1) ///AT mode
-	{
-		g_multi_acm_total->p_cmd->p_cdc_cmd_tx->l_tx = l_tx;
-		os_memcpy(g_multi_acm_total->p_cmd->p_cdc_cmd_tx->tx_buf, p_tx, l_tx);
-		cdc_send_msg(CDC_STATUS_BULKOUT_CMD, 0);
-	} else if (g_multi_acm_total->mode == 2) /// Data mode
-	{
-		uint8_t * p_buf = NULL;
-		uint8_t rd = g_multi_acm_total->p_data->p_cdc_data_tx->rd;
-		uint8_t wd = g_multi_acm_total->p_data->p_cdc_data_tx->wd;
+    	uint8_t * p_buf = NULL;
+    	uint8_t rd = g_multi_acm_total->p_data->p_cdc_data_tx->rd;
+    	uint8_t wd = g_multi_acm_total->p_data->p_cdc_data_tx->wd;
+        
     	while (1)
     	{
     		uint8_t t_rd = g_multi_acm_total->p_data->p_cdc_data_tx->rd;
@@ -198,33 +244,35 @@ int32_t bk_cdc_acm_modem_write(char *p_tx, uint32_t l_tx)
     		else
     			rd = t_rd;
     	}
-		while (1)
-		{
-			if (!_is_full(wd, rd))
-			{
-				g_cdc_tx_block = 0;
-				break;
-			} else {
-				g_cdc_tx_block++;
-				if (g_cdc_tx_block > (2*CDC_TX_CIRBUFFER_NUM))
-				{
-					LOGE("g_cdc_tx_block:%d, w:%d, r:%d\n", g_cdc_tx_block, wd, rd);
-				}
-				rtos_delay_milliseconds(2);
-			}
-			rd = g_multi_acm_total->p_data->p_cdc_data_tx->rd;
-			//wd = g_multi_acm_total->p_data->p_cdc_data_tx->wd;
-		}
+        
+    	while (1)
+    	{
+    		if (!_is_full(wd, rd))
+    		{
+    			g_cdc_tx_block = 0;
+    			break;
+    		} 
+    		else 
+    		{
+    			g_cdc_tx_block++;
+    			if (g_cdc_tx_block > (2*CDC_TX_CIRBUFFER_NUM))
+    			{
+    	    	    	    	LOGE("g_cdc_tx_block:%d, w:%d, r:%d\n", g_cdc_tx_block, wd, rd);
+    			}
+    			rtos_delay_milliseconds(2);
+    		}
+    		rd = g_multi_acm_total->p_data->p_cdc_data_tx->rd;
+    	}
 
-		wd = (wd+1)&(CDC_TX_CIRBUFFER_NUM-1);
+    	wd = (wd+1)&(CDC_TX_CIRBUFFER_NUM-1);
 
-		p_buf = g_multi_acm_total->p_data->p_cdc_data_tx->data[wd]->data;
-		g_multi_acm_total->p_data->p_cdc_data_tx->data[wd]->len = l_tx;
-		os_memcpy(p_buf, p_tx, l_tx);
+    	p_buf = g_multi_acm_total->p_data->p_cdc_data_tx->data[wd]->data;
+    	g_multi_acm_total->p_data->p_cdc_data_tx->data[wd]->len = l_tx;
+    	os_memcpy(p_buf, p_tx, l_tx);
 
-		g_multi_acm_total->p_data->p_cdc_data_tx->wd = wd;
-		cdc_send_msg(CDC_STATUS_BULKOUT_DATA, 0);
-	}
+    	g_multi_acm_total->p_data->p_cdc_data_tx->wd = wd;
+    	bk_usb_cdc_send_ipc_cmd(CPU0_BULKOUT_USB_CDC_DATA);    	
+
 	return 0;
 }
 
@@ -498,36 +546,16 @@ static void bk_cdc_demo_task(beken_thread_arg_t arg)
 							bk_cdc_acm_init_free();
 							g_cdc_close = 0;
 						}
-					//	goto exit;
 					}
 					break;
 				case CDC_STATUS_INIT_PARAM:
 					bk_usb_cdc_send_ipc_cmd(CPU0_INIT_USB_CDC_PARAM);
-					break;
-				case CDC_STATUS_BULKOUT_CMD:
-					bk_usb_cdc_send_ipc_cmd(CPU0_BULKOUT_USB_CDC_CMD);
-					break;
-				case CDC_STATUS_BULKOUT_DATA:
-					bk_usb_cdc_send_ipc_cmd(CPU0_BULKOUT_USB_CDC_DATA);
 					break;
 				default:
 					break;
 			}
 		}
 	}
-#if 0
-exit:
-	if (cdc_msg_queue)
-	{
-		rtos_deinit_queue(&cdc_msg_queue);
-		cdc_msg_queue = NULL;
-	}
-	if (cdc_demo_task)
-	{
-		cdc_demo_task = NULL;
-		rtos_delete_thread(NULL);
-	}
-#endif
 }
 
 static void bk_cdc_usbh_upload_ind(void)
@@ -602,6 +630,35 @@ exit:
 #endif
 }
 
+static void bk_cdc_demo_txtask(beken_thread_arg_t arg)
+{
+	int ret = BK_OK;
+	cdc_msg_t msg;
+	while (1)
+	{
+		ret = rtos_pop_from_queue(&cdc_msg_txqueue, &msg, BEKEN_WAIT_FOREVER);
+		LOGD("[+]%s, type %d\n", __func__, msg.type);
+		if (kNoErr == ret)
+		{
+			switch (msg.type)
+			{
+				case CDC_STATUS_BULKOUT_CMD:
+					bk_usb_cdc_send_ipc_cmd(CPU0_BULKOUT_USB_CDC_CMD);
+					break;
+				case CDC_STATUS_BULKOUT_DATA:
+				{
+					bk_cdc_acm_modem_write_handle((char *)msg.param, msg.data);                    
+					break;
+				}
+				default:
+					break;
+			}
+		}
+		if (msg.data)
+			os_free(msg.param);        
+	}
+}
+
 void bk_usb_cdc_modem(void)
 {
 	int ret = kNoErr;
@@ -656,6 +713,30 @@ void bk_usb_cdc_modem(void)
 			goto error;
 		}
 	}
+
+	if (cdc_msg_txqueue == NULL)
+	{
+		ret = rtos_init_queue(&cdc_msg_txqueue, "cdc_msg_txqueue", sizeof(cdc_msg_t), 64);
+		if (ret != kNoErr)
+		{
+			LOGE("init cdc_msg_queue failed\r\n");
+			goto error;
+		}
+	}
+	if (cdc_demo_txtask == NULL)
+	{
+		ret = rtos_create_thread(&cdc_demo_txtask,
+							4,
+							"cdc_modem_txtask",
+							(beken_thread_function_t)bk_cdc_demo_txtask,
+							4*1024,
+							NULL);
+
+		if (ret != kNoErr)
+		{
+			goto error;
+		}
+	}    
 	return;
 error:
 	if (cdc_msg_queue)
@@ -665,8 +746,8 @@ error:
 	}
 	if (cdc_demo_task)
 	{
-		cdc_demo_task = NULL;
-		rtos_delete_thread(NULL);
+		rtos_delete_thread(cdc_demo_task);
+		cdc_demo_task = NULL;        
 	}
 	if (cdc_msg_rxqueue)
 	{
@@ -675,8 +756,18 @@ error:
 	}
 	if (cdc_demo_rxtask)
 	{
-		cdc_demo_rxtask = NULL;
-		rtos_delete_thread(NULL);
+		rtos_delete_thread(cdc_demo_rxtask);
+		cdc_demo_rxtask = NULL;        
 	}
+	if (cdc_msg_txqueue)
+	{
+		rtos_deinit_queue(&cdc_msg_txqueue);
+		cdc_msg_txqueue = NULL;
+	}
+	if (cdc_demo_txtask)
+	{
+		rtos_delete_thread(cdc_demo_txtask);
+		cdc_demo_txtask = NULL;        
+	}    
 }
 
