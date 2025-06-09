@@ -15,7 +15,7 @@ if(CONFIG_AT)
 			endif()#NOT CONFIG_BTDM_CONTROLLER_ONLY
 		endif()#CONFIG_BT_AT_ENABLE
 	endif()#CONFIG_BT
-	
+
 	if (CONFIG_BLE_AT_ENABLE)
 		if(NOT CONFIG_BTDM_CONTROLLER_ONLY)
 			list(APPEND srcs
@@ -126,7 +126,11 @@ if (CONFIG_BLUETOOTH)
         set(bt_host_basename ${bt_host_ble})
         set(bt_controller_basename ${bt_controller_basename}_ble)
     elseif(CONFIG_BLE AND CONFIG_BT)
-        set(bt_host_basename ${bt_host_dm}_dual)
+        if(CONFIG_NET_PAN)
+            set(bt_host_basename ${bt_host_dm}_pan)
+        else()
+            set(bt_host_basename ${bt_host_dm}_dual)
+        endif()
         set(bt_controller_basename ${bt_controller_basename}_dual)
     endif()
 
