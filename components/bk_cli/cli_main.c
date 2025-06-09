@@ -1614,10 +1614,12 @@ int bk_cli_init(void)
 
 
 /*----------------platform cli command init begin------------------*/
-#if !CONFIG_CLI_CODE_SIZE_OPTIMIZE_ENABLE
 #if (CLI_CFG_MEM == 1) //memory related cli commands can also be used in release mode
 	cli_mem_init();
 #endif
+
+#if (CLI_CFG_OS == 1)
+	cli_os_init();
 #endif
 
 #if CONFIG_DEBUG_FIRMWARE
@@ -1657,10 +1659,6 @@ int bk_cli_init(void)
 
 #if (CLI_CFG_GPIO == 1)
 	cli_gpio_init();
-#endif
-
-#if (CLI_CFG_OS == 1)
-	cli_os_init();
 #endif
 
 #if (CLI_CFG_FLASH == 1)
