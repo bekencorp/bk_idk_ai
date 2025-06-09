@@ -14,6 +14,9 @@ menu "SOC_CONFIG"
 		default SOC_BK7258 if "$ARMINO_SOC" = "bk7258"
 		default SOC_BK7258_CP1 if "$ARMINO_SOC" = "bk7258_cp1"
 		default SOC_BK7258_CP2 if "$ARMINO_SOC" = "bk7258_cp2"
+		default SOC_BK7257 if "$ARMINO_SOC" = "bk7257"
+		default SOC_BK7257_CP1 if "$ARMINO_SOC" = "bk7257_cp1"
+		default SOC_BK7257_CP2 if "$ARMINO_SOC" = "bk7257_cp2"
 		default SOC_BK7256 if "$ARMINO_SOC" = "bk7256"
 		default SOC_BK7256_CP1 if "$ARMINO_SOC" = "bk7256_cp1"
 		default SOC_BK7235 if "$ARMINO_SOC" = "bk7235"
@@ -52,6 +55,15 @@ menu "SOC_CONFIG"
 		config SOC_BK7258_CP2
 			select SOC_BK7236XX
 			bool "BK7258_CP2"
+		config SOC_BK7257
+			select SOC_BK7236XX
+			bool "BK7257"
+		config SOC_BK7257_CP1
+			select SOC_BK7236XX
+			bool "BK7257_CP1"
+		config SOC_BK7257_CP2
+			select SOC_BK7236XX
+			bool "BK7257_CP2"
 		config SOC_BK7256
 			bool "BK7256"
 		config SOC_BK7256_CP1
@@ -74,6 +86,8 @@ menu "SOC_CONFIG"
 		default SYS_CPU1 if "$ARMINO_SOC" = "bk7286_cp1"
 		default SYS_CPU1 if "$ARMINO_SOC" = "bk7258_cp1"
 		default SYS_CPU2 if "$ARMINO_SOC" = "bk7258_cp2"
+		default SYS_CPU1 if "$ARMINO_SOC" = "bk7257_cp1"
+		default SYS_CPU2 if "$ARMINO_SOC" = "bk7257_cp2"
 		default SYS_CPU1 if "$ARMINO_SOC" = "bk7256_cp1"
 		default SYS_CPU0
 
@@ -112,6 +126,9 @@ menu "SOC_CONFIG"
 		default "bk7258"  if SOC_BK7258
 		default "bk7258_cp1"  if SOC_BK7258_CP1
 		default "bk7258_cp2"  if SOC_BK7258_CP2
+		default "bk7257"  if SOC_BK7257
+		default "bk7257_cp1"  if SOC_BK7257_CP1
+		default "bk7257_cp2"  if SOC_BK7257_CP2
 		default "bk7256"  if SOC_BK7256
 		default "bk7256_cp1"  if SOC_BK7256_CP1
 		default "bk7235"  if SOC_BK7235

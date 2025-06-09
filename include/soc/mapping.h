@@ -26,6 +26,8 @@
 #include "soc/bk7286/mapping.h"
 #elif CONFIG_SOC_BK7258
 #include "soc/bk7258/mapping.h"
+#elif CONFIG_SOC_BK7257
+#include "soc/bk7257/mapping.h"
 
 #elif CONFIG_SOC_BK7256 && (CONFIG_CPU_CNT == 1)
 #include "soc/bk7256/mapping.h"

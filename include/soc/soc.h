@@ -37,6 +37,8 @@
 #include "soc/bk7286/soc.h"
 #elif CONFIG_SOC_BK7258
 #include "soc/bk7258/soc.h"
+#elif CONFIG_SOC_BK7257
+#include "soc/bk7257/soc.h"
 
 #elif CONFIG_SOC_BK7256 && (CONFIG_CPU_CNT == 1)
 #include "soc/bk7256/soc.h"

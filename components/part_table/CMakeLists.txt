@@ -106,6 +106,19 @@ list(APPEND bk7258xx_supported_projects
 	"matter"
 )
 
+######################################################################
+#           Create supported projects list for bk7257                #
+######################################################################
+set(bk7257xx_supported_targets)
+list(APPEND bk7257xx_supported_targets
+	"bk7257"
+	"bk7257_cp1"
+	"bk7257_cp2"
+)
+set(bk7257xx_supported_projects)
+list(APPEND bk7257xx_supported_projects
+	"app"
+)
 
 ######################################################################
 #           Create supported projects list for bk7234                #
@@ -159,6 +172,7 @@ list(APPEND supported_targets
 	${bk7256xx_supported_targets}
 	${bk7236xx_supported_targets}
 	${bk7258xx_supported_targets}
+	${bk7257xx_supported_targets}
 	${bk7234xx_supported_targets}
 	${bk7239xx_supported_targets}
 	${bk723Lxx_supported_targets}
@@ -169,6 +183,7 @@ set(special_supported_targets)
 list(APPEND special_supported_targets
 	${bk7236xx_supported_targets}
 	${bk7258xx_supported_targets}
+	${bk7257xx_supported_targets}
 	${bk7234xx_supported_targets}
 	${bk7239xx_supported_targets}
 	${bk723Lxx_supported_targets}
@@ -186,6 +201,9 @@ elseif(target IN_LIST bk7236xx_supported_targets)
 	set(cpu1_base_addr "0x02000000")
 elseif(target IN_LIST bk7258xx_supported_targets)
 	set(supported_projects ${bk7258xx_supported_projects})
+	set(cpu1_base_addr "0x02000000")
+elseif(target IN_LIST bk7257xx_supported_targets)
+	set(supported_projects ${bk7257xx_supported_projects})
 	set(cpu1_base_addr "0x02000000")
 elseif(target IN_LIST bk7234xx_supported_targets)
 	set(supported_projects ${bk7234xx_supported_projects})

@@ -1,0 +1,6 @@
+/home/yuanguang.cao/bk_ai/bk_ai_release_2.0.1_3_19/bk_avdk/bk_idk/tools/build_tools/part_table_tools/tempFiles/configuration_new.json
+/home/yuanguang.cao/bk_ai/bk_ai_release_2.0.1_3_19/bk_avdk/bk_idk/tools/build_tools/part_table_tools/tempFiles/vendor_flash_partition.h
+/home/yuanguang.cao/bk_ai/bk_ai_release_2.0.1_3_19/bk_avdk/bk_idk/tools/build_tools/part_table_tools/tempFiles/partitions_new.csv
+/home/yuanguang.cao/bk_ai/bk_ai_release_2.0.1_3_19/bk_avdk/bk_idk/tools/build_tools/part_table_tools/tempFiles/partition_bk7256_ota_a_new.json
+/home/yuanguang.cao/bk_ai/bk_ai_release_2.0.1_3_19/bk_avdk/bk_idk/tools/build_tools/part_table_tools/tempFiles/vendor_flash_new.c
+/home/yuanguang.cao/bk_ai/bk_ai_release_2.0.1_3_19/bk_avdk/bk_idk/projects/app/config/bk7257/partitions.csv

@@ -611,7 +611,7 @@ function(armino_build_executable bin)
 
     # Add dependency of the build target to the executable
     add_dependencies(${bin} __armino_build_target)
- 
+
     if (EXISTS "$ENV{ARMINO_PATH}/middleware/boards/${ARMINO_SOC}/${ARMINO_SOC}.wrapper")
         set(armino_pack "$ENV{ARMINO_PATH}/middleware/boards/${ARMINO_SOC}/${ARMINO_SOC}.wrapper")
     else()
@@ -634,9 +634,9 @@ function(armino_build_executable bin)
     endforeach()
 
     set(wrapper_cmd COMMAND python3 ${armino_pack} -n all-${bin_name}.bin -f ${bin_name}.bin -c ${ARMINO_SOC})
-    if (("${target}" STREQUAL "bk7236") OR ("${target}" STREQUAL "bk7239") OR ("${target}" STREQUAL "bk7286") OR ("${target}" STREQUAL "bk7258") OR ("${target}" STREQUAL "bk7234") OR ("${target}" STREQUAL "bk723L"))
+    if (("${target}" STREQUAL "bk7236") OR ("${target}" STREQUAL "bk7239") OR ("${target}" STREQUAL "bk7286") OR ("${target}" STREQUAL "bk7258") OR ("${target}" STREQUAL "bk7234") OR ("${target}" STREQUAL "bk723L")OR ("${target}" STREQUAL "bk7257") )
         set(wrapper_cmd COMMAND python3 ${armino_pack} pack)
-    elseif (("${target}" STREQUAL "bk7236_cp1") OR ("${target}" STREQUAL "bk7258_cp1") OR ("${target}" STREQUAL "bk7258_cp2"))
+    elseif (("${target}" STREQUAL "bk7236_cp1") OR ("${target}" STREQUAL "bk7258_cp1") OR ("${target}" STREQUAL "bk7258_cp2") OR ("${target}" STREQUAL "bk7257_cp1") OR ("${target}" STREQUAL "bk7257_cp2"))
         set(wrapper_cmd)
     endif()
 

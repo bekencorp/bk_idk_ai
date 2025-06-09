@@ -1,0 +1,353 @@
+/*
+ * Copyright (C), 2018-2019, Arm Technology (China) Co., Ltd.
+ * All rights reserved
+ *
+ * The content of this file or document is CONFIDENTIAL and PROPRIETARY
+ * to Arm Technology (China) Co., Ltd. It is subject to the terms of a
+ * License Agreement between Licensee and Arm Technology (China) Co., Ltd
+ * restricting among other things, the use, reproduction, distribution
+ * and transfer.  Each of the embodiments, including this information and,,
+ * any derivative work shall retain this copyright notice.
+ */
+
+#include "soc/bk7257/reg_base.h"
+#include "partitions.h"
+#include "sdkconfig.h"
+
+OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
+
+__MSP_STACK_SIZE = (4 << 10);
+__MIN_HEAP_SIZE  = (32 << 10);
+__MPU_PROTECT_SIZE = 0x0;
+
+__SWAP_SIZE = (2048);
+
+#if CONFIG_CPU0_SRAM_BASE
+__PRIMARY_APP_RAM_BASE = CONFIG_CPU0_SRAM_BASE;
+#else
+__PRIMARY_APP_RAM_BASE = SOC_SRAM0_DATA_BASE;
+#endif
+
+__BT_SRAM_BASE = __PRIMARY_APP_RAM_BASE + CONFIG_CPU0_SPE_RAM_SIZE;
+#if (CONFIG_BT_REUSE_MEDIA_MEMORY)
+__BT_SRAM_SIZE = CONFIG_BT_REUSE_MEDIA_MEM_SIZE;
+#else
+__BT_SRAM_SIZE = 0;
+#endif
+
+__AEC_SRAM_BASE = __PRIMARY_APP_RAM_BASE + CONFIG_CPU0_SPE_RAM_SIZE + __BT_SRAM_SIZE;
+#if CONFIG_AUD_AI_NS_USE_STATIC_SRAM
+__AEC_SRAM_SIZE = (96 << 10);
+#else
+__AEC_SRAM_SIZE = 0;
+#endif
+/*****************************************************************************
+The follow four shared memory address area mapping to the same physical memory 
+    0x08000000 ~ 0x080a0000  ---- instruction area, recommend put sram code  
+    0x18000000 ~ 0x180a0000  ---- instruction area, recommend put sram code 
+    0x28000000 ~ 0x280a0000  ---- data area, recommend put sram data 
+    0x38000000 ~ 0x380a0000  ---- data area, recommend put sram data 
+******************************************************************************/
+__CPU1_APP_IRAM_OFFSET = 0x20000000;
+
+__CPU1_APP_RAM_BASE = __BT_SRAM_BASE + __BT_SRAM_SIZE + __AEC_SRAM_SIZE;
+__CPU1_APP_RAM_SIZE = CONFIG_CPU1_APP_RAM_SIZE - __BT_SRAM_SIZE - __AEC_SRAM_SIZE;
+
+__CPU1_APP_IRAM_BASE = __CPU1_APP_RAM_BASE - __CPU1_APP_IRAM_OFFSET;  /*0x08000000 = 0x28000000 - __CPU1_APP_IRAM_OFFSET*/
+__CPU1_APP_IRAM_SIZE = __CPU1_APP_RAM_SIZE;
+__SRAM_TOTLE_SIZE = (640 << 10);
+__SRAM_CONFIG_SIZE = CONFIG_CPU0_SPE_RAM_SIZE + CONFIG_CPU1_APP_RAM_SIZE + CONFIG_CPU2_APP_RAM_SIZE;
+
+
+MEMORY
+{
+  FLASH (rx)            : ORIGIN = (SOC_FLASH_DATA_BASE + CONFIG_PRIMARY_CPU1_APP_VIRTUAL_CODE_START), LENGTH = CONFIG_PRIMARY_CPU1_APP_VIRTUAL_CODE_SIZE
+  IRAM (rx)             : ORIGIN = __CPU1_APP_IRAM_BASE, LENGTH = __CPU1_APP_IRAM_SIZE
+#if (CONFIG_BT_REUSE_MEDIA_MEMORY)
+  SRAM_BT (rwx)         : ORIGIN = __BT_SRAM_BASE, LENGTH = __BT_SRAM_SIZE 
+#endif
+#if (CONFIG_AUD_AI_NS_USE_STATIC_SRAM)
+  SRAM_AEC (rwx)         : ORIGIN = __AEC_SRAM_BASE, LENGTH = __AEC_SRAM_SIZE 
+#endif
+  RAM (rwx)             : ORIGIN = __CPU1_APP_RAM_BASE, LENGTH = __CPU1_APP_RAM_SIZE
+
+  ITCM (rwx)            : ORIGIN = SOC_ITCM_DATA_BASE + __MPU_PROTECT_SIZE, LENGTH = CONFIG_ITCM_SIZE - __MPU_PROTECT_SIZE
+  DTCM (rwx)            : ORIGIN = SOC_DTCM_DATA_BASE, LENGTH = CONFIG_DTCM_SIZE
+  SWAP (rwx)            : ORIGIN = __PRIMARY_APP_RAM_BASE + CONFIG_CPU0_SPE_RAM_SIZE - __SWAP_SIZE, LENGTH = __SWAP_SIZE
+}
+
+ENTRY(Reset_Handler)
+
+SECTIONS
+{
+
+    ASSERT((. == ALIGN(512)), "vector table address align fault.")
+    .vectors :
+    {
+        __vector_table = .;
+        KEEP(*(.vectors))
+        . = ALIGN(128);
+    } > FLASH
+
+    .gnu.sgstubs ALIGN(32) : ALIGN(32)
+    {
+        *(.gnu.sgstubs*)
+        . = ALIGN(32);
+    } > FLASH
+
+    .text :
+    {
+        . = ALIGN(4);
+        _stext = .;
+
+        . = ALIGN(4);
+        __devconfig_start = .;
+        *(".devconfig.*")
+        KEEP(*(SORT_BY_NAME(".devconfig*")))
+        __devconfig_end = .;
+
+        . = ALIGN(4);
+        __apps_start = .;
+        KEEP (*(.apps_data))
+        __apps_end = .;
+        _etext = .;
+        . = ALIGN(4);
+    } > FLASH
+
+    .a_device_null :
+    {
+      KEEP(*(.a_deviceobj_null))
+    } > FLASH
+
+    .a_devices :
+    {
+      __device_start = .;
+      KEEP(*(.a_deviceobj_*))
+      __device_end = .;
+    } > FLASH
+
+    .a_init_entries :
+    {
+      __a_init_start = .;
+      KEEP(*(.a_init_entry_*))
+      __a_init_end = .;
+    } > FLASH
+
+    .ARM.extab :
+    {
+        *(.ARM.extab* .gnu.linkonce.armextab.*)
+        . = ALIGN(4);
+    } > FLASH
+
+    __exidx_start = .;
+    .ARM.exidx :
+    {
+        *(.ARM.exidx* .gnu.linkonce.armexidx.*)
+    } > FLASH
+    __exidx_end = .;
+
+    .copy.table :
+    {
+        . = ALIGN(4);
+        __copy_table_start__ = .;
+        LONG (__iram_flash_begin)
+        LONG (__iram_start__)
+        LONG ((__iram_end__ - __iram_start__) / 4)
+
+        LONG (__data_flash_begin)
+        LONG (__data_start__)
+        LONG ((__data_end__ - __data_start__) / 4)        
+
+        LONG (__dtcm_data)
+        LONG (__dtcm_start__)
+        LONG ((__dtcm_end__ - __dtcm_start__) / 4)
+
+        LONG (__itcm_text)
+        LONG (__itcm_start__)
+        LONG ((__itcm_end__ - __itcm_start__) / 4)
+        __copy_table_end__ = .;
+    } > FLASH
+
+    .zero.table :
+    {
+        . = ALIGN(4);
+        __zero_table_start__ = .;
+        LONG (_bss_start)
+        LONG ((_bss_end - _bss_start) / 4)
+        LONG (_heap_start)
+        LONG ((_heap_end - _heap_start) / 4)
+        /* Add each additional bss section here */
+        __zero_table_end__ = .;
+    } > FLASH
+
+#if (CONFIG_BT_REUSE_MEDIA_MEMORY)
+    .sram_bt (NOLOAD):
+    {
+        . = ALIGN(32);
+        PROVIDE(_bt_data_lmastart = LOADADDR(.sram_bt));
+        _bt_data_start = .;
+        KEEP(*(.bt_spec_data ))
+        KEEP(*(.ble_bss_data ))
+        . = ALIGN(4);
+        _bt_data_end = .;
+    } > SRAM_BT AT > FLASH
+#endif
+
+#if (CONFIG_AUD_AI_NS_USE_STATIC_SRAM)
+    .sram_aec (NOLOAD):
+    {
+        . = ALIGN(32);
+        PROVIDE(__aec_bss = LOADADDR(.sram_aec));
+        _aec_bss_start = .;
+        KEEP(*(.aec_bss*))
+        KEEP(*(.aec_bss))
+        . = ALIGN(4);
+        _aec_bss_end = .;
+    } > SRAM_AEC
+#endif
+    .itcm :
+    {
+        . = ALIGN(4);
+        PROVIDE(__itcm_text = LOADADDR(.itcm));
+        __itcm_start__ = .;
+        KEEP(*(.null_trap_handler))
+
+
+        *(.itcm)
+        *(.itcm_section*)
+        *(.itcm_sec_code*)
+        *(.interrupt)
+        . = ALIGN(4);
+        __itcm_end__ = .;
+    } > ITCM AT > FLASH
+
+    .dtcm :
+    {
+        . = ALIGN(4);
+        PROVIDE(__dtcm_data = LOADADDR(.dtcm));
+        __dtcm_start__ = .;
+
+        *(.dtcm)
+        *(.dtcm_sec_data*)
+        . = ALIGN(4);
+
+        __dtcm_end__ = .;
+    } > DTCM AT > FLASH
+
+    .iram :
+    {
+        . = ALIGN(512);
+        PROVIDE(__iram_flash_begin = LOADADDR(.iram));
+        __iram_start__ = .;
+
+        . = ALIGN(512);
+        __vector_iram_table = .;
+        KEEP(*(.vectors_iram))
+        . = ALIGN(128);
+
+
+        *(.iram)
+        . = ALIGN(4);
+        __iram_end__ = .;
+    } > IRAM AT > FLASH
+    .ramcode :
+    {
+        . = . +  SIZEOF(.iram);
+        . = ALIGN(512);
+    } > RAM AT > FLASH
+
+    .data :
+    {
+        PROVIDE(__etext = LOADADDR(.data));
+        PROVIDE(__data_flash_begin = LOADADDR(.data));
+
+        . = ALIGN(4);
+        __data_start__ = .;
+
+        *(.data)
+        *(".data.*")
+        *(.sdata)
+
+        *(.gnu.linkonce.d*)
+        . = ALIGN(4);
+        __data_end__ = .;
+    } > RAM AT > FLASH
+
+    _data_flash_begin = __data_flash_begin;
+    _data_ram_begin = __data_start__;
+    _data_ram_end = .;
+
+    s_rom_end = LOADADDR(.data) + SIZEOF(.data);
+
+    .uninitialized (NOLOAD):
+    {
+        . = ALIGN(32);
+        __uninitialized_start = .;
+        *(.uninitialized)
+        *(".uninitialized.*")
+        KEEP(*(.keep.uninitialized))
+        . = ALIGN(32);
+        __uninitialized_end = .;
+    } > RAM
+
+    .bss (NOLOAD):
+    {
+#if (!CONFIG_BT_REUSE_MEDIA_MEMORY)
+        . = ALIGN(32);
+        PROVIDE(_bt_data_lmastart = LOADADDR(.sram_bt));
+        _bt_data_start = .;
+        KEEP(*(.bt_spec_data ))
+        KEEP(*(.ble_bss_data ))
+        _bt_data_end = .;
+#endif
+        . = ALIGN(4);
+        _bss_start = .;
+        *(.bss)
+        *(.bss*)
+        *(COMMON)
+        . = ALIGN(4);
+        _bss_end = .;
+    } > RAM
+
+    bss_size = _bss_end - _bss_start;
+
+    .heap (COPY) :
+    {
+        . = ALIGN(8);
+        _heap_start = .;
+        . = . + (ORIGIN(RAM) + LENGTH(RAM) - __MSP_STACK_SIZE - _heap_start - 8); /* 16 bytes for boundary protection */
+        . = ALIGN(8);
+        _heap_end = .;
+    } > RAM
+
+    .stack (ORIGIN(RAM) + LENGTH(RAM) - __MSP_STACK_SIZE) (COPY) :
+    {
+        . = ALIGN(8);
+        _sstack = .;
+        __StackLimit = .;
+        . = . + __MSP_STACK_SIZE;
+        . = ALIGN(8);
+        __StackTop = .;
+        _estack = .;
+    } > RAM
+
+    .swap ORIGIN(SWAP):
+    {
+        . = ALIGN(8);
+        _swap_start = .;
+
+        * (.swap_data)
+        * (.swap_data*)
+        . = ALIGN(4);
+        _swap_end = .;
+    } > SWAP AT > FLASH
+
+    /* Set stack top to end of RAM, and stack limit move down by
+     * size of stack_dummy section */
+    __MSPTop = ORIGIN(RAM) + LENGTH(RAM);
+    __MSPLimit = __MSPTop - __MSP_STACK_SIZE;
+
+    ASSERT((s_rom_end < ORIGIN(FLASH) + LENGTH(FLASH)), "ROM overflow!!!")
+    ASSERT(((ORIGIN(RAM) + LENGTH(RAM)) > (_heap_start + __MSP_STACK_SIZE + 8)), "Stack overflowed with bss")
+    ASSERT(((_heap_end - _heap_start) >= __MIN_HEAP_SIZE), "Heap smaller than minimize size 32K!!!")
+}

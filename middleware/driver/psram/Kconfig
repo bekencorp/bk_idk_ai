@@ -1,4 +1,5 @@
 menu "PSRAM"
+	depends on (!SOC_BK7257)
 	config PSRAM
 		bool "Enable PSRAM"
 		default n

@@ -34,6 +34,7 @@ menu "PWR_CLK"
 		 bool "ahbp power domain disable"
 		default n
 	config PSRAM_POWER_DOMAIN_LV_DISABLE
+		 depends on PSRAM
 		 bool "psram power domain disable"
 		default n
 	config DCO_CLK_ENABLE

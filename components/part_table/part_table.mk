@@ -56,9 +56,13 @@ bk7234xx_supported_projects := $(bk7234xx_supported_projects) customization/conf
 bk7239xx_supported_targets := bk7239
 bk7239xx_supported_projects := app
 
+############################################################
+#        Create supported projects list for bk7257         #
+############################################################
+bk7257xx_supported_targets := bk7257
+bk7257xx_supported_projects := app
 
-
-PART_TABLE_SUPPORTED_TARGETS := $(bk7235xx_supported_targets) $(bk7256xx_supported_targets) $(bk7236xx_supported_targets) $(bk7258xx_supported_targets) $(bk7234xx_supported_targets) $(bk7239xx_supported_targets)
+PART_TABLE_SUPPORTED_TARGETS := $(bk7235xx_supported_targets) $(bk7256xx_supported_targets) $(bk7236xx_supported_targets) $(bk7258xx_supported_targets) $(bk7234xx_supported_targets) $(bk7239xx_supported_targets) $(bk7257xx_supported_targets)
 PART_TABLE_SUPPORTED_PROJECTS := app
 ifneq ($(findstring $(ARMINO_SOC), $(bk7235xx_supported_targets)),)
 	PART_TABLE_SUPPORTED_PROJECTS := $(bk7235xx_supported_projects)
@@ -77,6 +81,9 @@ ifneq ($(findstring $(ARMINO_SOC), $(bk7234xx_supported_targets)),)
 endif
 ifneq ($(findstring $(ARMINO_SOC), $(bk7239xx_supported_targets)),)
 	PART_TABLE_SUPPORTED_PROJECTS := $(bk7239xx_supported_projects)
+endif
+ifneq ($(findstring $(ARMINO_SOC), $(bk7257xx_supported_targets)),)
+	PART_TABLE_SUPPORTED_PROJECTS := $(bk7257xx_supported_projects)
 endif
 
 ARMINO_TOOL_PART_TABLE := $(ARMINO_DIR)/tools/build_tools/part_table_tools/gen_bk7256partitions.py
