@@ -19,18 +19,30 @@
 #if CONFIG_USR_GPIO_CFG_EN
 #include "usr_gpio_cfg.h"
 #endif
+#include "gpio_driver_base.h"
 
 //move out from function, which uses too much STACK.
 static const gpio_map_t gpio_map_table[] = GPIO_DEV_MAP;
+
+#define GPIO_RETURN_ON_INVALID_ID(id) do {\
+		if (!gpio_map_table[id].is_available){ \
+			GPIO_LOGW("id is not available\r\n");\
+			return BK_ERR_GPIO_CHAN_ID;\
+		}\
+	} while(0)
+
+
 bk_err_t gpio_hal_init(gpio_hal_t *hal)
 {
 	gpio_ll_init(hal->hw);
 	return BK_OK;
 }
 
-void gpio_hal_set_value(gpio_hal_t *hal, gpio_id_t id, uint32_t v)
+bk_err_t gpio_hal_set_value(gpio_hal_t *hal, gpio_id_t id, uint32_t v)
 {
 	gpio_ll_set_value(hal->hw, id, v);
+
+	return BK_OK;
 }
 
 uint32_t gpio_hal_get_value(gpio_hal_t *hal, gpio_id_t id)
@@ -171,6 +183,9 @@ static bk_err_t gpio_hal_map_check(gpio_hal_t *hal, gpio_id_t gpio_id)
 
 bk_err_t gpio_hal_func_map(gpio_hal_t *hal, gpio_id_t gpio_id, gpio_dev_t dev)
 {
+
+	GPIO_RETURN_ON_INVALID_ID(gpio_id);
+
 	const gpio_map_t *gpio_map = NULL;
 
 	//special for BK7235:the GPIO ID isn't from 0~47, some of the GPIO are not exist.
@@ -214,6 +229,8 @@ bk_err_t gpio_hal_func_map(gpio_hal_t *hal, gpio_id_t gpio_id, gpio_dev_t dev)
 
 bk_err_t gpio_hal_func_unmap(gpio_hal_t *hal, gpio_id_t gpio_id)
 {
+	GPIO_RETURN_ON_INVALID_ID(gpio_id);
+	
 	gpio_hal_sencond_function_enable(hal, gpio_id, 0);
 	return BK_OK;
 }
