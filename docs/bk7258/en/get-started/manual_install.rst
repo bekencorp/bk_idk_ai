@@ -51,7 +51,7 @@ If using the Archlinux operating system, you need to enter the following command
 
 Enter the following command to install python modules::
 
-    sudo pip3 install pycryptodome click future click_option_group cryptography jinja2 PyYAML cbor2 intelhex
+    sudo pip3 install pycryptodome click future click_option_group cryptography jinja2 PyYAML cbor2 intelhex numpy
 
 If you default Python is Python2, please set it to Python3. The minimum required version for Python is Python 3.8::
 

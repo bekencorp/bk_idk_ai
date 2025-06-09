@@ -51,7 +51,7 @@
 
 在终端输入下述命令安装python依赖库::
 
-    sudo pip3 install pycryptodome click future click_option_group cryptography jinja2 PyYAML cbor2 intelhex
+    sudo pip3 install pycryptodome click future click_option_group cryptography jinja2 PyYAML cbor2 intelhex numpy
 
 如果您的 Python 默认为 Python2，请使用下述命令更改成 Python3，Python最低要求版本为Python3.8::
 
