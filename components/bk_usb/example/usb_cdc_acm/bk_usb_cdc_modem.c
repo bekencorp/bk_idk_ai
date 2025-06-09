@@ -35,7 +35,7 @@ void bk_modem_usbh_close(void){ }
 void bk_modem_usbh_bulkout_ind(char *p_tx, uint32_t l_tx){ }
 void bk_modem_usbh_bulkin_ind(uint8_t *p_rx, uint32_t l_rx){ }
 void bk_modem_usbh_poweron_ind(void){ }
-uint8_t bk_modem_get_mode(void){return 0}
+uint8_t bk_modem_get_mode(void){return 0;}
 #endif
 
 IPC_CDC_DATA_T *g_cdc_ipc;
