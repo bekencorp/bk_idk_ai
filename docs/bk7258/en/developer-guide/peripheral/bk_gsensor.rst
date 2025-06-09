@@ -7,7 +7,7 @@ Overview of Gsensor
 ------------------------------------------------------------
     Gsensor is a high-precision digital three-axis acceleration sensor, currently supporting the SC7A20 sensor. It uses I2C for data transmission and performs analysis on the collected data from the X, Y, and Z axes.
 
-.. figure:: ../../../../common/_static/gsensor_sc7a20.png
+.. figure:: ../../../../common/_static/gsensor_sc7a20_en.png
     :align: center
     :alt: gsensor_sc7a20
     :figclass: align-center
