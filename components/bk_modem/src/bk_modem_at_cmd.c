@@ -28,41 +28,8 @@ static beken_semaphore_t g_modem_at_semaphore = NULL;
 beken2_timer_t func_proc = {0};
 uint8_t g_modem_at_cmd_buf[AT_CMD_LEN_MAX];
 uint8_t g_modem_at_rsp_buf[AT_RSP_LEN_MAX];
-bool g_modem_at_timer_cb_handle = false;
-
-
-bk_err_t bk_modem_at_init(void)
-{
-	bk_err_t ret = BK_FAIL;
-	if (g_modem_at_semaphore != NULL)
-	{
-		BK_MODEM_LOGI("sem already exist\r\n");
-		return BK_FAIL;
-	}
-	ret = rtos_init_semaphore(&g_modem_at_semaphore, 32);
-	if (kNoErr != ret)
-	{
-		BK_MODEM_LOGI("sem init fail[%d]!\r\n", ret);
-		return BK_FAIL;
-	}
-	return ret;
-}
-
-bk_err_t bk_modem_at_dinit(void)
-{
-	bk_err_t ret = BK_FAIL;
-	if (g_modem_at_semaphore != NULL)
-	{
-		ret = rtos_deinit_semaphore(&g_modem_at_semaphore);
-		g_modem_at_semaphore = NULL;
-		if (kNoErr != ret)
-		{
-			BK_MODEM_LOGI("sem dinit fail[%d]!\r\n", ret);
-			return BK_FAIL;
-		}
-	}
-	return ret;
-}  
+uint8_t g_modem_at_rsp_segment_cnt = 0;
+uint32_t g_modem_at_rsp_len = 0;
 
 int bk_modem_at_rsp_parse_args(char *rsp_buf, const char *resp_expr, ...)
 {
@@ -105,23 +72,26 @@ static bk_err_t bk_modem_at_rsp_analysis(uint8_t *cmd,uint8_t *resp)
 
 static void bk_modem_at_timeout_cb(void* larg, void* rarg)
 {
-	BK_MODEM_LOGI("AT command_timer is too long\r\n");
+	static uint8_t timer_cnt = 0;
 
-	g_modem_at_timer_cb_handle = true;
+	if (timer_cnt * 20 >= 5000)
+		BK_MODEM_LOGI("AT command_timer is too long\r\n");
 
 	if (g_modem_at_semaphore == NULL)
 	{
 		BK_MODEM_LOGI("at_semaphore is deinited.\r\n");
-		if(rtos_is_oneshot_timer_init(&func_proc))
-		{
-			bk_err_t ret = rtos_deinit_oneshot_timer(&func_proc);
-			if(ret!=0)
-			{
-				BK_MODEM_LOGE("AT deinit timer failed\r\n");
-			}
-		}
+		timer_cnt = 0;
 		return;
 	}
+
+	if ((g_modem_at_rsp_segment_cnt < 2) && (timer_cnt * 20 < 5000))
+	{
+		timer_cnt ++;
+		rtos_start_oneshot_timer(&func_proc);
+		return;
+	}
+
+	timer_cnt = 0;
 
 	int ret = rtos_set_semaphore(&g_modem_at_semaphore);
 	if (ret) 
@@ -136,17 +106,12 @@ void bk_modem_at_rcv_resp(const char *resp,uint32_t len)
 	if(len>=AT_RSP_LEN_MAX)
 	{
 		BK_MODEM_LOGI("rcv len err len %\r\n",len);
+		return;
 	}
-	else
-	{
-		os_memcpy(g_modem_at_rsp_buf,resp,len);
-	}
-    
-	int ret = rtos_set_semaphore(&g_modem_at_semaphore);
-	if (ret) 
-	{
-		BK_MODEM_LOGI("rcv rtos_set_semaphore fail\r\n");
-	}    
+
+	g_modem_at_rsp_segment_cnt ++;
+	os_memcpy(g_modem_at_rsp_buf+g_modem_at_rsp_len,resp,len);
+	g_modem_at_rsp_len += len;
 }
 
 bk_err_t bk_modem_at_cmd_send(const char *cmd, uint8_t max_retry, uint32_t timeout)
@@ -172,19 +137,15 @@ bk_err_t bk_modem_at_cmd_send(const char *cmd, uint8_t max_retry, uint32_t timeo
 
 	BK_MODEM_LOGI("at cmd send: len=%d, cmd=%s\r\n", len, at_cmd_buf);
 
-	ret = rtos_init_oneshot_timer(&func_proc,timeout,bk_modem_at_timeout_cb,NULL,NULL);
-	if(ret != BK_OK){
-		BK_MODEM_LOGI("init timer failed\r\n");
-		return BK_FAIL;
-	}
-	rtos_start_oneshot_timer(&func_proc);
-	g_modem_at_timer_cb_handle = false;
-
 	while (retry--)
 	{
 		BK_MODEM_LOGI("modem_device_write: %d\r\n", retry);
 		os_memset(g_modem_at_rsp_buf, 0x0, sizeof(g_modem_at_rsp_buf));
+		g_modem_at_rsp_segment_cnt = 0;
+		g_modem_at_rsp_len = 0;
 		
+		rtos_start_oneshot_timer(&func_proc);
+
 		//:send at cmd to uart
 		bk_modem_dte_send_data(len, at_cmd_buf, PPP_CMD_MODE);
 
@@ -194,9 +155,9 @@ bk_err_t bk_modem_at_cmd_send(const char *cmd, uint8_t max_retry, uint32_t timeo
 			BK_MODEM_LOGI("semaphore failed\r\n");
 			break;
 		}
-		if(g_modem_at_timer_cb_handle)
+		if(g_modem_at_rsp_len == 0)
 		{
-			BK_MODEM_LOGI("tiemout no handle\r\n");
+			BK_MODEM_LOGI("len is 0, no handle\r\n");
 			break;
 		}
 
@@ -217,21 +178,6 @@ bk_err_t bk_modem_at_cmd_send(const char *cmd, uint8_t max_retry, uint32_t timeo
 		{
 			BK_MODEM_LOGI("recv fail[%d]!\r\n", ret);
 			continue;
-		}
-	}
-	
-	if(rtos_is_oneshot_timer_init(&func_proc))
-	{
-		ret = rtos_stop_oneshot_timer(&func_proc);
-		if(ret!=0)
-		{
-			BK_MODEM_LOGE("AT stop timer failed\r\n");
-		}
-
-		ret = rtos_deinit_oneshot_timer(&func_proc);
-		if(ret!=0)
-		{
-			BK_MODEM_LOGE("AT deinit timer failed\r\n");
 		}
 	}
 
@@ -619,3 +565,59 @@ bk_err_t bk_modem_at_cfun(uint8_t value)
 
 	return BK_FAIL;
 }
+
+
+bk_err_t bk_modem_at_init(void)
+{
+	bk_err_t ret = BK_FAIL;
+	if (g_modem_at_semaphore != NULL)
+	{
+		BK_MODEM_LOGI("sem already exist\r\n");
+		return BK_FAIL;
+	}
+	ret = rtos_init_semaphore(&g_modem_at_semaphore, 32);
+	if (kNoErr != ret)
+	{
+		BK_MODEM_LOGI("sem init fail[%d]!\r\n", ret);
+		return BK_FAIL;
+	}
+
+	ret = rtos_init_oneshot_timer(&func_proc,20,bk_modem_at_timeout_cb,NULL,NULL);
+	if(ret != BK_OK){
+		BK_MODEM_LOGI("init timer failed\r\n");
+		return BK_FAIL;
+	}
+	return ret;
+}
+
+bk_err_t bk_modem_at_dinit(void)
+{
+	bk_err_t ret = BK_FAIL;
+	if (g_modem_at_semaphore != NULL)
+	{
+		ret = rtos_deinit_semaphore(&g_modem_at_semaphore);
+		g_modem_at_semaphore = NULL;
+		if (kNoErr != ret)
+		{
+			BK_MODEM_LOGI("sem dinit fail[%d]!\r\n", ret);
+			return BK_FAIL;
+		}
+	}
+
+	if(rtos_is_oneshot_timer_init(&func_proc))
+	{
+		ret = rtos_stop_oneshot_timer(&func_proc);
+		if(ret!=0)
+		{
+			BK_MODEM_LOGE("AT stop timer failed\r\n");
+		}
+
+		ret = rtos_deinit_oneshot_timer(&func_proc);
+		if(ret!=0)
+		{
+			BK_MODEM_LOGE("AT deinit timer failed\r\n");
+		}
+	}
+	return ret;
+}  
+

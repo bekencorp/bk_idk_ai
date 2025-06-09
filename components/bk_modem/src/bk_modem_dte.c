@@ -27,6 +27,8 @@ void bk_modem_dte_send_data(uint32_t data_length, uint8_t *data, enum bk_modem_p
     {
         bk_modem_usbh_bulkout_ind((char *)data, data_length);
     }
+    else
+        BK_MODEM_LOGE("%s: different ppp mode. %d %d\r\n",__func__, bk_modem_env.bk_modem_ppp_mode, ppp_mode);
 }
 
 void bk_modem_dte_recv_data(uint32_t data_length, uint8_t *data)

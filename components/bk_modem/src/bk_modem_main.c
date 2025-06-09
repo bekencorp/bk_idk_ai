@@ -123,6 +123,8 @@ void bk_modem_del_resource(void)
 
 void bk_modem_deinit(void)
 {
+    BK_MODEM_LOGI("%s \r\n", __func__);
+
     if (bk_modem_status == 1)
     {
         bk_modem_set_state(PPP_STOP);
@@ -145,9 +147,11 @@ bk_err_t bk_modem_init(void)
 {
     int ret;
 
+    BK_MODEM_LOGI("%s: status %d \r\n", __func__, bk_modem_status);
+
     if (bk_modem_status == 1)
     {
-        BK_MODEM_LOGE("bk modem already stat, no need start again\r\n");
+        BK_MODEM_LOGE("bk modem already start, no need start again\r\n");
         return BK_FAIL; 
     }
 
