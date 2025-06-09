@@ -632,16 +632,23 @@ static int ws_tcp_connect(transport client, const char *host, int port, int time
 {
 	bk_err_t err = BK_OK;
 #if CONFIG_WEBSOCKET_TLS
-	if (client->is_tls == 1)
+	if (client->is_tls == 1) {
 		err = _ssl_connect(client->bk_ssl, host, port, timeout_ms);
+		if (err != BK_OK) {
+			BK_LOGE(TAG, "%s failed\r\n", __func__);
+			return BK_FAIL;
+		}
+		client->sockfd = client->bk_ssl->sockfd;
+	}
 	else
 #endif
+	{
 		err = _tcp_connect(&client->sockfd, host, os_strlen(host), port, timeout_ms);
-	if (err != BK_OK) {
-		BK_LOGE(TAG, "%s failed\r\n", __func__);
-		return BK_FAIL;
+		if (err != BK_OK) {
+			BK_LOGE(TAG, "%s failed\r\n", __func__);
+			return BK_FAIL;
+		}
 	}
-
 	return BK_OK;
 }
 
@@ -697,16 +704,23 @@ static int ws_tcp_close(transport client)
 {
 	bk_err_t err = BK_OK;
 #if CONFIG_WEBSOCKET_TLS
-	if (client->is_tls == 1)
+	if (client->is_tls == 1) {
 		err = _ssl_base_close(client->bk_ssl);
+		if (err != BK_OK) {
+			BK_LOGE(TAG, "%s failed\r\n", __func__);
+			return BK_FAIL;
+		}
+		client->sockfd = -1;
+	}
 	else
 #endif
+	{
 		err = _tcp_close(client);
-	if (err != BK_OK) {
-		BK_LOGE(TAG, "%s failed\r\n", __func__);
-		return BK_FAIL;
+		if (err != BK_OK) {
+			BK_LOGE(TAG, "%s failed\r\n", __func__);
+			return BK_FAIL;
+		}
 	}
-
 	return BK_OK;
 }
 
@@ -1424,7 +1438,9 @@ void websocket_client_task(beken_thread_arg_t *thread_param)
 			read_select = ws_tcp_poll_read(client, 1000); //Poll every 1000ms
 			if (read_select < 0) {
 				BK_LOGE(TAG, "Network error: ws_tcp_poll_read() returned %d, errno=%d\r\n", read_select, errno);
+				rtos_lock_mutex(&client->mutex);
 				ws_disconnect(client);
+				rtos_unlock_mutex(&client->mutex);
 			}
 		} else if (WEBSOCKET_STATE_WAIT_TIMEOUT == client->state) {
 			if(client->auto_reconnect)
@@ -1500,6 +1516,7 @@ bk_err_t websocket_client_stop(transport client)
 	rtos_lock_mutex(&client->mutex);
 	ws_tcp_close(client);
 	rtos_unlock_mutex(&client->mutex);
+	BK_LOGI(TAG, "%s, sockfd :%d stop ws task\r\n", __func__, client->sockfd);
 	client->run = false;
 	client->state = WEBSOCKET_STATE_UNKNOW;
 	return BK_OK;
