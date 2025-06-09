@@ -1,6 +1,6 @@
 #!/usr/bin/env pwsh
 
-$global:DOCKER_IMAGE_LOWEST_VERSION = "1.0"
+$global:DOCKER_IMAGE_LOWEST_VERSION = "1.2"
 $global:DOCKER_IMAGE_VERSION = ""
 $global:DOCKER_IMAGE = "bekencorp/armino-idk"
 
