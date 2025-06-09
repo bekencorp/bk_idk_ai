@@ -31,7 +31,7 @@ GPIO MAP Config
    - gpio_id：从 0 开始编号的对应GPIO引脚号。
    - second_func_en：是否启用第二功能。
    - second_func_dev:选择引脚的第二功能。（目前，单个GPIO引脚最多可复用八种第二功能，同一时间只能复用一个第二功能，详见 **GPIO_DEV_MAP**。该表格用户不可修改。）
-   - io_mode：选择输入输出（IO）操作模式，包括输入模式、输出模式或高阻态。
+   - io_mode：选择输入输出（IO）操作模式，包括输入模式、输出模式或高阻态。（输出模式下为开漏输出）
    - pull_mode：选择GPIO的上拉或下拉模式。
    - int_en：是否开启中断。
    - int_type：选择触发中断的条件，包括高电平触发、低电平触发、上升沿触发、下降沿触发。
@@ -39,15 +39,23 @@ GPIO MAP Config
    - driver_capacity：驱动能力选择，共有四个等级。
 
 
+.. note::
+
+  **GPIO_DEV_MAP** 表中标志位为false的GPIO_ID 表示物理上不存在。访问此类GPIO的操作无效，系统会打印警告。(不同芯片封装，GPIO pin脚不一样)
+
+
 
 GPIO 部分使用介绍:
 ------------------
   
   1. 客户需要根据其开发板的配置需求来配置 **GPIO_DEFAULT_DEV_CONFIG** 表。您可以依据 **GPIO_DEV_MAP** 表中定义的每个 GPIO 的功能，自由地配置 **GPIO_DEFAULT_DEV_CONFIG** 表。
-     如果您想在程序运行期间更改某个 GPIO 的功能，可以使用 gpio_dev_unmap() 函数取消原有的映射，然后使用 gpio_dev_map() 函数进行新的映射。 
-  2. 目前，BK7258 基于非对称多处理（AMP）架构，这会导致 GPIO 中断由多个 CPU 核心处理，影响程序的预期运行表现（CPU1 的时钟速度高于 CPU0，CPI1清除了GPIO的中断状态位，CPU0无法检测到该中断，会导致中断丢失）。为解决该问题，提出以下解决办法：
+     如果您想在程序运行期间更改某个 GPIO 的功能，可以使用 gpio_dev_unmap() 函数取消原有的映射，然后使用 gpio_dev_map() 函数进行新的映射。 GPIO外设初始化时会在gpio_hal.c的
+     gpio_hal_default_map_init（）函数里按照 **GPIO_DEFAULT_DEV_CONFIG** 表初始化GPIO（需要打开宏CONFIG_GPIO_DEFAULT_SET_SUPPORT，平台只会操作一次，后面以用户配置为准,如果没有开启该宏，则平台不会操作GPIO，GPIO默认值为高组态）
+  2. 目前，BK7258 基于非对称多处理（AMP）架构，这会导致 GPIO 中断由多个 CPU 核心处理，影响程序的预期运行表现（CPU1 的时钟速度高于 CPU0，CPU1清除了GPIO的中断状态位，CPU0无法检测到该中断，会导致中断丢失）。为解决该问题，提出以下解决办法：
 
     - 通过采用第3点，为每个 CPU 核心定义 **GPIO_DEFAULT_DEV_CONFIG** 表，将不同的 GPIO 分配给不同的核心。这样每个 CPU 核心将仅响应其对应映射表中的中断，从而避免多个核心处理同一个中断，确保程序按预期运行。
+    
+    （**note**: 新建工程之后，每个CPU必须配置自己需要控制的GPIO,确保每个CPU管理自己的GPIO，注册相应的中断回调函数，确保程序按预期运行）
 
   3. 以自定义方式覆盖默认的 **GPIO_DEFAULT_DEV_CONFIG** 时，可按以下步骤操作：
     
@@ -56,22 +64,36 @@ GPIO 部分使用介绍:
       
      需要注意的是，新映射的功能必须已在 **GPIO_DEV_MAP** 表中定义。在初始化过程中，芯片会根据 **GPIO_DEFAULT_DEV_CONFIG** 表来配置 GPIO 的状态。（注意：确保在代码中包含 usr_gpio_cfg.h 文件，这样在编译时就会使用你自定义的 GPIO 配置。）
      
-  4. 低功耗状态：在低功耗状态下，GPIO 可配置为输入模式（唤醒源）和输出模式。如果在低功耗期间不使用相应的 GPIO（GPIO_LOW_POWER_DISCARD_IO_STATUS），低功耗模式程序会将该 GPIO 设置为高阻状态，以防止在低功耗模式下出现漏电现象。
+  4. 低功耗状态：在低功耗状态下，GPIO 可配置为输入模式（唤醒源）和输出模式。如果在低功耗期间不使用相应的 GPIO（GPIO_LOW_POWER_DISCARD_IO_STATUS），低功耗模式程序会将GPIO 设置为高阻状态，以防止在低功耗模式下出现漏电现象。
   5. 当你需要在低功耗模式下保持 GPIO 的输出状态时，有两种办法设置：
 
     - 按照说明配置 **GPIO_DEFAULT_DEV_CONFIG** 表。
-    - 使用bk_gpio_register_lowpower_keep_status() 函数注册。目前默认数量为4，可使用CONFIG_GPIO_DYNAMIC_KEEP_STATUS_MAX_CNT修改数量）
+    - 使用 bk_gpio_register_lowpower_keep_status() 函数注册。目前默认数量为4，可使用CONFIG_GPIO_DYNAMIC_KEEP_STATUS_MAX_CNT修改数量）
+    - 使用 bk_gpio_unregister_lowpower_keep_status（）函数可以取消之前注册需要保持的GPIO。
 
   6. 当进入低功耗模式时，可以将多个外部 GPIO 设置为唤醒源。如果任何一个 GPIO 产生中断信号，芯片就能从低功耗模式中唤醒。目前有三种办法设置为唤醒源：
 
     - 按照说明配置 **GPIO_DEFAULT_DEV_CONFIG** 表。
     - **GPIO_STATIC_WAKEUP_SOURCE_MAP** 中设置多个唤醒源。
     - 使用 bk_gpio_register_wakeup_source（）函数注册。（目前默认数量为4，可使用CONFIG_GPIO_DYNAMIC_WAKEUP_SOURCE_MAX_CNT修改数量）
+    - 使用 bk_gpio_unregister_wakeup_source（）函数可以取消注册的唤醒源。
 
   7. 当进入低功耗模式（仅适用于低压情况）时，GPIO 的状态将被备份。退出低功耗模式后，GPIO 会自动恢复到进入该模式之前的状态。
-     （**note**：从深度睡眠模式退出后，相当于进行了一次软重启，GPIO 状态不会自动恢复。）
+     （**note**：从深度睡眠模式退出后，相当于进行了一次软重启，GPIO状态不会自动恢复，会重新走初始化流程，如果需要从深度睡眠模式退出保持GPIO的状态，见第8点）
+  8. GPIO在OTA或者软件重启过程中保持状态
+
+    - c. 初始化GPIO驱动也不掉电，增加跳过保持输出的GPIO 代码，修改文件 gpio_hal.c 约Line：335。例如 GPIO20 保持输出：if(default_map[i].gpio_id == GPIO_20) continue;
   
-   
+  9. 设置输入中断检测时，需要确保开启中断前，电平状态稳定，处理逻辑如下：先将电平钳位在高电平或者低电平（根据中断触发方式决定），即如果是上升沿触发中断，则一开始就需要
+     将GPIO设置到拉低状态，防止抖动或高阻态随机值引起误触发。
+  10. GPIO复用为第二功能有两种方式：静态和动态。
+      
+      - 静态方式是在gpio_map.h中的GPIO_DEFAULT_DEV_CONFIG结构体数组中设置second_func_en和second_func_dev成员。启用second_func_en并选择所需的第二功能后，GPIO将在芯片上电初始化时自动复用为相应的第二功能。
+      - 动态方式则通过调用 gpio_dev_map()或 gpio_dev_unprotect_map()函数实现。 gpio_dev_unprotect_map()函数不会检查当前GPIO是否被别的CPU核心使用。而 gpio_dev_map()函数会在GPIO复用过程中加锁，保证原子操作。
+
+      （**note**: 为防止同一个管脚被多个业务使用发生冲突，建议所有的GPIO引脚通过 **GPIO_DEFAULT_DEV_CONFIG** 进行配置，只有特殊情况，比如分时复用等场景，才使用动态方式配置GPIO）。
+  11. 同一外设的复用功能不能同时映射到多组引脚上，这会导致硬件资源冲突。（比如 GPIO_30 和 GPIO_40 同时复用为UART2的RX，这会导致UART2无法正常工作）
+
 
 .. note::
    
@@ -147,6 +169,26 @@ GPIO_0 作为低功耗唤醒源，下降沿唤醒：
 	  
 	  - PS：low_power_io_ctrl 设置为 [GPIO_LOW_POWER_KEEP_INPUT_STATUS]
 
+
+Q&A
+-------------
+
+1. 低压模式设置了RTC和GPIO中断，RTC触发后GPIO则失效了。
+
+   该问题原因为在进入低压模式之前，MCU会备份GPIO的状态。为了防止未使能唤醒GPIO引脚的中断，导致MCU无法被唤醒，在低压模式下，唤醒GPIO的引脚中断会被使能。
+   退出中断后，该引脚的状态会恢复到进入低压之前的状态。如果在进入低压模式之前未使能唤醒引脚的中断，那么在退出低压后，该引脚的中断仍然未被使能，因此在正
+   常工作模式下唤醒GPIO的中断无法被触发。
+
+2. 进入深度休眠后，敲一下串口，设备会唤醒。
+   因为一些场景需求，默认支持在low voltage、 deepsleep时使用uart来唤醒设备。如果不需要该功能，可以在gpio_map.h中将GPIO_STATIC_WAKEUP_SOURCE_MAP中GPIO_10注释掉。
+
+3. 多核操作同一个GPIO之间的协同问题，某客户在多核AMP系统中未采用CPU独立配置GPIO方案，导致以下典型问题，表象如下：
+
+  - 使用dvp摄像头打开后，按键中断偶现丢失。
+  - 单独打开lcd或uvc时，按键gpio中断50%概率左右不会触发
+
+  BK7258是AMP架构，多个CPU共享硬件资源。所有的GPIO引脚共享GPIO中断线。如果每个CPU没有配置自己需要控制的GPIO，在GPIO发生中断时，多个CPU核心都会接到中断通知，执行中断处理函数。
+  开dvp和lcd等操作都会开启CPU1，CPU1的主频比CPU0快，可能会清掉中断标志位，造成CPU0的GPIO中断丢失，导致程序为按照预期执行。为避免这种情况，每个CPU必须配置各自的GPIO_MAP表。
 
 
 GPIO API Status
