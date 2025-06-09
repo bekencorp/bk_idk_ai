@@ -33,6 +33,7 @@ static uint8_t key_count = 0;
 static void short_press_cb(void *param);
 static void double_press_cb(void *param);
 static void long_press_cb(void *param);
+static void long_press_up_cb(void *param);
 static void key_thread(void *param);
 
 void bk_init_keys()
@@ -58,7 +59,8 @@ void bk_configure_key(KeyConfig_t *KeyConfig)
                                  short_press_cb, 
                                  double_press_cb, 
                                  long_press_cb, 
-                                 NULL);
+                                 NULL,
+                                 long_press_up_cb);
     
     if (ret != BK_OK)
     {
@@ -172,6 +174,9 @@ static void process_key_event(uint8_t gpio_id, key_action_t action) {
                 case LONG_PRESS: 
                     event = key_configs[i].long_event; 
                     break;
+                case LONG_PRESS_UP:
+                    event = key_configs[i].long_press_up_event;
+                    break;
                 default:
                     break;
             }
@@ -254,6 +259,27 @@ void long_press_cb(void *param) {
     KeyEventMsg_t msg = {
         .gpio_id = gpio_id,
         .action = LONG_PRESS
+    };
+
+    ret = rtos_push_to_queue(&s_key_msgqueue, &msg, 1000);
+
+    if (kNoErr != ret){
+		LOGI("key send msg failed");
+	}
+    
+   
+}
+
+void long_press_up_cb(void *param) {
+    LOGI("enter long press up cb\r\n");
+    bk_err_t ret;
+
+    BUTTON_S * handle = (BUTTON_S *)param;
+    uint32_t gpio_id = (uint32_t)(handle->user_data);
+
+    KeyEventMsg_t msg = {
+        .gpio_id = gpio_id,
+        .action = LONG_PRESS_UP
     };
 
     ret = rtos_push_to_queue(&s_key_msgqueue, &msg, 1000);

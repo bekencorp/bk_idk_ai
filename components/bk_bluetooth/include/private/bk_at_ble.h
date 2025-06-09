@@ -2,6 +2,7 @@
 #define _BLE_AT_H_
 #ifdef CONFIG_AT
 #include "atsvr_core.h"
+#endif
 #include "../../../include/os/os.h"
 
 
@@ -115,6 +116,5 @@ extern beken_semaphore_t *ble_at_get_sema_handle(void);
 
 extern void ble_at_cmd_init(void);
 
-#endif
 #endif
 

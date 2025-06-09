@@ -35,7 +35,7 @@ typedef enum KEY_ITEM_T {
 
 void key_initialization(void);
 void key_uninitialization(void);
-int key_item_configure(uint32_t gpio, uint8_t active_level, void short_press(void *), void double_press(void *), void long_press(void *), void hold_press(void *));
+int key_item_configure(uint32_t gpio, uint8_t active_level, void short_press(void *), void double_press(void *), void long_press(void *), void hold_press(void *), void long_press_up_event(void *));
 int key_item_unconfigure(uint32_t gpio);
 
 #endif // 

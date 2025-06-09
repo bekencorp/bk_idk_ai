@@ -40,7 +40,9 @@ static uint8_t s_boarding_ssid[64];
 static uint8_t s_boarding_password[32];
 static uint16_t s_boarding_ssid_len = 0;
 static uint16_t s_boarding_password_len = 0;
+#if CONFIG_AT
 static uint8_t s_boarding_notify[1] = {0};
+#endif
 static uint8_t s_conn_ind = ~0;
 
 #define GATT_BOARDING_SERVICE_UUID              0xFFFFU

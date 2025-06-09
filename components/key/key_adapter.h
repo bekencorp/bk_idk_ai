@@ -32,12 +32,15 @@ typedef enum {
     BRIGHTNESS_ADD,
     AI_AGENT_CONFIG,
     FACTORY_RESET,
+    AUDIO_BUF_APPEND,
+    AUDIO_BUF_COMMIT
 } key_event_t;
 
 typedef enum{
     SHORT_PRESS = 0,
     DOUBLE_PRESS = 1,
-    LONG_PRESS =2
+    LONG_PRESS =2,
+    LONG_PRESS_UP =3
 } key_action_t;
 
 typedef struct {
@@ -46,6 +49,7 @@ typedef struct {
     key_event_t short_event;   // 短按对应业务事件
     key_event_t double_event;  // 双按对应业务事件
     key_event_t long_event;    // 长按对应业务事件
+    key_event_t long_press_up_event;      //长按松手对应业务事件
 } KeyConfig_t;
 
 typedef struct

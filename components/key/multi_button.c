@@ -38,6 +38,7 @@ void button_init(BUTTON_S *handle, uint8_t(*pin_level)(struct _button_ *), uint8
 	handle->user_data = user_data;
 	handle->hal_button_Level = pin_level;
 	handle->button_level = handle->hal_button_Level(handle);
+	handle->press_up_flag = 0;
 }
 
 /**
@@ -108,6 +109,7 @@ void button_handler(BUTTON_S *handle)
 
 		} else if (handle->ticks > LONG_TICKS) {
 			LOGI("%s LONG_PRESS_START,line: %d\r\n", __func__ , __LINE__);
+			handle->press_up_flag = 1;
 			handle->event = (uint8_t)LONG_PRESS_START;
 			EVENT_CB(LONG_PRESS_START);
 			handle->state = 5;
@@ -160,7 +162,11 @@ void button_handler(BUTTON_S *handle)
 		} else { //releasd
 			LOGI("%s PRESS_UP,line: %d\r\n", __func__ , __LINE__);
 			handle->event = (uint8_t)PRESS_UP;
-			EVENT_CB(PRESS_UP);
+			if (handle->press_up_flag)
+			{
+				handle->press_up_flag = 0;
+				EVENT_CB(LONG_PRESS_UP_EVENT);
+			}
 			handle->state = 0; //reset
 		}
 		break;
