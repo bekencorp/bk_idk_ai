@@ -893,7 +893,7 @@ int ws_poll_connection_closed(int *sockfd, int timeout_ms)
 			uint8_t buffer;
 			if (recv(*sockfd, &buffer, 1, MSG_PEEK) <= 0) {
 				// socket is readable, but reads zero bytes -- connection cleanly closed by FIN flag
-				return BK_OK;
+				return 1;
 			}
 			BK_LOGW(TAG, "ws_poll_connection_closed: unexpected data readable on socket=%d", *sockfd);
 		} else if (FD_ISSET(*sockfd, &errset)) {
@@ -902,7 +902,8 @@ int ws_poll_connection_closed(int *sockfd, int timeout_ms)
 			getsockopt(*sockfd, SOL_SOCKET, SO_ERROR, &sock_errno, &optlen);
 			BK_LOGD(TAG, "ws_poll_connection_closed select error %d, errno = %s, fd = %d", sock_errno, strerror(sock_errno), *sockfd);
 			if (sock_errno == ENOTCONN || sock_errno == ECONNRESET || sock_errno == ECONNABORTED) {
-				return BK_OK;
+				BK_LOGI(TAG, "ws_poll_connection_closed recv reset error %d, errno = %s, fd = %d", sock_errno, strerror(sock_errno), *sockfd);
+				return 1;
 			}
 			BK_LOGE(TAG, "ws_poll_connection_closed: unexpected errno=%d on socket=%d", sock_errno, *sockfd);
 		}
@@ -1375,30 +1376,31 @@ void websocket_client_task(beken_thread_arg_t *thread_param)
 				break;
 			case WEBSOCKET_STATE_CONNECTED:
 				BK_LOGD(TAG, "%s, status:%02x %llu %llu\r\n", __func__, status_bits, bk_tick_get_ms(), client->ping_tick_ms);
-				if (bk_tick_get_ms() - client->ping_tick_ms > WEBSOCKET_PING_INTERVAL_SEC*1000) {
-					client->ping_tick_ms = bk_tick_get_ms();
+				if ((status_bits & CLOSE_SENT_BIT) == 0) {
+					if (bk_tick_get_ms() - client->ping_tick_ms > WEBSOCKET_PING_INTERVAL_SEC*1000) {
+						client->ping_tick_ms = bk_tick_get_ms();
 
-					if (status_bits & PING_SENT_BIT) {
-						BK_LOGE(TAG, "----------Sending ping packet----------\r\n");
-						rtos_lock_mutex(&client->mutex);
-						ws_write(client, WS_TRANSPORT_OPCODES_PING | WS_TRANSPORT_OPCODES_FIN, WS_MASK, NULL, 0, WEBSOCKET_NETWORK_TIMEOUT_MS);
-						rtos_unlock_mutex(&client->mutex);
-					} else if(status_bits & TEXT_SENT_BIT) {
-						BK_LOGE(TAG, "----------Sending text packet----------\r\n");
-						test_case_text(client);
+						if (status_bits & PING_SENT_BIT) {
+							BK_LOGE(TAG, "----------Sending ping packet----------\r\n");
+							rtos_lock_mutex(&client->mutex);
+							ws_write(client, WS_TRANSPORT_OPCODES_PING | WS_TRANSPORT_OPCODES_FIN, WS_MASK, NULL, 0, WEBSOCKET_NETWORK_TIMEOUT_MS);
+							rtos_unlock_mutex(&client->mutex);
+						} else if(status_bits & TEXT_SENT_BIT) {
+							BK_LOGE(TAG, "----------Sending text packet----------\r\n");
+							test_case_text(client);
+						}
+						if (!client->wait_for_pong_resp) {
+							client->pingpong_tick_ms = bk_tick_get_ms();
+							client->wait_for_pong_resp = true;
+						}
 					}
-					if (!client->wait_for_pong_resp) {
-						client->pingpong_tick_ms = bk_tick_get_ms();
-						client->wait_for_pong_resp = true;
-					}
-				}
-				 if ( bk_tick_get_ms() - client->pingpong_tick_ms > WEBSOCKET_PINGPONG_TIMEOUT_SEC*1000) {
-					 if (client->wait_for_pong_resp) {
-						BK_LOGD(TAG, "Error, no PONG received for more than %d seconds after PING\r\n", client->pingpong_tick_ms);
-						break;
+					 if ( bk_tick_get_ms() - client->pingpong_tick_ms > WEBSOCKET_PINGPONG_TIMEOUT_SEC*1000) {
+						 if (client->wait_for_pong_resp) {
+							BK_LOGD(TAG, "Error, no PONG received for more than %d seconds after PING\r\n", client->pingpong_tick_ms);
+							break;
+						 }
 					 }
-				 }
-
+				}
 				 if (read_select == 0) {
 					BK_LOGD(TAG, "Read poll timeout: skipping read()...\r\n");
 					break;
@@ -1426,8 +1428,11 @@ void websocket_client_task(beken_thread_arg_t *thread_param)
 				}
 				break;
 			case WEBSOCKET_STATE_CLOSING:
+				if ((status_bits & CLOSE_SENT_BIT) == 0) {
 					BK_LOGE(TAG, "Closing initiated by the server, sending close frame\r\n");
 					ws_write(client, WS_TRANSPORT_OPCODES_CLOSE | WS_TRANSPORT_OPCODES_FIN, WS_MASK, NULL, 0, WEBSOCKET_NETWORK_TIMEOUT_MS);
+					status_bits = status_bits | CLOSE_SENT_BIT;
+				}
 				break;
 			default:
 				BK_LOGE(TAG, "Client run iteration in a default state: %d\r\n", client->state);
@@ -1445,7 +1450,7 @@ void websocket_client_task(beken_thread_arg_t *thread_param)
 		} else if (WEBSOCKET_STATE_WAIT_TIMEOUT == client->state) {
 			if(client->auto_reconnect)
 				rtos_delay_milliseconds(WEBSOCKET_RECONNECT_TIMEOUT_MS);
-		} else if (WEBSOCKET_STATE_CLOSING == client->state) {
+		} else if (WEBSOCKET_STATE_CLOSING == client->state && (status_bits & CLOSE_SENT_BIT)) {
 			BK_LOGE(TAG, " Waiting for TCP connection to be closed by the server\r\n");
 			int ret = ws_poll_connection_closed(&(client->sockfd), 1000);
 			if (ret == 0) {
