@@ -140,6 +140,12 @@ SECTIONS
         __apps_start = .;
         KEEP (*(.apps_data))
         __apps_end = .;
+	    . = ALIGN(4);	
+        *(.text)
+        *(.text.*)
+        *(.rodata)
+        *(.rodata.*)
+        . = ALIGN(4);
         _etext = .;
         . = ALIGN(4);
     } > FLASH
