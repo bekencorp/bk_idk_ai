@@ -1312,8 +1312,7 @@ void rwnx_handle_recv_msg(struct ke_msg *rx_msg)
 			resultful_scan_cfm = 1;
 		}
 
-		sort_scan_result(scan_rst_set_ptr);
-			wpa_ctrl_event(WPA_CTRL_EVENT_SCAN_RESULTS, NULL);
+		wpa_ctrl_event(WPA_CTRL_EVENT_SCAN_RESULTS, NULL);
 
 		break;
 
