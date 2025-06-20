@@ -104,11 +104,15 @@ extern void bk7011_default_rxsens_setting(void);
 /* scan result malloc item */
 UINT8 *sr_malloc_result_item(UINT32 vies_len)
 {
-	#if CONFIG_MINIMUM_SCAN_RESULTS
+#if CONFIG_MINIMUM_SCAN_RESULTS
 	return os_zalloc(vies_len + sizeof(struct wpa_scan_res));
-	#else
+#else
+#if CONFIG_PSRAM_AS_SYS_MEMORY
+	return psram_zalloc(vies_len + sizeof(struct sta_scan_res));
+#else
 	return os_zalloc(vies_len + sizeof(struct sta_scan_res));
-	#endif
+#endif
+#endif
 }
 
 /* free scan result item */
