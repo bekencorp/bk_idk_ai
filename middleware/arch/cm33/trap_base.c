@@ -109,10 +109,10 @@ static void dump_peri_regs(void) {
 #endif
 #if CONFIG_PSRAM
     stack_mem_dump((uint32_t)SOC_PSRAM_REG_BASE, (uint32_t)SOC_PSRAM_REG_BASE + (0x17*4));
-#endif
-#endif
     /*dmup psram memory*/
     stack_mem_dump((uint32_t)0x60000000, (uint32_t)(0x60000000+2048));
+#endif
+#endif
 
 }
 
