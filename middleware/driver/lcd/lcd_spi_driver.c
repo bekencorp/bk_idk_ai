@@ -44,16 +44,52 @@
 #define LCD_SPI_REFRESH_WITH_QSPI_MAPPING_MODE    0
 #endif
 
-#if (CONFIG_LCD_SPI_DEVICE_NUM > 1)
-#define LCD_SPI_BACKLIGHT_PIN       GPIO_25
-#define LCD0_SPI_RESET_PIN          GPIO_6
-#define LCD0_SPI_DC_PIN             GPIO_7
-#define LCD1_SPI_RESET_PIN          GPIO_45
-#define LCD1_SPI_DC_PIN             GPIO_5
+#ifdef CONFIG_LCD_SPI_BACKLIGHT_PIN
+#define LCD_SPI_BACKLIGHT_PIN       CONFIG_LCD_SPI_BACKLIGHT_PIN
 #else
-#define LCD_SPI_BACKLIGHT_PIN       GPIO_26
+#define LCD_SPI_BACKLIGHT_PIN       GPIO_25
+#endif
+
+#if (CONFIG_LCD_SPI_DEVICE_NUM > 1)
+
+#ifdef CONFIG_LCD0_SPI_RESET_PIN
+#define LCD0_SPI_RESET_PIN          CONFIG_LCD0_SPI_RESET_PIN
+#else
+#define LCD0_SPI_RESET_PIN          GPIO_6
+#endif
+
+#ifdef CONFIG_LCD0_SPI_DC_PIN
+#define LCD0_SPI_DC_PIN             CONFIG_LCD0_SPI_DC_PIN
+#else
+#define LCD0_SPI_DC_PIN             GPIO_7
+#endif
+
+#ifdef CONFIG_LCD1_SPI_RESET_PIN
+#define LCD1_SPI_RESET_PIN          CONFIG_LCD1_SPI_RESET_PIN
+#else
+#define LCD1_SPI_RESET_PIN          GPIO_45
+#endif
+
+#ifdef CONFIG_LCD1_SPI_DC_PIN
+#define LCD1_SPI_DC_PIN             CONFIG_LCD1_SPI_DC_PIN
+#else
+#define LCD1_SPI_DC_PIN             GPIO_5
+#endif
+
+#else
+
+#ifdef CONFIG_LCD_SPI_RESET_PIN
+#define LCD_SPI_RESET_PIN           CONFIG_LCD_SPI_RESET_PIN
+#else
 #define LCD_SPI_RESET_PIN           GPIO_28
+#endif
+
+#ifdef CONFIG_LCD_SPI_DC_PIN
+#define LCD_SPI_DC_PIN              CONFIG_LCD_SPI_DC_PIN
+#else
 #define LCD_SPI_DC_PIN              GPIO_9
+#endif
+
 #endif
 
 #define LCD_SPI_DEVICE_CASET        0x2A
@@ -228,10 +264,12 @@ static void lcd_spi_driver_init_with_qspi(qspi_id_t qspi_id, lcd_qspi_clk_t clk)
             break;
     }
 
+#if (LCD_SPI_REFRESH_WITH_QSPI_MAPPING_MOD == 1)
     qspi_hal_disable_soft_reset(&s_lcd_spi[qspi_id].hal);
     delay_us(10);
     qspi_hal_enable_soft_reset(&s_lcd_spi[qspi_id].hal);
     qspi_hal_set_cmd_a_cfg2(&s_lcd_spi[qspi_id].hal, 0x80000000);
+#endif
 }
 
 static void lcd_spi_driver_deinit_with_qspi(qspi_id_t qspi_id)
@@ -713,8 +751,8 @@ void lcd_spi_display_frame(uint8_t id, uint8_t *frame_buffer, uint32_t width, ui
 {
     uint8_t column_value[4] = {0};
     uint8_t row_value[4] = {0};
-    column_value[2] = (width >> 8) & 0xFF,
-    column_value[3] = (width & 0xFF) - 1,
+    column_value[2] = (width >> 8) & 0xFF;
+    column_value[3] = (width & 0xFF) - 1;
     row_value[2] = (height >> 8) & 0xFF;
     row_value[3] = (height & 0xFF) - 1;
 
@@ -732,3 +770,30 @@ void lcd_spi_display_frame(uint8_t id, uint8_t *frame_buffer, uint32_t width, ui
     lcd_spi_send_data(id, frame_buffer, width * height * 2);
 }
 
+void lcd_spi_display_partial_display(uint8_t id, uint16_t x_start, uint16_t x_end, uint16_t y_start, uint16_t y_end, uint8_t *disp_buffer)
+{
+    uint8_t column_value[4] = {0};
+    uint8_t row_value[4] = {0};
+
+    column_value[0] = (x_start >> 8) & 0xFF;
+    column_value[1] = x_start & 0xFF;
+    column_value[2] = (x_end >> 8) & 0xFF;
+    column_value[3] = x_end & 0xFF;
+    row_value[0] = (y_start >> 8) & 0xFF;
+    row_value[1] = y_start & 0xFF;
+    row_value[2] = (y_end >> 8) & 0xFF;
+    row_value[3] = y_end & 0xFF;
+
+    if (lcd_spi_first_disp == 1) {
+        lcd_spi_backlight_open();
+        lcd_spi_first_disp = 0;
+    }
+
+    lcd_spi_send_cmd(id, LCD_SPI_DEVICE_CASET);
+    lcd_spi_send_data(id, column_value, 4);
+    lcd_spi_send_cmd(id, LCD_SPI_DEVICE_RASET);
+    lcd_spi_send_data(id, row_value, 4);
+
+    lcd_spi_send_cmd(id, LCD_SPI_DEVICE_RAMWR);
+    lcd_spi_send_data(id, disp_buffer, (x_end - x_start + 1) * (y_end - y_start + 1) * 2);
+}

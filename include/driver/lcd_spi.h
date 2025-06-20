@@ -38,6 +38,9 @@ void lcd_spi_deinit(uint8_t id);
 
 void lcd_spi_display_frame(uint8_t id, uint8_t *frame_buffer, uint32_t width, uint32_t height);
 
+void lcd_spi_display_partial_display(uint8_t id, uint16_t x_start, uint16_t x_end, uint16_t y_start, uint16_t y_end, uint8_t *disp_buffer);
+
+
 #ifdef __cplusplus
 }
 #endif
