@@ -114,6 +114,12 @@ CONFIG_BK_COEX=y
 # end of Modules::Bk_coex
 
 #
+# modules::BK_LWIP
+#
+CONFIG_BK_LWIP=y
+# end of modules::BK_LWIP
+
+#
 # Shared Configs with Public components
 #
 
@@ -475,6 +481,7 @@ CONFIG_PARTITION_TEST=y
 # CONFIG_FLASH_API_TEST is not set
 # CONFIG_FLASH_WRITE_STATUS_VOLATILE is not set
 # CONFIG_FLASH_PARTITION_CHECK_VALID is not set
+# CONFIG_FLASH_CLK_120M is not set
 # end of FLASH
 
 #
@@ -779,6 +786,7 @@ CONFIG_FREERTOS_V10=y
 CONFIG_FREERTOS_USE_TICKLESS_IDLE=2
 CONFIG_FREERTOS_TICK_RATE_HZ=500
 CONFIG_BK_OS_TIMER_DEBUG=y
+# CONFIG_DEBUG_RTOS_TIMER is not set
 # end of Modify FreeRTOS Config
 
 #
