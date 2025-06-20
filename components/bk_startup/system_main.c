@@ -452,12 +452,6 @@ void entry_main(void)
 	start_user_app_thread();
 #endif
 
-#if CONFIG_BLUETOOTH
-typedef void (*ble_sleep_state_cb)(uint8_t is_sleeping, uint32_t slp_period);
-extern void bk_ble_register_sleep_state_callback(ble_sleep_state_cb cb);
-	bk_ble_register_sleep_state_callback(ble_sleep_cb);
-#endif
-
 #if (CONFIG_SYS_CPU0) && (CONFIG_FREERTOS_V10)
 	extern void rtos_init_base_time(void);
 	rtos_init_base_time();

@@ -21,7 +21,9 @@
 #if (CONFIG_BLE_AT_ENABLE)
 #include "../include/private/bk_at_ble.h"
 #endif
-
+#if CONFIG_FLASH
+#include "driver/flash.h"
+#endif
 
 #define TAG       "bluetooth"
 #define LOGV(...) BK_LOGV(TAG, ##__VA_ARGS__)
@@ -116,6 +118,14 @@ bt_err_t bk_bluetooth_init(void)
     {
         rtos_init_mutex(&bluetooth_mutex);
     }
+
+    //register ble callback to get sleep state for flash erasing
+#if CONFIG_FLASH
+    typedef void (*ble_sleep_state_cb)(uint8_t is_sleeping, uint32_t slp_period);
+    extern void bk_ble_register_sleep_state_callback(ble_sleep_state_cb cb);
+    bk_ble_register_sleep_state_callback(ble_sleep_cb);
+#endif
+
     bluetooth_already_init = 1;
     LOGI("%s ok\r\n", __func__);
     return ret;
