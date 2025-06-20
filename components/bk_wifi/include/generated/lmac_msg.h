@@ -1071,6 +1071,10 @@ enum mm_msg_tag
     MM_SET_ARP_REPLY_CONFIG_REQ,
     ///set arp reply Configuration Confirmation.  msgid:135
     MM_SET_ARP_REPLY_CONFIG_CFM,
+    ///set default AC Request.  msgid:136
+    MM_SET_DEFAULT_AC_REQ,
+    ///set default AC Confirmation.  msgid:137
+    MM_SET_DEFAULT_AC_CFM,
 #endif
 
     /*
@@ -1189,6 +1193,13 @@ struct mm_set_filter_req
 {
     /// RX filter to be put into rxCntrlReg HW register
     uint32_t filter;
+};
+
+/// Structure containing the parameters of the @ref MM_SET_DEFAULT_AC_REQ message
+struct mm_set_def_ac_req
+{
+    /// AC parameters
+    uint32_t ac_param;
 };
 
 struct mm_set_machw_ack_cntrl_req

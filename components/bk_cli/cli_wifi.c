@@ -1635,10 +1635,15 @@ void cli_wifi_rc_cmd(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **
 		rate_cfg = os_strtoul(argv[3], NULL, 10) & 0xFFFF;
 		bk_wifi_rc_config(sta_idx, rate_cfg);
 	}
-        else if (os_strcmp(argv[1], "rssi_offset") == 0) {
-                CLI_LOGI("rc rssi offset: %d\n",os_strtoul(argv[2], NULL, 10));
-                bk_wifi_set_rc_rssi_offset(os_strtoul(argv[2], NULL, 10));
-        }
+	else if (os_strcmp(argv[1], "rssi_offset") == 0) {
+			CLI_LOGI("rc rssi offset: %d\n",os_strtoul(argv[2], NULL, 10));
+			bk_wifi_set_rc_rssi_offset(os_strtoul(argv[2], NULL, 10));
+	}
+	else if (os_strcmp(argv[1], "def_ac") == 0) {
+			uint32_t def_ac = os_strtoul(argv[2], NULL, 0) & 0xFFFFFFFF;
+			CLI_LOGI("rc def_ac: %x\n",def_ac);
+			bk_wifi_set_default_ac(def_ac);
+	}
 	else {
 		CLI_LOGI("invalid RC paramter\n");
 		goto error;
