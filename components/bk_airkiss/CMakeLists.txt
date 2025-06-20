@@ -5,6 +5,7 @@ set(srcs
 	airkiss_main.c
 	airkiss_pingpong.c
 	bk_airkiss.c
+	airkiss.c
 	)
 endif()
 

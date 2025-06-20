@@ -18,7 +18,7 @@ const airkiss_config_t airkiss_cfg_ptr = {
 	(airkiss_memset_fn) &os_memset,
 	(airkiss_memcpy_fn) &os_memcpy,
 	(airkiss_memcmp_fn) &os_memcmp,
-	(airkiss_printf_fn) &os_printf,
+	(airkiss_printf_fn) &os_null_printf,//replace os_printf for debug
 };
 
 void bk_airkiss_set_start_flag(void)

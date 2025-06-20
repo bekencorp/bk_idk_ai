@@ -14,7 +14,7 @@
 #define MIN_VALID_DATACNT_INCHAN    4
 #define MIN_VALID_BCNCNT_INCHAN     1
 
-#define AIRKISS_DEBUG           1
+#define AIRKISS_DEBUG           0
 #if AIRKISS_DEBUG
 #define AIRKISS_PRT             os_printf
 #define AIRKISS_WARN            warning_prf

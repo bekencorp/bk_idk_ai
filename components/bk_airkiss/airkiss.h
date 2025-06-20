@@ -46,6 +46,7 @@ typedef struct {
 typedef struct {
 	int dummyap[26];
 	int dummy[32];
+	int revd[30];
 } airkiss_context_t;
 
 /*

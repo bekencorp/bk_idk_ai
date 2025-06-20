@@ -58,8 +58,10 @@ void cli_airkiss_v2_cmd(char *pcWriteBuffer, int xWriteBufferLen, int argc, char
 
 	if (is_fail)
 		os_printf("check the cli parameter, thx\r\n");
-	else
+	else{
+		bk_wifi_sta_pm_disable();
 		bk_airkiss_process(start);
+	}
 }
 #endif
 

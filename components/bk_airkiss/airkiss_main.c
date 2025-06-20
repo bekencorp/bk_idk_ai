@@ -6,7 +6,6 @@
 #include "sys_rtos.h"
 #include <os/os.h>
 #include <common/bk_kernel_err.h>
-#include "bk_fake_clock.h"
 #include "lwip/sockets.h"
 #include "airkiss.h"
 #include "airkiss_pingpong.h"
@@ -38,6 +37,7 @@ volatile u8 airkiss_exit = 0;
 u8 *read_buf = NULL;
 
 extern void net_set_sta_ipup_callback(void *fn);
+extern const uint8_t *get_ie(const uint8_t *ies, size_t len, uint8_t eid);
 
 static unsigned char calcrc_1byte(unsigned char abyte)
 {
@@ -56,9 +56,13 @@ static unsigned char calcrc_1byte(unsigned char abyte)
 	return crc_1byte;
 }
 
-static unsigned char calcrc_bytes(unsigned char *p, unsigned int num_of_bytes)
+static unsigned char calcrc_bytes(unsigned char *p, size_t num_of_bytes)
 {
 	unsigned char crc = 0;
+
+	if (!p ||num_of_bytes == 0)
+		return crc;
+
 	while (num_of_bytes--)
 		crc = calcrc_1byte(crc ^ *p++);
 	return crc;
@@ -68,7 +72,9 @@ void airkiss_count_usefull_packet(const unsigned char *frame, int size)
 	u8 mac_crc = 0;
 	u8 *mac_ptr = 0;
 	u16 channel = 0;
-	uint32_t elmt_addr, var_part_addr, var_part_len;
+	const uint8_t *elmt_addr;
+	uint8_t *var_part_addr;
+	size_t var_part_len;
 	int i;
 	struct wifi_mac_hdr *fwifi_mac_hdr = (struct wifi_mac_hdr *)frame;
 	struct wifi_bcn_frame const *frm = (struct wifi_bcn_frame const *)frame;
@@ -82,11 +88,11 @@ void airkiss_count_usefull_packet(const unsigned char *frame, int size)
 	if ((MAC_FCTRL_BEACON == (fwifi_mac_hdr->fctl & MAC_FCTRL_TYPESUBTYPE_MASK))
 		|| (MAC_FCTRL_PROBERSP == (fwifi_mac_hdr->fctl & MAC_FCTRL_TYPESUBTYPE_MASK))) {
 		cur_chan->bcn_cnt++;
-		var_part_addr = (uint32_t)frm->variable;
+		var_part_addr = (uint8_t *)frm->variable;
 		var_part_len = size - MAC_BEACON_VARIABLE_PART_OFT;
-		elmt_addr = bk_wifi_find_ie(var_part_addr, var_part_len, MAC_ELTID_DS);
-		if (elmt_addr != 0)
-			channel = *(uint8_t*)(elmt_addr + MAC_DS_CHANNEL_OFT);
+		elmt_addr = get_ie(var_part_addr, var_part_len, MAC_ELTID_DS);
+		if (elmt_addr)
+			channel = *(elmt_addr + MAC_DS_CHANNEL_OFT);
 
 		for (i = 0; i < g_macs.mac_cnt; i++) {
 			if ((mac_crc == g_macs.mac[i].mac_crc)) {
@@ -96,7 +102,7 @@ void airkiss_count_usefull_packet(const unsigned char *frame, int size)
 			}
 		}
 
-		if (i == g_macs.mac_cnt) {
+		if ((i == g_macs.mac_cnt) && (g_macs.mac_cnt < MAX_MAC)) {
 			g_macs.mac[i].mac_crc = mac_crc;
 			if (channel != 0)
 				g_macs.mac[i].channel = channel;
