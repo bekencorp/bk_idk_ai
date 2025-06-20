@@ -79,6 +79,7 @@ void bk_key_driver_init(KeyConfig_t* configs, uint8_t num_keys) {
     key_count = num_keys;
     for (uint8_t i = 0; i < num_keys; i++) {
         bk_configure_key(configs+i);
+        LOGI("key id is %d\r\n",(configs+i)->gpio_id);
     }
 
     ret = rtos_init_queue(

@@ -26,7 +26,7 @@ static const gpio_map_t gpio_map_table[] = GPIO_DEV_MAP;
 
 #define GPIO_RETURN_ON_INVALID_ID(id) do {\
 		if (!gpio_map_table[id].is_available){ \
-			GPIO_LOGW("id is not available\r\n");\
+			GPIO_LOGW("id %d is not available\r\n", id);\
 			return BK_ERR_GPIO_CHAN_ID;\
 		}\
 	} while(0)
