@@ -18,8 +18,8 @@ extern "C" {
 
 typedef struct _app_eq_para_t
 {
-    int32_t    a[2];
-    int32_t    b[3];
+    int32_t a[2];
+    int32_t b[3];
 }app_eq_para_t;
 
 typedef struct _app_eq_load_para_t
@@ -55,22 +55,31 @@ typedef struct _app_aud_sys_config_t
     uint8_t mic0_analog_gain;
     uint8_t mic1_digital_gain;
     uint8_t mic1_analog_gain;
- 
+
     uint8_t speaker_chan0_digital_gain;
     uint8_t speaker_chan0_analog_gain;
     uint8_t speaker_chan1_digital_gain;
     uint8_t speaker_chan1_analog_gain;
- 
-    uint8_t dmic_enable;
-    uint8_t dual_mic_enable;
+
+    uint8_t dmic_enable; // digital mic
     uint8_t main_mic_select;
-    uint8_t extend[7];
-    
     uint8_t adc_sample_rate;
     uint8_t dac_sample_rate;
-    
+
+    uint8_t mic_mode;  //signed_end/diffen
+    uint8_t spk_mode;  //signed_end/diffen
+    uint8_t mic_vbias; //0b00=2.4v, 0b11=1.8v
+
+    uint8_t extend[5];
 }app_aud_sys_config_t;
 
+typedef enum
+{
+	NS_CLOSE = 0,
+	NS_AI    = 1,
+	NS_TRADITION = 2,
+	NS_MODE_MAX,
+}AUD_NS_TYPE;
 
 typedef struct _app_aud_aec_config_t
 {
@@ -88,7 +97,7 @@ typedef struct _app_aud_aec_config_t
 
     uint8_t ns_level;
     uint8_t ns_para;
-    uint8_t ai_ns_enable;
+    uint8_t ns_type;
     uint8_t vad_enable;
 
     int16_t vad_start_threshold;
@@ -97,8 +106,9 @@ typedef struct _app_aud_aec_config_t
     int16_t vad_eng_threshold;
 
     uint8_t dual_mic_enable;
-    uint8_t rsvd[3];
-    
+    uint8_t dual_mic_distance;
+    uint8_t rsvd[2];
+
 }app_aud_aec_config_t;
 
 

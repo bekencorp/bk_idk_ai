@@ -11,6 +11,16 @@ extern int bk_get_printf_sync(void);
 //#define AUD_DBG_TOOL_PRT  os_printf
 #define AUD_DBG_TOOL_PRT  os_null_printf
 
+#define APP_AUD_PARAS_TX_TMP_LEN   (0x20)
+
+#define APP_SYS_PARA_TX_TOTALLEN  (0xF)
+#define APP_SYS_PARA_TX_HEADERLEN (0x4)
+#define APP_SYS_PARA_RX_DATALEN   (0x9)
+
+
+#define APP_AEC_PARA_TX_TOTALLEN  (0x1E)
+#define APP_AEC_PARA_TX_HEADERLEN (0x4)
+#define APP_AEC_PARA_RX_DATALEN   (0x18)
 
 bk_aud_intf_update_sys_config_cb_t bk_aud_intf_update_sys_config_cb = NULL;
 bk_aud_intf_update_aec_config_cb_t bk_aud_intf_update_aec_config_cb = NULL;
@@ -56,7 +66,7 @@ void aud_eq_load_param(void)
 			uint32_t port = bkreg_tx_get_uart_port();
 		#endif
 			uint32_t tx_len = 12;
-			uint8_t tmp[32] = {0};
+			uint8_t tmp[APP_AUD_PARAS_TX_TMP_LEN] = {0};
 			tmp[0] = 0x01;
 			tmp[1] = 0xe0;
 			tmp[2] = 0xfc;
@@ -85,7 +95,7 @@ void aud_eq_load_param(void)
 			uint32_t port = bkreg_tx_get_uart_port();
 		#endif
 			uint32_t tx_len = 0x15;
-			uint8_t tmp[32] = {0};
+			uint8_t tmp[APP_AUD_PARAS_TX_TMP_LEN] = {0};
 			tmp[0] = 0x01;
 			tmp[1] = 0xe0;
 			tmp[2] = 0xfc;
@@ -266,20 +276,20 @@ void app_sys_config_dbg(uint8_t* params)
 			uint32_t i = 0;
 			uint32_t port = bkreg_tx_get_uart_port();
 	#endif
-			uint32_t tx_len = 12;
-			uint8_t tmp[32] = {0};
-			tmp[0] = 0x01;
-			tmp[1] = 0xe0;
-			tmp[2] = 0xfc;
-			tmp[3] = tx_len - 4;
-			tmp[4] = 0xb3;
-			tmp[5] = 0xf9;
+			uint32_t tx_len = APP_SYS_PARA_TX_TOTALLEN;
+			uint8_t tmp[APP_AUD_PARAS_TX_TMP_LEN] = {0};
+			tmp[0] = 0x01; tmp[1] = 0xe0; tmp[2] = 0xfc;
+			tmp[3] = APP_SYS_PARA_TX_TOTALLEN - APP_SYS_PARA_TX_HEADERLEN;
+			tmp[4] = 0xb3; tmp[5] = 0xf9;
 			tmp[6] = p_aud_para->sys_config_voice.mic0_digital_gain;
 			tmp[7] = p_aud_para->sys_config_voice.mic0_analog_gain;
 			tmp[8] = p_aud_para->sys_config_voice.mic1_analog_gain;
 			tmp[9] = p_aud_para->sys_config_voice.speaker_chan0_digital_gain;
 			tmp[10] = p_aud_para->sys_config_voice.speaker_chan0_analog_gain;
 			tmp[11] = p_aud_para->sys_config_voice.main_mic_select;
+			tmp[12] = p_aud_para->sys_config_voice.mic_mode;
+			tmp[13] = p_aud_para->sys_config_voice.spk_mode;
+			tmp[14] = p_aud_para->sys_config_voice.mic_vbias;
 
 	#if CONFIG_SHELL_ASYNCLOG
 			shell_log_raw_data((uint8_t *)&tmp[0], tx_len);
@@ -303,6 +313,9 @@ void app_sys_config_dbg(uint8_t* params)
 				sys_dbg_sys_para->speaker_chan0_digital_gain = params[4];
 				sys_dbg_sys_para->speaker_chan0_analog_gain  = params[5];
 				sys_dbg_sys_para->main_mic_select            = params[6];
+				sys_dbg_sys_para->mic_mode                   = params[7];
+				sys_dbg_sys_para->spk_mode                   = params[8];
+				sys_dbg_sys_para->mic_vbias                  = params[9];
 
 				p_aud_para->sys_config_voice.mic0_digital_gain           = sys_dbg_sys_para->mic0_digital_gain;
 				p_aud_para->sys_config_voice.mic0_analog_gain            = sys_dbg_sys_para->mic0_analog_gain;
@@ -310,10 +323,13 @@ void app_sys_config_dbg(uint8_t* params)
 				p_aud_para->sys_config_voice.speaker_chan0_digital_gain  = sys_dbg_sys_para->speaker_chan0_digital_gain;
 				p_aud_para->sys_config_voice.speaker_chan1_analog_gain   = sys_dbg_sys_para->speaker_chan0_analog_gain;
 				p_aud_para->sys_config_voice.main_mic_select             = sys_dbg_sys_para->main_mic_select;
+				p_aud_para->sys_config_voice.mic_mode                    = sys_dbg_sys_para->mic_mode;
+				p_aud_para->sys_config_voice.spk_mode                    = sys_dbg_sys_para->spk_mode;
+				p_aud_para->sys_config_voice.mic_vbias                   = sys_dbg_sys_para->mic_vbias;
 
 			#if 1
 				BK_LOG_RAW("rcv sys_params: ");
-				for(uint32_t i = 1; i < 7; i++)
+				for(uint32_t i = 1; i <(APP_SYS_PARA_RX_DATALEN+1); i++)
 				{
 					BK_LOG_RAW("%02x ", params[i]);
 				}
@@ -340,6 +356,9 @@ void app_sys_config_dbg(uint8_t* params)
 			break;
 	}
 }
+
+
+
 void app_aec_para_dbg(uint8_t* params)
 {
 	AUD_DBG_TOOL_PRT("app_aec_para_dbg 0x%x\r\n", params[0]);
@@ -351,14 +370,11 @@ void app_aec_para_dbg(uint8_t* params)
 			uint32_t i = 0;
 			uint32_t port = bkreg_tx_get_uart_port();
 	#endif
-			uint32_t tx_len = 0x1d;
-			uint8_t tmp[32] = {0};
-			tmp[0] = 0x01;
-			tmp[1] = 0xe0;
-			tmp[2] = 0xfc;
-			tmp[3] = tx_len - 4;
-			tmp[4] = 0xb4;
-			tmp[5] = 0xff;
+			uint32_t tx_len = APP_AEC_PARA_TX_TOTALLEN;
+			uint8_t tmp[APP_AUD_PARAS_TX_TMP_LEN] = {0};
+			tmp[0] = 0x01; tmp[1] = 0xe0; tmp[2] = 0xfc;
+			tmp[3] = APP_AEC_PARA_TX_TOTALLEN - APP_AEC_PARA_TX_HEADERLEN;
+			tmp[4] = 0xb4; tmp[5] = 0xff;
 			tmp[6]  = p_aud_para->aec_config_voice.aec_enable;
 			tmp[7]  = p_aud_para->aec_config_voice.ec_filter;
 			tmp[8]  = (p_aud_para->aec_config_voice.init_flags>>8)&0xFF;
@@ -371,7 +387,7 @@ void app_aec_para_dbg(uint8_t* params)
 			tmp[15] = p_aud_para->aec_config_voice.mic_delay;
 			tmp[16] = p_aud_para->aec_config_voice.ns_level;
 			tmp[17] = p_aud_para->aec_config_voice.ns_para;
-			tmp[18] = p_aud_para->aec_config_voice.ai_ns_enable;
+			tmp[18] = p_aud_para->aec_config_voice.ns_type;
 			tmp[19] = p_aud_para->aec_config_voice.vad_enable;
 			tmp[20] = (p_aud_para->aec_config_voice.vad_start_threshold>>8)&0xFF;
 			tmp[21] = (p_aud_para->aec_config_voice.vad_start_threshold)&0xFF;
@@ -382,6 +398,7 @@ void app_aec_para_dbg(uint8_t* params)
 			tmp[26] = (p_aud_para->aec_config_voice.vad_eng_threshold>>8)&0xFF;
 			tmp[27] = (p_aud_para->aec_config_voice.vad_eng_threshold)&0xFF;
 			tmp[28] = p_aud_para->aec_config_voice.dual_mic_enable;
+			tmp[29] = (p_aud_para->aec_config_voice.dual_mic_distance);
 		#if CONFIG_SHELL_ASYNCLOG
 			shell_log_raw_data((uint8_t *)&tmp[0], tx_len);
 		#else
@@ -409,13 +426,14 @@ void app_aec_para_dbg(uint8_t* params)
 				aec_dbg_aec_para->mic_delay  = params[10];
 				aec_dbg_aec_para->ns_level   = params[11];
 				aec_dbg_aec_para->ns_para    = params[12];
-				aec_dbg_aec_para->ai_ns_enable = params[13];
+				aec_dbg_aec_para->ns_type    = params[13];
 				aec_dbg_aec_para->vad_enable = params[14];
-				aec_dbg_aec_para->vad_start_threshold = (params[15]<<8)|(params[16]);
-				aec_dbg_aec_para->vad_stop_threshold  = (params[17]<<8)|(params[18]);
+				aec_dbg_aec_para->vad_start_threshold   = (params[15]<<8)|(params[16]);
+				aec_dbg_aec_para->vad_stop_threshold    = (params[17]<<8)|(params[18]);
 				aec_dbg_aec_para->vad_silence_threshold = (params[19]<<8)|(params[20]);
 				aec_dbg_aec_para->vad_eng_threshold     = (params[21]<<8)|(params[22]);
-				aec_dbg_aec_para->dual_mic_enable = params[23];
+				aec_dbg_aec_para->dual_mic_enable   = params[23];
+				aec_dbg_aec_para->dual_mic_distance = params[24];
 
 				p_aud_para->aec_config_voice.aec_enable            = aec_dbg_aec_para->aec_enable;
 				p_aud_para->aec_config_voice.ec_filter             = aec_dbg_aec_para->ec_filter;
@@ -428,17 +446,18 @@ void app_aec_para_dbg(uint8_t* params)
 				p_aud_para->aec_config_voice.mic_delay             = aec_dbg_aec_para->mic_delay;
 				p_aud_para->aec_config_voice.ns_level              = aec_dbg_aec_para->ns_level;
 				p_aud_para->aec_config_voice.ns_para               = aec_dbg_aec_para->ns_para;
-				p_aud_para->aec_config_voice.ai_ns_enable          = aec_dbg_aec_para->ai_ns_enable;
+				p_aud_para->aec_config_voice.ns_type               = aec_dbg_aec_para->ns_type;
 				p_aud_para->aec_config_voice.vad_enable            = aec_dbg_aec_para->vad_enable;
 				p_aud_para->aec_config_voice.vad_start_threshold   = aec_dbg_aec_para->vad_start_threshold;
 				p_aud_para->aec_config_voice.vad_stop_threshold    = aec_dbg_aec_para->vad_stop_threshold;
 				p_aud_para->aec_config_voice.vad_silence_threshold = aec_dbg_aec_para->vad_silence_threshold;
 				p_aud_para->aec_config_voice.vad_eng_threshold     = aec_dbg_aec_para->vad_eng_threshold;
 				p_aud_para->aec_config_voice.dual_mic_enable       = aec_dbg_aec_para->dual_mic_enable;
+				p_aud_para->aec_config_voice.dual_mic_distance     = aec_dbg_aec_para->dual_mic_distance;
 
 			#if 1
 				BK_LOG_RAW("rcv aec_params: ");
-				for(uint32_t i = 1; i < 23; i++)
+				for(uint32_t i = 1; i < (APP_AEC_PARA_RX_DATALEN+1); i++)
 				{
 					BK_LOG_RAW("%02x ", params[i]);
 				}
