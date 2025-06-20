@@ -493,14 +493,17 @@ static void bk_cdc_acm_init_free(void)
 
 void bk_cdc_acm_deinit(void)
 {
-	g_multi_acm_total->p_data->p_cdc_data_tx->rd = 0;
-	g_multi_acm_total->p_data->p_cdc_data_tx->wd = 0;
+	if (g_multi_acm_total)
+	{
+		g_multi_acm_total->p_data->p_cdc_data_tx->rd = 0;
+		g_multi_acm_total->p_data->p_cdc_data_tx->wd = 0;
 
-	g_multi_acm_total->p_data->p_cdc_data_rx->rd = 0;
-	g_multi_acm_total->p_data->p_cdc_data_rx->wd = 0;
+		g_multi_acm_total->p_data->p_cdc_data_rx->rd = 0;
+		g_multi_acm_total->p_data->p_cdc_data_rx->wd = 0;
 
-	g_multi_acm_total->idx = 0;
-	g_multi_acm_total->mode = 0;
+		g_multi_acm_total->idx = 0;
+		g_multi_acm_total->mode = 0;
+	}
 }
 
 void bk_cdc_acm_init(void)
