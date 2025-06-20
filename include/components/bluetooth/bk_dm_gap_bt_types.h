@@ -211,6 +211,7 @@ typedef enum {
     BK_BT_GAP_LINK_KEY_NOTIF_EVT,                   /*!< Link Key Notification */
     BK_BT_GAP_LINK_KEY_REQ_EVT,                     /*!< Link Key request */
     BK_BT_GAP_SET_AUTO_SNIFF_CMPL_EVT,             /// set auto entry sniff req completed event
+    BK_BT_GAP_ROLE_CHG_EVT,                         /*!< role change event */
     BK_BT_GAP_EVT_MAX,
 } bk_gap_bt_cb_event_t;
 
@@ -223,6 +224,10 @@ typedef enum {
 /** Minimum and Maximum inquiry length*/
 #define BK_BT_GAP_MIN_INQ_LEN                (0x01)  /*!< Minimum inquiry duration, unit is 1.28s */
 #define BK_BT_GAP_MAX_INQ_LEN                (0x30)  /*!< Maximum inquiry duration, unit is 1.28s */
+
+/** bluetooth role defenitions */
+#define BT_MASTER_ROLE             0
+#define BT_SLAVE_ROLE              1
 
 /// GAP state callback parameters
 typedef union {
@@ -407,6 +412,15 @@ typedef union {
         bk_bd_addr_t bda;                    /// peer addr
         bk_bt_status_t result;
     } auto_sniff_cmpl;
+
+    /**
+     * @brief BK_BT_GAP_ROLE_CHG_EVT
+     */
+    struct role_chg_param {
+        uint8_t status;                        /*!<switch role status */
+        bk_bd_addr_t bda;                      /*!< remote bluetooth device address*/
+        uint8_t new_role;                       /*!< new role:BT_MASTER_ROLE or BT_SLAVE_ROLE*/
+    } role_chg;                                 /*!< role change event parameter struct */
 } bk_bt_gap_cb_param_t;
 
 /**
