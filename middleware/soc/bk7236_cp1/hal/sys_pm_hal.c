@@ -816,7 +816,9 @@ __attribute__((section(".itcm_sec_code"))) void sys_hal_enter_low_voltage(void)
 	uint32_t valoldosel            = 0;
 	// uint32_t violdosel          = 0;
 	uint8_t  ustep                 = 0;
+	#if CONFIG_PSRAM
 	uint32_t psram_state           = 0;
+	#endif
 	uint32_t chip_id               = 0;
 	pm_lpo_src_e lpo_src           = PM_LPO_SRC_ROSC;
 #if CONFIG_OTA_POSITION_INDEPENDENT_AB
@@ -890,9 +892,10 @@ __attribute__((section(".itcm_sec_code"))) void sys_hal_enter_low_voltage(void)
 	uint32_t hf_reg_v = sys_hal_disable_hf_clock();
 
 	sys_hal_enable_spi_latch();
-
-	psram_state = sys_ll_get_ana_reg13_enpsram();
 	chip_id = aon_pmu_hal_get_chipid();
+	#if CONFIG_PSRAM
+	psram_state = sys_ll_get_ana_reg13_enpsram();
+
 	if(psram_state != 0x0)//when psram ldo enable(0x1:psram ldo enable)
 	{
 		if ((chip_id & PM_CHIP_ID_MASK) != (PM_CHIP_ID_MP_A & PM_CHIP_ID_MASK))
@@ -907,14 +910,19 @@ __attribute__((section(".itcm_sec_code"))) void sys_hal_enter_low_voltage(void)
 			sys_ll_set_ana_reg10_vbspbuflp1v(0x1);
 		}
 	}
-
+	#else
+	if ((chip_id & PM_CHIP_ID_MASK) != (PM_CHIP_ID_MP_A & PM_CHIP_ID_MASK))
+	{
+		sys_ll_set_ana_reg10_vbspbuflp1v(0x1);
+	}
+	#endif
 	/*low voltage power optimization*/
 	if(sys_ll_get_ana_reg11_enpowa() != 0x1)
 	{
 		sys_ll_set_ana_reg11_enpowa(0x1);
 	}
 
-	#if CONFIG_PSRAM_POWER_DOMAIN_LV_DISABLE
+	#if CONFIG_PSRAM && CONFIG_PSRAM_POWER_DOMAIN_LV_DISABLE
 	if(psram_state != 0x0)
 	{
 		sys_ll_set_ana_reg13_enpsram(0x0);//the psram power domain need the app enable again
