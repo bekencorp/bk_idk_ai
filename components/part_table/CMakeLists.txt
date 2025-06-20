@@ -104,6 +104,8 @@ list(APPEND bk7258xx_supported_projects
 	"wifi/repeater"
 	"at"
 	"matter"
+	"beken_wss_nopsram"
+	"platform"
 )
 
 ######################################################################
@@ -118,6 +120,8 @@ list(APPEND bk7257xx_supported_targets
 set(bk7257xx_supported_projects)
 list(APPEND bk7257xx_supported_projects
 	"app"
+	"beken_wss_nopsram"
+	"platform"
 )
 
 ######################################################################

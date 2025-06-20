@@ -42,7 +42,7 @@ bk7258xx_supported_projects := $(bk7258xx_supported_projects) phy/cert_test
 bk7258xx_supported_projects := $(bk7258xx_supported_projects) wifi/repeater
 bk7258xx_supported_projects := $(bk7258xx_supported_projects) at
 bk7258xx_supported_projects := $(bk7258xx_supported_projects) matter
-bk7258xx_supported_projects := $(bk7258xx_supported_projects) beken_genie beken_genie_ab ai_dashboard soundhub soundhub_wss rock_paper_scissors
+bk7258xx_supported_projects := $(bk7258xx_supported_projects) beken_genie beken_genie_ab ai_dashboard soundhub soundhub_wss rock_paper_scissors beken_wss_nopsram platform
 ############################################################
 #        Create supported projects list for bk7234         #
 ############################################################
@@ -61,6 +61,7 @@ bk7239xx_supported_projects := app
 ############################################################
 bk7257xx_supported_targets := bk7257
 bk7257xx_supported_projects := app
+bk7257xx_supported_projects := $(bk7257xx_supported_projects) beken_wss_nopsram platform
 
 PART_TABLE_SUPPORTED_TARGETS := $(bk7235xx_supported_targets) $(bk7256xx_supported_targets) $(bk7236xx_supported_targets) $(bk7258xx_supported_targets) $(bk7234xx_supported_targets) $(bk7239xx_supported_targets) $(bk7257xx_supported_targets)
 PART_TABLE_SUPPORTED_PROJECTS := app
