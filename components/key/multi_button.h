@@ -28,9 +28,11 @@ typedef enum {
 	DOUBLE_CLICK,
 	LONG_PRESS_START,
 	LONG_PRESS_HOLD,
-	number_of_event,
 	NONE_PRESS,
-	LONG_PRESS_UP_EVENT
+	LONG_PRESS_UP_EVENT,
+
+
+	MAX_NUMBER_OF_EVEVT,
 } PRESS_EVT;
 
 typedef enum {
@@ -51,7 +53,7 @@ typedef struct _button_ {
 
 	void *user_data;
 	uint8_t (*hal_button_Level)(struct _button_ *);
-	btn_callback  cb[number_of_event];
+	btn_callback  cb[MAX_NUMBER_OF_EVEVT];
 	struct _button_ *next;
 } BUTTON_S;
 
