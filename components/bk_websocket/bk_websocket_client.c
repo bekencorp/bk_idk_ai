@@ -1269,7 +1269,6 @@ bk_err_t websocket_client_destroy(transport client)
 		if(client->state >= WEBSOCKET_STATE_CONNECTED) {
 			if(websocket_client_send_close(client, NULL, 0, WEBSOCKET_NETWORK_TIMEOUT_MS)) {
 				BK_LOGE(TAG, "%s, client send close frame fail\r\n", __func__);
-				return BK_FAIL;
 			}
 		}
 
@@ -1455,6 +1454,7 @@ void websocket_client_task(beken_thread_arg_t *thread_param)
 			int ret = ws_poll_connection_closed(&(client->sockfd), 1000);
 			if (ret == 0) {
 				// still waiting
+				BK_LOGE(TAG, "Connection terminate timeout while waiting for clean TCP close\r\n");
 				break;
 			}
 			if (ret < 0) {
@@ -1470,7 +1470,9 @@ void websocket_client_task(beken_thread_arg_t *thread_param)
 	rtos_lock_mutex(&client->mutex);
 	ws_tcp_close(client);
 	rtos_unlock_mutex(&client->mutex);
+
 	client->state = WEBSOCKET_STATE_UNKNOW;
+	bk_websocket_client_dispatch_event(client, WEBSOCKET_EVENT_CLOSED, NULL, 0, -1);
 
 	if(websocket_client_destory_config(client)) {
 		BK_LOGE(TAG, "client config already free\r\n");
