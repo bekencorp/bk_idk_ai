@@ -1364,8 +1364,10 @@ void websocket_client_task(beken_thread_arg_t *thread_param)
 				if (ws_connect(client, client->config->host,
 										client->config->port,
 										WEBSOCKET_NETWORK_TIMEOUT_MS) < 0) {
+					rtos_lock_mutex(&client->mutex);
 					BK_LOGE(TAG, "Error websocket connect\r\n");
 					ws_disconnect(client);
+					rtos_unlock_mutex(&client->mutex);
 					break;
 				}
 				BK_LOGE(TAG, "websocket connected to %s://%s:%d\r\n", client->config->scheme, client->config->host, client->config->port);
