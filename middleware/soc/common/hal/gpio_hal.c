@@ -232,7 +232,7 @@ bk_err_t gpio_hal_func_unmap(gpio_hal_t *hal, gpio_id_t gpio_id)
 	GPIO_RETURN_ON_INVALID_ID(gpio_id);
 	
 	if(gpio_hal_map_check(hal, gpio_id)) {
-		HAL_LOGE("Abnormal gpio cfg detected.Please review the previous log to identify the issue\r\n", gpio_id);
+		HAL_LOGW("gpio: %d is risky.Please careful!!!\r\n", gpio_id);
 	}
 
 	gpio_hal_sencond_function_enable(hal, gpio_id, 0);
