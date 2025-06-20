@@ -16,6 +16,7 @@ list(APPEND incs
 	lwip-2.1.2/port/wlanif.c
 	lwip-2.1.2/port/net.c
 	lwip-2.1.2/port/sys_arch.c
+	lwip-2.1.2/port/bk_lwip_adapter.c
 	lwip-2.1.2/src/api/api_lib.c
 	lwip-2.1.2/src/api/api_msg.c
 	lwip-2.1.2/src/api/err.c

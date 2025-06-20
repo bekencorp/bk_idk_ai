@@ -45,6 +45,7 @@
 #define LWIP_HAVE_LOOPIF                1
 #define LWIP_NETIF_LOOPBACK_MULTITHREADING       1
 #define LWIP_LOOPBACK_MAX_PBUFS         8
+#define LWIP_DNS_API_HOSTENT_STORAGE    1
 
 /* Define IP_FORWARD to 1 if you wish to have the ability to forward
    IP packets across network interfaces. If you are going to run lwIP
@@ -435,7 +436,7 @@ u32_t beken_random(void);
  * DNS related options, revisit later to fine tune.
  */
 #define LWIP_DNS                        1
-#define DNS_TABLE_SIZE                  2  // number of table entries, default 4
+#define DNS_TABLE_SIZE                  4  // number of table entries, default 4
 //#define DNS_MAX_NAME_LENGTH           64  // max. name length, default 256
 #define DNS_MAX_SERVERS                 2  // number of DNS servers, default 2
 #define DNS_DOES_NAME_CHECK             1  // compare received name with given,def 0

@@ -11,13 +11,28 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#if !defined PTHREAD_INTERNAL_H
-#define PTHREAD_INTERNAL_H
-#if (CONFIG_SOC_BK7256XX)
-	typedef unsigned int pthread_key_t;
+
+#ifndef _LWIP_ADAPTER__H_
+#define _LWIP_ADAPTER__H_
+
+#ifdef __cplusplus
+extern "C" {
 #endif
-typedef void (*pthread_destructor_t)(void*);
-int pthread_key_create(pthread_key_t *key, pthread_destructor_t destructor);
-int pthread_setspecific(pthread_key_t key, const void *value);
-void *pthread_getspecific(pthread_key_t key);
-#endif /*PTHREAD_INTERNAL_H*/
+
+
+typedef struct {
+	/// os pthread function pointer
+	int (*_pthread_key_create)(uint32_t *key, void *destructor);
+	void *(*_pthread_getspecific)(uint32_t key);
+	int (*_pthread_setspecific)(uint32_t key, const void *value);
+} lwip_os_funcs_t;
+
+bk_err_t bk_lwip_adapter_init(void);
+int lwip_osi_funcs_init(void *osi_funcs);
+void sys_thread_hostent_init();
+struct hostent *sys_thread_hostent(const struct hostent *src);
+
+#ifdef __cplusplus
+}
+#endif
+#endif //_LWIP_ADAPTER__H_

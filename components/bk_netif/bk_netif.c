@@ -11,6 +11,7 @@
 #endif
 #include <components/event.h>
 #include "bk_private/bk_wifi.h"
+#include <bk_lwip_adapter.h>
 
 uint8 sta_static_ip_flag = 0;
 netif_ip4_config_t static_ip = {0};
@@ -60,6 +61,7 @@ bk_err_t netif_wifi_event_cb(void *arg, event_module_t event_module,
 
 bk_err_t bk_netif_init(void)
 {
+	BK_LOG_ON_ERR(bk_lwip_adapter_init());
 #if (!CONFIG_RTT) && CONFIG_NO_HOSTED
 	extern void net_wlan_initial(void);
 	net_wlan_initial();

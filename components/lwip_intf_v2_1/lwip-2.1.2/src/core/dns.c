@@ -96,7 +96,7 @@
 #include "lwip/prot/dns.h"
 
 #include <string.h>
-
+#include "port/bk_lwip_adapter.h"
 /** Random generator function to create random TXIDs and source ports for queries */
 #ifndef DNS_RAND_TXID
 #if ((LWIP_DNS_SECURE & LWIP_DNS_SECURE_RAND_XID) != 0)
@@ -348,6 +348,7 @@ dns_init(void)
 #if DNS_LOCAL_HOSTLIST
   dns_init_local();
 #endif
+  sys_thread_hostent_init();
 }
 
 /**

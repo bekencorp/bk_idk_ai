@@ -48,6 +48,7 @@
 
 #include <string.h> /* memset */
 #include <stdlib.h> /* atoi */
+#include "port/bk_lwip_adapter.h"
 
 /** helper struct for gethostbyname_r to access the char* buffer */
 struct gethostbyname_r_helper {
@@ -128,8 +129,10 @@ lwip_gethostbyname(const char *name)
   if (s_hostent.h_addr_list != NULL) {
     u8_t idx;
     for (idx = 0; s_hostent.h_addr_list[idx]; idx++) {
+      char ip[IP4ADDR_STRLEN_MAX];
+      ipaddr_ntoa_r((ip_addr_t *)s_hostent.h_addr_list[idx], ip, IP4ADDR_STRLEN_MAX);
       LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_addr_list[%i]   == %p\n", idx, s_hostent.h_addr_list[idx]));
-      LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_addr_list[%i]-> == %s\n", idx, ipaddr_ntoa((ip_addr_t *)s_hostent.h_addr_list[idx])));
+      LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_addr_list[%i]-> == %s\n", idx, ip));
     }
   }
 #endif /* DNS_DEBUG */

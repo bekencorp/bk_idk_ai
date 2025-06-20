@@ -1196,6 +1196,21 @@ int net_wlan_remove_netif(uint8_t *mac)
 	return ERR_OK;
 }
 
+void bk_netif_add_dns_server(uint8_t idx, const char* szIpv4)
+{
+    ip_addr_t ipaddr;
+    ipaddr_aton(szIpv4, &ipaddr);
+    if (ipaddr_aton(szIpv4, &ipaddr))
+    {
+        LWIP_LOGI("idx:(%d)dns:(%s)",idx,szIpv4);
+        dns_setserver(idx, &ipaddr);
+    }
+    else
+    {
+        LWIP_LOGI("idx:(%d)dns:(%s)",idx,szIpv4);
+    }
+}
+
 #if CONFIG_NET_PAN
 int net_pan_add_netif(uint8_t *mac)
 {

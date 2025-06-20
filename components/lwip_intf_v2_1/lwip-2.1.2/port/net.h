@@ -57,6 +57,7 @@ uint32_t ppp_ip_is_start(void);
 #if LWIP_NETIF_LOOPBACK
 void bk_netif_trigger_loopnetif_msg(void);
 #endif
+void bk_netif_add_dns_server(uint8_t idx, const char* szIpv4);
 
 #ifdef __cplusplus
 }
