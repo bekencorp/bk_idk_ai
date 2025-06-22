@@ -1737,6 +1737,10 @@ int bk_cli_init(void)
 	cli_pwm_init();
 #endif
 
+#if (CLI_CFG_IRDA == 1)
+	cli_irda_init();
+#endif
+
 #if (CLI_CFG_EXCEPTION == 1)
 	cli_exception_init();
 #endif

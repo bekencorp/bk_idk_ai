@@ -64,6 +64,7 @@ list(APPEND srcs
 	"hal/ckmn_hal_debug.c"
 	"hal/lin_ll.c"
 	"hal/lin_hal_debug.c"
+	"hal/irda_hal.c"
 )
 
 armino_component_register(SRCS "${srcs}" INCLUDE_DIRS "${incs}" REQUIRES partitions)

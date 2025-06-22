@@ -669,7 +669,7 @@ CONFIG_PWM=n
 CONFIG_PWM_V1PX=n
 # end of pwm
 
-# CONFIG_SUPPORT_IRDA is not set
+# CONFIG_IRDA is not set
 
 #
 # efuse

@@ -104,6 +104,12 @@ if (CONFIG_PWM)
 	)
 endif()
 
+if (CONFIG_IRDA)
+	list(APPEND srcs
+		cli_irda.c
+	)
+endif()
+
 if (CONFIG_I2C)
 	list(APPEND srcs
 		cli_i2c.c

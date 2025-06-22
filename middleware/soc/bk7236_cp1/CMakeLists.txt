@@ -59,6 +59,7 @@ list(APPEND srcs
 	"hal/qspi_hal_debug.c"
 	"hal/i2s_hal.c"
 	"hal/sdmadc_hal_debug.c"
+	"hal/irda_hal.c"
 )
 
 armino_component_register(SRCS "${srcs}" INCLUDE_DIRS "${incs}" REQUIRES partitions PRIV_REQUIRES tfm)

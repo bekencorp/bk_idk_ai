@@ -41,6 +41,7 @@
 #include <driver/otp.h>
 #include <driver/pwr_clk.h>
 
+#include <driver/irda.h>
 
 #if CONFIG_SECURITY
 #include "bk_security.h"
@@ -377,6 +378,10 @@ int driver_init(void) {
 
 #if CONFIG_QSPI
 	bk_qspi_driver_init();
+#endif
+
+#if CONFIG_IRDA
+	bk_irda_driver_init();
 #endif
 
 #if CONFIG_YUV_BUF

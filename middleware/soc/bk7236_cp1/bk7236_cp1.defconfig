@@ -653,7 +653,7 @@ CONFIG_I2S_TEST=y
 CONFIG_PWM=n
 # end of pwm
 
-# CONFIG_SUPPORT_IRDA is not set
+# CONFIG_IRDA is not set
 
 #
 # efuse

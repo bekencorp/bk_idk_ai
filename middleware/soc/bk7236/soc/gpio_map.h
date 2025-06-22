@@ -479,6 +479,8 @@ struct {\
 
 #endif
 
+#define IRDA_PIN    (GPIO_25)
+
 #ifdef __cplusplus
 }
 #endif

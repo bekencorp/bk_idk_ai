@@ -108,6 +108,7 @@ int cli_mico_init(void);
 int cli_peri_init(void);
 int cli_event_init(void);
 int cli_pwm_init(void);
+int cli_irda_init(void);
 int cli_reg_init(void);
 int cli_dma_init(void);
 int cli_exception_init(void);

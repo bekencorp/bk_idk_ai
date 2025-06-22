@@ -72,7 +72,7 @@ static const DD_INIT_S dd_init_tbl[] = {
 	{DD_DEV_TYPE_FFT,          fft_init,                   fft_exit},
 #endif
 
-#if CONFIG_SUPPORT_IRDA
+#if CONFIG_IRDA
 	{DD_DEV_TYPE_IRDA,         irda_init,                  irda_exit},
 #endif
 

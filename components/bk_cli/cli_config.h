@@ -126,6 +126,12 @@ extern "C" {
 #define CLI_CFG_PWM         0
 #endif
 
+#if(CONFIG_IRDA)
+#define CLI_CFG_IRDA        1
+#else
+#define CLI_CFG_IRDA        0
+#endif
+
 #if(CONFIG_FLASH)
 #define CLI_CFG_FLASH       1
 #else

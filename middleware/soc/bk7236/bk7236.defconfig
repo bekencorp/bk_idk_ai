@@ -1532,7 +1532,7 @@ CONFIG_LCD=n
 #
 # IRDA
 #
-# CONFIG_SUPPORT_IRDA is not set
+# CONFIG_IRDA is not set
 # end of IRDA
 
 #

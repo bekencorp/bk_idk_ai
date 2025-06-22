@@ -419,7 +419,7 @@ CONFIG_PWM=n
 CONFIG_PWM_V1PX=y
 #@ PWM PM Support
 CONFIG_PWM_PM_CB_SUPPORT=y
-# CONFIG_SUPPORT_IRDA is not set
+# CONFIG_IRDA is not set
 #@ Enable mail_box
 CONFIG_MAILBOX=y
 #@ Use mailbox v2.0 driver

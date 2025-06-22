@@ -145,11 +145,11 @@ if (CONFIG_SIM_I2C)
 endif()
 endif()  #if (CONFIG_I2C)
 
-if (CONFIG_SUPPORT_IRDA)
+if (CONFIG_IRDA)
 	list(APPEND srcs
-		irda/irda.c
+		irda/irda_driver.c
 		)
-endif()  #if (CONFIG_SUPPORT_IRDA)
+endif()  #if (CONFIG_IRDA)
 
 if (CONFIG_PWM)
 if (CONFIG_PWM_V1PX)
