@@ -3,7 +3,7 @@
 
 :link_to_translation:`en:[English]`
 
-Armino平台BK7258系统调试命令
+**Armino平台BK7258系统调试命令**
 --------------------------------------
 
 
@@ -14,7 +14,6 @@ Armino平台BK7258系统调试命令
    可以改变CPU1的Log输出方式（上述设置是CPU1的Log通过UART0输出）
    注：CPU0是主核，且CPU0与CPU2之间没有MailBox通道，所以上述方式目前仅支持CPU1
  - CPU1 log带cpu1标签（异常log除外）
- - 由于内存缓冲区的限制，每条log数据的字节数，要小于128字节。超过这个大小的log都会被shell 模块丢弃，并输出一条 !!some LOGs discarded!! 如果log数量太多，来不及输出导致log堆积，缓冲区用完，也会输出这条提示字符串。
  - 通过串口输入log命令查看当前log配置
  - 通过串口输入help命令查看当前支持的调试命令：
 
@@ -281,7 +280,7 @@ Armino平台BK7258系统调试命令
     cpu1:cli:I(18046):soc: bk7258_cp1
     #
 
-Armino平台BK7258系统jtag调试
+**Armino平台BK7258系统SWD调试**
 --------------------------------------
 
  - JLink环境通过Eclipse集成JLink gdb server + gdb 工具
@@ -320,13 +319,85 @@ Armino平台BK7258系统jtag调试
     :figclass: align-center
 
 
- - 默认jtag连接cpu0，BK7258有两个Jtag口(grou1/group2)
+ - 默认jtag连接cpu0，BK7258有两个Jtag口(grou1/group2)，group1对应于gpio20、gpio21,group2对应于gpio0/gpio1
  - 可以通过setjtagmode cpu0 group1命令设置jtag连接cpu0
  - 可以通过setjtagmode cpu1 group1设置jtag连接cpu1
  - 可以通过jtagmode命令查看当前jtag状态
 
+.. note::
 
-Armino平台BK7258 异常dump一键恢复现场工具
+    使用Jlink进行SWD调试连接，需要编译DEBUG版本。
+
+    如果是开机异常，在串口输入命令的形式可能无法连接上Jlink。可以在driver_init里bk_gpio_driver_init();之后手动调用：
+    bk_set_jtag_mode(0,0); //第一个参数0表示调试cpu0，第二个参数0表示使用第一组SWD gpio管脚
+    while(g_test_mode); //定义一个volitale的全局变量，而不是while（1）；是防止编译器将后面的代码全部优化掉
+
+    然后接入Jlink后，修改g_test_mode变量值，开始往下调试。
+
+    由于GPIO管脚复用，所以默认版本接入JLINK调试，需要输入调试命令，或者在代码里设置调试模式：
+
+    - 关闭看门狗
+    - 重新配置SWD相关的gpio
+
+.. important::
+
+    对于beken AI开发板，由于当前两组管脚都已经被占用，所以不支持直接发送setjtagmode命令来设置jtag连接，需要将管脚复用功能取消，再在代码里手动进行配置。
+
+    GPIO的配置可以参考：`GPIO使用指南 <https://docs.bekencorp.com/arminodoc/bk_idk/bk7258/zh_CN/v_ai_2.0.1/api-reference/peripheral/bk_gpio.html?highlight=gpio>`_
+ 
+
+swd调试示例
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+连接好jlink后，可以按照以下步骤打断点调试：
+
+- 根据函数指针或者函数名在Disassembly页找到dump的地址
+
+.. figure:: ../../../../common/_static/jlink/jlink_1.png
+      :align: center
+      :alt: BK7258 JLink configuration
+      :figclass: align-center
+
+      示意图1
+
+
+.. figure:: ../../../../common/_static/jlink/jlink_2.png
+      :align: center
+      :alt: BK7258 JLink configuration
+      :figclass: align-center
+
+      示意图2
+
+
+- 在dump函数之前的语句设置断点，将断点属性设置为hardware
+
+.. figure:: ../../../../common/_static/jlink/jlink_3.png
+      :align: center
+      :alt: BK7258 JLink configuration
+      :figclass: align-center
+
+      示意图3
+
+
+- 点击resume继续运行程序。运行错误代码，如我在sta命令里，加了错误代码
+
+.. figure:: ../../../../common/_static/jlink/jlink_4.png
+      :align: center
+      :alt: BK7258 JLink configuration
+      :figclass: align-center
+
+      示意图4
+
+
+- 程序在断点处停下
+
+.. figure:: ../../../../common/_static/jlink/jlink_5.png
+      :align: center
+      :alt: BK7258 JLink configuration
+      :figclass: align-center
+
+      示意图5
+
+**Armino平台BK7258 异常dump一键恢复现场工具**
 ------------------------------------------------
 
  - 请参考发布工具中使用文档:
@@ -424,3 +495,31 @@ Armino平台BK7258 异常dump一键恢复现场工具
       6976       0x2807d110   80     425     xQueueGenericCreate                transfer_major_task
 
    + 正常情况下也会将task相关信息dump到日志, 供问题分析时参考
+
+
+**Armino平台BK7258系统稳定性问题分析**
+--------------------------------------
+
+嵌入式稳定性问题是一类常见但不容易定位的问题，其具有以下特征：
+
+ - 不可预测性：系统故障的时间点不固定，难以预测，可能在长时间运行后突然发生
+ - 多样性：问题可能以崩溃、死机、卡顿或错误行为等多种形式出现
+ - 累计效应：系统运行时间越长，资源泄漏或数据损坏等问题可能积累，最终导致崩溃
+ - 环境依赖性：稳定性还可能受温度、湿度和电源波动等环境因素的影响
+
+
+为了帮助用户更好的定位稳定性问题，下面的链接文档中提供了常见的分析手段
+
+.. note::
+
+    本文档仅针对软件引起的稳定性问题,建议用户在碰到稳定性问题时，优先参考该文档
+    
+
+ - 文档 `下载链接 <https://dl.bekencorp.com/tools/system_debug/稳定性问题软件分析.pdf>`_ 
+
+
+ - 文档内容说明:
+
+   + 文中介绍了系统调试相关的工具，请参考上述章节
+   + 文中列举了系统可能出现异常的各种场景
+   + 文中还列举了一些经典的稳定性问题的分析案例

@@ -4,8 +4,8 @@ system debugging
 
 :link_to_translation:`zh_CN:[中文]`
 
-Armino platform BK7258 system debugging commands
---------------------------------------------------
+**Armino platform BK7258 system debugging commands**
+----------------------------------------------------------
 
 
   - The log of BK7258 CPU0 is output through the serial port DL_UART0 (default baud rate is 115200)
@@ -284,8 +284,8 @@ Armino platform BK7258 system debugging commands
      cpu1:cli:I(18046):soc: bk7258_cp1
      #
 
-Armino platform BK7258 system jtag debugging
------------------------------------------------
+**Armino platform BK7258 system jtag debugging**
+--------------------------------------------------------
 
   - JLink environment integrates JLink gdb server + gdb tool through Eclipse
 
@@ -328,8 +328,83 @@ Armino platform BK7258 system jtag debugging
   - You can set jtag to connect cpu1 through setjtagmode cpu1 group1
   - You can view the current jtag status through the jtagmode command
 
+.. note::
 
-Armino platform BK7258 abnormal dump one-click recovery on-site tool
+    To establish a SWD debugging connection using Jlink, a DEBUG version of the code must be compiled.
+
+    If the system is not booting normally, attempting to connect to Jlink via serial input commands may not be possible. 
+    In this case, you can manually call the following functions in driver_init after bk_gpio_driver_init():
+    bk_set_jtag_mode(0,0); // The first parameter 0 indicates debugging cpu0, and the second parameter 0 indicates 
+    using the first set of SWD gpio pins while(g_test_mode); // Define a volatile global variable to prevent the compiler from optimizing away the following code
+
+    Then, after connecting to Jlink, modify the g_test_mode variable value and continue debugging.
+
+    Due to GPIO pin multiplexing, the default version requires entering debug commands or setting debug mode in the code when connecting to Jlink for debugging:
+
+    - Disable the watchdog
+    - Reconfigure the SWD-related gpio
+
+.. important::
+
+    For the Beken AI development board, direct sending of the setjtagmode command to configure the JTAG connection is not supported, as both pin groups are currently occupied. 
+    You must disable the pin multiplexing function and then manually configure it in the code.
+
+    Refer to the following for GPIO configuration：`GPIO User Guide <https://docs.bekencorp.com/arminodoc/bk_idk/bk7258/zh_CN/v_ai_2.0.1/api-reference/peripheral/bk_gpio.html?highlight=gpio>`_
+
+
+SWD debugging example
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+After connecting JLink, you can follow these steps to debug with breakpoints:
+
+- Find the dump address in the Disassembly page based on the function pointer or function name.
+
+.. figure:: ../../../../common/_static/jlink/jlink_1.png
+      :align: center
+      :alt: BK7258 JLink configuration
+      :figclass: align-center
+
+      Figure 1
+
+
+.. figure:: ../../../../common/_static/jlink/jlink_2.png
+      :align: center
+      :alt: BK7258 JLink configuration
+      :figclass: align-center
+
+      Figure 2
+
+
+- Set a breakpoint at the statement before the dump function and set the breakpoint attribute to hardware
+
+.. figure:: ../../../../common/_static/jlink/jlink_3.png
+      :align: center
+      :alt: BK7258 JLink configuration
+      :figclass: align-center
+
+      Figure 3
+
+
+- Click 'Resume' to continue running the program. Run the error code, as I did in the sta command, and add error code
+
+.. figure:: ../../../../common/_static/jlink/jlink_4.png
+      :align: center
+      :alt: BK7258 JLink configuration
+      :figclass: align-center
+
+      Figure 4
+
+
+-The program stops at the breakpoint.
+
+.. figure:: ../../../../common/_static/jlink/jlink_5.png
+      :align: center
+      :alt: BK7258 JLink configuration
+      :figclass: align-center
+
+      Figure 5
+
+
+**Armino platform BK7258 abnormal dump one-click recovery on-site tool**
 --------------------------------------------------------------------------------
 
   - Please refer to the usage documentation in the publishing tool:
@@ -427,3 +502,35 @@ Armino platform BK7258 abnormal dump one-click recovery on-site tool
        6976 0x2807d110 80 425 xQueueGenericCreate transfer_major_task
 
     + Under normal circumstances, task-related information will also be dumped to the log for reference during problem analysis.
+
+**analysis of stability issues of Armino platform BK7258 system**
+-----------------------------------------------------------------------
+
+Embedded stability problems are a common but difficult to locate problem,
+which have the following characteristics：
+
+ - Unpredictability:The time point of system failure is not fixed and difficult to predict.
+   It may occur suddenly after a long period of operation.
+ - Diversity:problems can appear in many forms such as crashes,freezes,lags or erroneous behavior.
+ - Cumulative effect:The longer the system runs,problems such as resource leakage or data corruption
+   may accumulate,eventually leading to a crash.
+ - Environmental dependence:stability may also be affected by environmental factors such as temperature,
+   humidity and power supply ripple.
+
+
+In order to help users better locate stability problems,the following linked documents provide common analysis methods.
+
+.. note::
+
+    This document only addresses stability issues caused by the software. It is recommended that users refer to 
+    this document first when encountering stability issues.
+    
+
+ - Documentation `download link <https://dl.bekencorp.com/tools/system_debug/稳定性问题软件分析.pdf>`_ 
+   
+
+ - Document content description:
+
+   + The text introduces tools related to system debugging; please refer to the aforementioned chapter
+   + The article lists various secnarios in which the system may be abnormal
+   + The article also lists some classic analysis cases of stability problems and related debugging codes.
