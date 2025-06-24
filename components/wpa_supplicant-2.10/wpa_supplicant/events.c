@@ -2462,11 +2462,10 @@ static int _wpa_supplicant_event_scan_results(struct wpa_supplicant *wpa_s,
 	    wpa_s->wpa_state < WPA_COMPLETED)
 		goto scan_work_done;
 
-	#if CONFIG_MINIMUM_SCAN_RESULTS
+#if CONFIG_MINIMUM_SCAN_RESULTS
 	wpa_hostapd_release_scan_rst();
-	#endif
+#endif
 	wpa_scan_results_free(scan_res);
-
 	if (own_request && wpa_s->scan_work) {
 		struct wpa_radio_work *work = wpa_s->scan_work;
 		wpa_s->scan_work = NULL;
@@ -2491,9 +2490,9 @@ static int _wpa_supplicant_event_scan_results(struct wpa_supplicant *wpa_s,
 	return wpas_select_network_from_last_scan(wpa_s, 1, own_request);
 
 scan_work_done:
-	#if CONFIG_MINIMUM_SCAN_RESULTS
+#if CONFIG_MINIMUM_SCAN_RESULTS
 	wpa_hostapd_release_scan_rst();
-	#endif
+#endif
 	wpa_scan_results_free(scan_res);
 	if (own_request && wpa_s->scan_work) {
 		struct wpa_radio_work *work = wpa_s->scan_work;

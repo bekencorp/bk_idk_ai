@@ -500,6 +500,8 @@ CONFIG_WPA3=y
 #@ Enable PMF(802.11w)
 CONFIG_PMF=y
 CONFIG_WPA_CTRL_IFACE=y
+#@Enable Minimize Scan Result IE
+CONFIG_MINIMUM_SCAN_RESULTS=y
 #@ Enable AP HT IE
 CONFIG_AP_HT_IE=y
 #@ Enable AP VHT

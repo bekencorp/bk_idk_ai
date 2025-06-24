@@ -12,16 +12,18 @@
 
 void wpa_scan_results_free(struct wpa_scan_results *res)
 {
+#if !CONFIG_MINIMUM_SCAN_RESULTS
 	size_t i;
+#endif
 
 	if (res == NULL)
 		return;
-
+#if !CONFIG_MINIMUM_SCAN_RESULTS
 	for (i = 0; i < res->num; i++) {
 		os_free(res->res[i]);
 		res->res[i] = 0;
 	}
-	
+#endif
 	os_free(res->res);
 	res->res = 0;
 	
