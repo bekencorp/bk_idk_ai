@@ -51,7 +51,7 @@ typedef enum
 #define rtos_get_ms_per_tick()      (1000 / RT_TICK_PER_SECOND)
 #define rtos_get_tick_per_second()           (RT_TICK_PER_SECOND)
 #else
-#define rtos_get_ms_per_tick()      2
+#define rtos_get_ms_per_tick()               (1000/CONFIG_FREERTOS_TICK_RATE_HZ)
 #define rtos_get_tick_per_second()           (1000/rtos_get_ms_per_tick())
 #endif
 
