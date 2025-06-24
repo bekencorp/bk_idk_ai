@@ -307,7 +307,7 @@ static uint32_t pm_check_and_ctrl_sleep()
 		if ((s_pm_sleeped_modules & s_pm_enter_low_vol_modules) == s_pm_enter_low_vol_modules)
 		{
 #if CONFIG_AON_RTC
-			s_current_tick = (uint32_t)bk_aon_rtc_get_current_tick(AON_RTC_ID_1);
+			s_current_tick = bk_aon_rtc_get_current_tick(AON_RTC_ID_1);
 #endif
 			if (s_pm_on_modules & (0x1 << POWER_MODULE_NAME_BTSP))
 			{
