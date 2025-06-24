@@ -130,8 +130,26 @@ bk_err_t bk_lcd_qspi_read_data(qspi_id_t qspi_id, uint8_t *data, const lcd_devic
  *
  * @return
  *    - BK_OK: succeed
+ *    - others: other errors.
  */
 bk_err_t bk_lcd_qspi_send_data(qspi_id_t qspi_id, const lcd_device_t *device, uint32_t *data, uint32_t data_len);
+
+/**
+ * @brief     Send a partial data to device display
+ *
+ * @param qspi_id the qspi device id number
+ * @param device the struct of lcd device
+ * @param x_start the x starting coordinate of display
+ * @param x_end the x ending coordinate of display
+ * @param y_start the y starting coordinate of display
+ * @param y_end the y ending coordinate of display
+ * @param data the data to send
+ *
+ * @return
+ *    - BK_OK: succeed
+ *    - others: other errors.
+ */
+bk_err_t bk_lcd_qspi_partial_display(qspi_id_t qspi_id, const lcd_device_t *device, uint16_t x_start, uint16_t x_end, uint16_t y_start, uint16_t y_end, uint8_t *data);
 
 /**
  * @brief     Open the qspi lcd device

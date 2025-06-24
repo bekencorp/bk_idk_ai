@@ -41,7 +41,11 @@
 #define LCD_SPI_REFRESH_WITH_QSPI    1
 
 #if (LCD_SPI_REFRESH_WITH_QSPI == 1)
+#ifdef CONFIG_LCD_SPI_REFRESH_WITH_QSPI_MAPPING_MODE
+#define LCD_SPI_REFRESH_WITH_QSPI_MAPPING_MODE    CONFIG_LCD_SPI_REFRESH_WITH_QSPI_MAPPING_MODE
+#else
 #define LCD_SPI_REFRESH_WITH_QSPI_MAPPING_MODE    0
+#endif
 #endif
 
 #ifdef CONFIG_LCD_SPI_BACKLIGHT_PIN
@@ -102,7 +106,6 @@ spi_config_t config = {0};
 #if (LCD_SPI_REFRESH_WITH_QSPI_MAPPING_MODE == 1)
 static beken_semaphore_t lcd_spi_semaphore = NULL;
 static dma_id_t lcd_spi_dma_id = DMA_ID_MAX;
-static uint32_t dma_repeat_once_len = 0;
 static bool dma_is_repeat_mode = false;
 #endif
 #endif
@@ -264,10 +267,11 @@ static void lcd_spi_driver_init_with_qspi(qspi_id_t qspi_id, lcd_qspi_clk_t clk)
             break;
     }
 
-#if (LCD_SPI_REFRESH_WITH_QSPI_MAPPING_MOD == 1)
     qspi_hal_disable_soft_reset(&s_lcd_spi[qspi_id].hal);
     delay_us(10);
     qspi_hal_enable_soft_reset(&s_lcd_spi[qspi_id].hal);
+
+#if (LCD_SPI_REFRESH_WITH_QSPI_MAPPING_MODE == 1)
     qspi_hal_set_cmd_a_cfg2(&s_lcd_spi[qspi_id].hal, 0x80000000);
 #endif
 }
@@ -312,7 +316,7 @@ static void lcd_spi_send_data_with_qspi_indirect_mode(qspi_id_t qspi_id, uint8_t
 
     while (remain_len > 0) {
         if (remain_len <= 4) {
-            lcd_spi_send_data_with_qspi_direct_mode(qspi_id, data, remain_len);
+            lcd_spi_send_data_with_qspi_direct_mode(qspi_id, data_tmp, remain_len);
             break;
         }
 
@@ -381,11 +385,12 @@ bk_err_t lcd_spi_quad_write_start(qspi_id_t qspi_id)
     qspi_hal_set_cmd_c_cfg1(&s_lcd_spi[qspi_id].hal, 0);
     qspi_hal_set_cmd_c_cfg2(&s_lcd_spi[qspi_id].hal, 0);
 
+    qspi_hal_force_spi_cs_low_enable(&s_lcd_spi[qspi_id].hal);
+
 #if (CONFIG_SOC_BK7236XX)
     qspi_hal_io_cpu_mem_select(&s_lcd_spi[qspi_id].hal, 1);
 #endif
 
-    qspi_hal_force_spi_cs_low_enable(&s_lcd_spi[qspi_id].hal);
     qspi_hal_disable_cmd_sck_enable(&s_lcd_spi[qspi_id].hal);
 
     return BK_OK;
@@ -406,6 +411,7 @@ bk_err_t lcd_spi_quad_write_stop(qspi_id_t qspi_id)
 static void lcd_spi_dma_config(qspi_id_t qspi_id, uint8_t *data, uint32_t data_len)
 {
     bk_err_t ret = BK_OK;
+    dma_is_repeat_mode = false;
 
     dma_config_t dma_config = {0};
     dma_config.mode = DMA_WORK_MODE_SINGLE;
@@ -420,6 +426,7 @@ static void lcd_spi_dma_config(qspi_id_t qspi_id, uint8_t *data, uint32_t data_l
     dma_config.dst.dev = DMA_DEV_DTCM;
     dma_config.dst.width = DMA_DATA_WIDTH_32BITS;
     dma_config.dst.addr_inc_en = DMA_ADDR_INC_ENABLE;
+
     if (qspi_id == QSPI_ID_0) {
         dma_config.dst.start_addr = (uint32_t)LCD_QSPI0_DATA_ADDR;
         dma_config.dst.end_addr = (uint32_t)(LCD_QSPI0_DATA_ADDR + data_len);
@@ -434,6 +441,8 @@ static void lcd_spi_dma_config(qspi_id_t qspi_id, uint8_t *data, uint32_t data_l
         return;
     }
 
+    LCD_SPI_LOGD("%s data_len = %d\r\n", __func__, data_len);
+    bk_dma_set_transfer_len(lcd_spi_dma_id, data_len);
     bk_dma_register_isr(lcd_spi_dma_id, NULL, (void *)lcd_spi_dma_finish_isr);
     bk_dma_enable_finish_interrupt(lcd_spi_dma_id);
 }
@@ -444,8 +453,10 @@ static void lcd_spi_send_data_with_qspi_mapping_mode(qspi_id_t qspi_id, uint8_t 
 
     if (dma_is_repeat_mode) {
         if (qspi_id == QSPI_ID_0) {
+            dma_set_dst_pause_addr(lcd_spi_dma_id, LCD_QSPI0_DATA_ADDR + data_len);
             bk_dma_stateless_judgment_configuration((void *)LCD_QSPI0_DATA_ADDR, (void *)data, data_len, lcd_spi_dma_id, (void *)lcd_spi_dma_finish_isr);
         } else if (qspi_id == QSPI_ID_1) {
+            dma_set_dst_pause_addr(lcd_spi_dma_id, LCD_QSPI1_DATA_ADDR + data_len);
             bk_dma_stateless_judgment_configuration((void *)LCD_QSPI1_DATA_ADDR, (void *)data, data_len, lcd_spi_dma_id, (void *)lcd_spi_dma_finish_isr);
         } else {
             LCD_SPI_LOGE("unsupported lcd qspi id\r\n");
@@ -465,13 +476,14 @@ static void lcd_spi_send_data_with_qspi_mapping_mode(qspi_id_t qspi_id, uint8_t 
         LCD_SPI_LOGE("ret = %d, lcd qspi get semaphore failed!\r\n", ret);
         return;
     }
-    delay_us(5);
+    delay_us(15);
     lcd_spi_quad_write_stop(qspi_id);
 }
 
 static void lcd_spi_dma_init(uint8_t id, const lcd_device_t *device)
 {
     bk_err_t ret = BK_OK;
+    uint32_t dma_repeat_once_len = 0;
 
     ret = rtos_init_semaphore(&lcd_spi_semaphore, 1);
     if (ret != kNoErr) {
@@ -501,19 +513,6 @@ static void lcd_spi_dma_init(uint8_t id, const lcd_device_t *device)
     if (device->spi->frame_len > 0x10000) {
         dma_is_repeat_mode = true;
         dma_repeat_once_len = lcd_spi_get_dma_repeat_once_len(device);
-        #if (CONFIG_LCD_SPI_DEVICE_NUM > 1)
-            dma_set_dst_pause_addr(lcd_spi_dma_id, LCD_QSPI0_DATA_ADDR + device->spi->frame_len);
-            dma_set_dst_pause_addr(lcd_spi_dma_id, LCD_QSPI1_DATA_ADDR + device->spi->frame_len);
-        #else
-            if (id == QSPI_ID_0) {
-                dma_set_dst_pause_addr(lcd_spi_dma_id, LCD_QSPI0_DATA_ADDR + device->spi->frame_len);
-            } else if (id == QSPI_ID_1) {
-                dma_set_dst_pause_addr(lcd_spi_dma_id, LCD_QSPI1_DATA_ADDR + device->spi->frame_len);
-            } else {
-                LCD_SPI_LOGE("unsupported lcd qspi id\r\n");
-                return;
-            }
-        #endif
     } else {
         dma_is_repeat_mode = false;
         dma_repeat_once_len = device->spi->frame_len;
@@ -751,10 +750,10 @@ void lcd_spi_display_frame(uint8_t id, uint8_t *frame_buffer, uint32_t width, ui
 {
     uint8_t column_value[4] = {0};
     uint8_t row_value[4] = {0};
-    column_value[2] = (width >> 8) & 0xFF;
-    column_value[3] = (width & 0xFF) - 1;
-    row_value[2] = (height >> 8) & 0xFF;
-    row_value[3] = (height & 0xFF) - 1;
+    column_value[2] = ((width - 1) >> 8) & 0xFF;
+    column_value[3] = (width - 1) & 0xFF;
+    row_value[2] = ((height - 1) >> 8) & 0xFF;
+    row_value[3] = (height - 1) & 0xFF;
 
     if (lcd_spi_first_disp == 1) {
         lcd_spi_backlight_open();
@@ -770,7 +769,7 @@ void lcd_spi_display_frame(uint8_t id, uint8_t *frame_buffer, uint32_t width, ui
     lcd_spi_send_data(id, frame_buffer, width * height * 2);
 }
 
-void lcd_spi_display_partial_display(uint8_t id, uint16_t x_start, uint16_t x_end, uint16_t y_start, uint16_t y_end, uint8_t *disp_buffer)
+void lcd_spi_partial_display(uint8_t id, uint16_t x_start, uint16_t x_end, uint16_t y_start, uint16_t y_end, uint8_t *disp_buffer)
 {
     uint8_t column_value[4] = {0};
     uint8_t row_value[4] = {0};

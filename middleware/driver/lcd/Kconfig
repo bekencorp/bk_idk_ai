@@ -15,7 +15,7 @@ menu "LCD"
 
 	config LCD_QSPI_COLOR_DEPTH_BYTE
 		depends on LCD_QSPI
-		int "Set Lcd Qspi Color Depth"
+		int "Set lcd qspi color depth"
 		default 2
 		help
 			2 - RGB565
