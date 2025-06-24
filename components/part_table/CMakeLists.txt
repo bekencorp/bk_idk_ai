@@ -106,6 +106,7 @@ list(APPEND bk7258xx_supported_projects
 	"matter"
 	"beken_wss_nopsram"
 	"platform"
+	"volc_rtc"
 )
 
 ######################################################################

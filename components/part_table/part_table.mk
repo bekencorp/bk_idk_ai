@@ -42,7 +42,7 @@ bk7258xx_supported_projects := $(bk7258xx_supported_projects) phy/cert_test
 bk7258xx_supported_projects := $(bk7258xx_supported_projects) wifi/repeater
 bk7258xx_supported_projects := $(bk7258xx_supported_projects) at
 bk7258xx_supported_projects := $(bk7258xx_supported_projects) matter
-bk7258xx_supported_projects := $(bk7258xx_supported_projects) beken_genie beken_genie_ab ai_dashboard soundhub soundhub_wss rock_paper_scissors beken_wss_nopsram platform
+bk7258xx_supported_projects := $(bk7258xx_supported_projects) beken_genie beken_genie_ab ai_dashboard soundhub soundhub_wss rock_paper_scissors beken_wss_nopsram platform volc_rtc
 ############################################################
 #        Create supported projects list for bk7234         #
 ############################################################
