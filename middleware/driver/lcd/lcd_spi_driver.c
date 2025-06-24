@@ -411,7 +411,6 @@ bk_err_t lcd_spi_quad_write_stop(qspi_id_t qspi_id)
 static void lcd_spi_dma_config(qspi_id_t qspi_id, uint8_t *data, uint32_t data_len)
 {
     bk_err_t ret = BK_OK;
-    dma_is_repeat_mode = false;
 
     dma_config_t dma_config = {0};
     dma_config.mode = DMA_WORK_MODE_SINGLE;
@@ -784,6 +783,9 @@ void lcd_spi_partial_display(uint8_t id, uint16_t x_start, uint16_t x_end, uint1
     row_value[3] = y_end & 0xFF;
 
     if (lcd_spi_first_disp == 1) {
+#if (LCD_SPI_REFRESH_WITH_QSPI_MAPPING_MODE == 1)
+        dma_is_repeat_mode = false;
+#endif
         lcd_spi_backlight_open();
         lcd_spi_first_disp = 0;
     }
