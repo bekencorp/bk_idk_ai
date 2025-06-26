@@ -1172,9 +1172,9 @@ transport websocket_client_init(const websocket_client_input_t *input)
 		goto _websocket_init_fail;
 #endif
 	}
-
+	client->config->user_context = input->user_context;
 	//set event callback
-	client->ws_event_handler = input->ws_event_handler;;
+	client->ws_event_handler = input->ws_event_handler;
 
 	//set autoreconnect
 	client->auto_reconnect = true;
@@ -1407,6 +1407,16 @@ void websocket_client_task(beken_thread_arg_t *thread_param)
 					break;
 				 }
 				 client->ping_tick_ms = bk_tick_get_ms();
+#if CONFIG_LINGXIN_AI_EN
+				 if (ws_client_recv(client) == BK_FAIL) {
+					rtos_lock_mutex(&client->mutex);
+					BK_LOGE(TAG, "Error receive data\r\n");
+					ws_disconnect(client);
+					rtos_unlock_mutex(&client->mutex);
+					break;
+				 }
+				 break;
+#else
 				 rtos_lock_mutex(&client->mutex);
 				 if (ws_client_recv(client) == BK_FAIL) {
 					BK_LOGE(TAG, "Error receive data\r\n");
@@ -1416,7 +1426,7 @@ void websocket_client_task(beken_thread_arg_t *thread_param)
 				 }
 				 rtos_unlock_mutex(&client->mutex);
 				 break;
-
+#endif
 			case WEBSOCKET_STATE_WAIT_TIMEOUT:
 				 if (!client->auto_reconnect) {
 					client->run = false;
