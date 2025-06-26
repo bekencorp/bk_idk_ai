@@ -111,6 +111,7 @@ CONFIG_ALI_MQTT=y
 # CONFIG_DEMO_TEST is not set
 # CONFIG_FTPD_UPGRADE is not set
 #@ Enable Ota Http
+CONFIG_OTA_FUNCTION=y
 CONFIG_OTA_HTTP=y
 # CONFIG_OTA_TFTP is not set
 # CONFIG_USE_APP_DEMO_VIDEO_TRANSSER is not set
@@ -426,6 +427,7 @@ CONFIG_DSP_SRC_ADD=0x130000
 # CONFIG_VFS is not set
 #@ bk vfs max file fd num
 CONFIG_VFS_MAX_FD_NUM=20
+CONFIG_VFS=y
 # end of Bk_vfs
 
 #

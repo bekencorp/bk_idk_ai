@@ -434,6 +434,7 @@ CONFIG_DSP_SRC_ADD=0x130000
 # CONFIG_VFS is not set
 #@ bk vfs max file fd num
 CONFIG_VFS_MAX_FD_NUM=20
+CONFIG_VFS=y
 # end of Bk_vfs
 
 #
@@ -911,6 +912,7 @@ CONFIG_OPENSSL_ASSERT_EXIT=y
 # CONFIG_OTA_UPDATE_DEFAULT_PARTITION is not set
 # CONFIG_OTA_UPDATE_B_PARTITION is not set
 # CONFIG_OTA_HTTPS is not set
+CONFIG_OTA_FUNCTION=y
 # end of Ota
 
 #
