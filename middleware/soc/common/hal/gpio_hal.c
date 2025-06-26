@@ -231,8 +231,12 @@ bk_err_t gpio_hal_func_unmap(gpio_hal_t *hal, gpio_id_t gpio_id)
 {
 	GPIO_RETURN_ON_INVALID_ID(gpio_id);
 	
+	/*If detected that gpio_2_func_en is set,it indicates that the GPIO
+	is being used by other peripheral,will print a warning log to indicate 
+	the risk,but the operation will continue to execute,without interrupting 
+	the process*/
 	if(gpio_hal_map_check(hal, gpio_id)) {
-		HAL_LOGW("gpio: %d is risky.Please careful!!!\r\n", gpio_id);
+		HAL_LOGW("gpio: %d is used.Please confirm unmap isn't impact is working module.!\r\n", gpio_id);
 	}
 
 	gpio_hal_sencond_function_enable(hal, gpio_id, 0);
