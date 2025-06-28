@@ -20,12 +20,8 @@
 #include "driver/flash.h"
 #endif
 #endif
+#include "bk_private/bk_ota_private.h"
 
-#ifdef CONFIG_HTTP_AB_PARTITION
-    #include "modules/ota.h"
-    #include "vendor_flash_partition.h"
-    extern part_flag update_part_flag;
-#endif
 #if CONFIG_HTTP
 #define HTTPCLIENT_MIN(x,y) (((x)<(y))?(x):(y))
 #define HTTPCLIENT_MAX(x,y) (((x)>(y))?(x):(y))
@@ -64,9 +60,6 @@ HTTP_DATA_ST *bk_http_ptr = &bk_http;
 #if HTTP_WR_TO_FLASH
 static UINT32 ota_wr_block = 0;
 #endif
-#if CONFIG_OTA_POSITION_INDEPENDENT_AB
-static uint32 ota_partition_length = 0;
-#endif
 
 // static int httpclient_parse_host(const char *url, char *host, uint32_t maxhost_len);
 static int httpclient_parse_url(const char *url, char *scheme, uint32_t max_scheme_len, char *host,
@@ -96,25 +89,6 @@ static void httpclient_base64enc(char *out, const char *in)
 	for (; i % 4;)
 		out[i++] = '=';
 	out[i] = '\0';
-}
-
-static uint32 http_get_sapp_partition_length(bk_partition_t partition)
-{
-	bk_logic_partition_t *bk_ptr = NULL;
-	uint32 ret_length;
-	
-	bk_ptr = bk_flash_partition_get_info(partition);
-
-	if(NULL == bk_ptr)
-	{
-		os_printf("get s_app partition fail! \r\n");
-
-		bk_reboot();
-	}
-
-	ret_length = bk_ptr->partition_length;
-
-	return ret_length;
 }
 
 uint32_t get_http_flash_wr_buf_max(void)
@@ -489,265 +463,7 @@ int httpclient_recv(httpclient_t *client, char *buf, int min_len, int max_len, i
 
 }
 
-#if 0
-/*
- * when bt INT effect the OTA update
- */
-#define S_WAKE_UP    (0)
-#define S_SLEEP      (1)
-#define S_POWER_OFF  (2)
-#define S_NO_BT      (3)
-
-#define ERASE_TOUCH_TIMEOUT  (3000)//ms
-#define ERASE_FLASH_TIMEOUT  (56)//ms
-#define WRITE_FLASH_TIMEOUT  (4)//ms
-
-static u32  bt_sleepend_time = -1;  //when cb return,bt is sleep ,recoeding the bt will sleep how long
-static u32  bt_cb_anchor_time = 0;    //when cb return ,record current time ;
-static u8   bt_sleep_state = S_NO_BT;  //record bt state;the default is 3(S_NO_BT);
-
-void ble_sleep_cb(uint8_t is_sleeping, uint32_t slp_period)
-{
-	GLOBAL_INT_DECLARATION();
-
-	GLOBAL_INT_DISABLE();
-
-    bt_sleep_state = is_sleeping ;
-    bt_cb_anchor_time = rtos_get_time();
-    if (is_sleeping == S_SLEEP)
-    {
-       bt_sleepend_time = bt_cb_anchor_time + slp_period/32;
-    }
-
-    GLOBAL_INT_RESTORE();
-}
-
-static int ble_callback_deal_handler(uint32_t deal_flash_time)
-{
-    uint32_t  cur_time =0;
-    uint32_t  temp_time = 0;
-    int       ret_val = 0;
-
-    cur_time = rtos_get_time();
-
-	GLOBAL_INT_DECLARATION();
-
-	GLOBAL_INT_DISABLE();
-
-    do
-    {
-        if(bt_sleep_state == S_POWER_OFF)     //poweroff
-        {
-            ret_val = 1;
-            break;
-        }
-        else if(bt_sleep_state == S_WAKE_UP) //wakeup
-        {
-            if(cur_time >= bt_cb_anchor_time)
-            {
-                temp_time = (cur_time - bt_cb_anchor_time);
-            }
-            else
-            {
-                temp_time = 0xFFFFFFFF - bt_cb_anchor_time + cur_time;
-            }
-
-            if(temp_time >= ERASE_TOUCH_TIMEOUT)
-            {
-                bt_sleep_state = S_NO_BT;
-                ret_val = 1;
-                break;
-            }
-
-            ret_val = 0;
-            break;
-        }
-        else if(bt_sleep_state == S_SLEEP) //sleep
-        {
-            if(bt_sleepend_time > bt_cb_anchor_time)
-            {
-                if(bt_sleepend_time < cur_time)
-                {
-                     ret_val = 1;
-                     break;
-                }
-                else if(cur_time < bt_cb_anchor_time)
-                {
-                     ret_val = 1;
-                     break;
-                }
-                else if((bt_sleepend_time - cur_time) >= deal_flash_time)
-                {
-                     ret_val = 1;
-                     break;
-                }
-                else
-                {
-                     ret_val = 0;
-                     break;
-                }
-            }
-            else
-            {
-                temp_time = 0;
-                if((cur_time > bt_sleepend_time)&&(bt_cb_anchor_time > cur_time))
-                {
-                     ret_val = 1;
-                     break;
-                }
-                else if(bt_cb_anchor_time <= cur_time)
-                {
-                    temp_time = 0xFFFFFFFF - cur_time + bt_sleepend_time;
-                }
-                else
-                {
-                    temp_time = bt_sleepend_time - cur_time;
-                }
-
-                if(temp_time >= deal_flash_time )
-                {
-                     ret_val = 1;
-                     break;
-                }
-                else
-                {
-                     ret_val = 0;
-                     break;
-                }
-            }
-        }
-        else
-        {
-             ret_val = 1;
-             break;
-        }
-    }while(0);
-
-    GLOBAL_INT_RESTORE();
-
-    return ret_val;
-}
-#endif
-
 #if HTTP_WR_TO_FLASH
-
-void http_flash_wr(UINT8 *src, unsigned len)
-{
-	UINT32  param;
-    UINT32  anchor_time = 0;
-    UINT32  temp_time = 0;
-    UINT8   flash_erase_ready = 0;
-
-	//GLOBAL_INT_DECLARATION();
-	if (bk_http_ptr->flash_address % 0x1000 == 0)
-    {
-        anchor_time = rtos_get_time();
-        while(1)
-        {
-            flash_erase_ready = ble_callback_deal_handler(ERASE_FLASH_TIMEOUT);
-
-            temp_time = rtos_get_time();
-            if(temp_time >= anchor_time)
-            {
-                temp_time -= anchor_time;
-            }
-            else
-            {
-                temp_time += (0xFFFFFFFF - anchor_time);
-            }
-
-            if(temp_time >= ERASE_TOUCH_TIMEOUT)
-                flash_erase_ready = 1;
-
-            //os_printf("flash_erase_ready~111 :%d\n",flash_erase_ready);
-            if(flash_erase_ready == 1)
-    	    {
-        		param = bk_http_ptr->flash_address;
-        		//GLOBAL_INT_DISABLE();
-
-#if CONFIG_FLASH_ORIGIN_API
-        		ddev_control(bk_http_ptr->flash_hdl, CMD_FLASH_ERASE_SECTOR, (void *)&param);
-#else
-#if CONFIG_OTA_POSITION_INDEPENDENT_AB
-                if((len != 0) && (((u32)bk_http_ptr->flash_address + len) <= (bk_http_ptr->pt->partition_start_addr + ota_partition_length)))
-#else
-                if((len != 0) && (((u32)bk_http_ptr->flash_address + len) <= (bk_http_ptr->pt->partition_start_addr + bk_http_ptr->pt->partition_length)))
-#endif
-                {
-                    bk_flash_erase_sector(param);
-                }
-#endif
-		      //GLOBAL_INT_RESTORE();
-                flash_erase_ready = 0;
-                break;
-            }
-            else
-            {
-                rtos_delay_milliseconds(2);
-            }
-       }
-	}
-
-#if CONFIG_OTA_POSITION_INDEPENDENT_AB
-		if (((u32)bk_http_ptr->flash_address >= bk_http_ptr->pt->partition_start_addr)
-		&& (((u32)bk_http_ptr->flash_address + len) <= (bk_http_ptr->pt->partition_start_addr + ota_partition_length)))
-#else
-	if (((u32)bk_http_ptr->flash_address >= bk_http_ptr->pt->partition_start_addr)
-		&& (((u32)bk_http_ptr->flash_address + len) <= (bk_http_ptr->pt->partition_start_addr + bk_http_ptr->pt->partition_length)))
-#endif
-		{
-            while(1)
-            {
-                flash_erase_ready = ble_callback_deal_handler(WRITE_FLASH_TIMEOUT);
-
-                temp_time = rtos_get_time();
-                if(temp_time >= anchor_time)
-                {
-                    temp_time -= anchor_time;
-                }
-                else
-                {
-                    temp_time += (0xFFFFFFFF - anchor_time);
-                }
-
-                if(temp_time >= ERASE_TOUCH_TIMEOUT)
-                    flash_erase_ready = 1;
-
-                //os_printf("flash_erase_ready~222 :%d\n",flash_erase_ready);
-                if(flash_erase_ready == 1)
-    	        {
-            		//GLOBAL_INT_DISABLE();
-#if CONFIG_FLASH_ORIGIN_API
-            		ddev_write(bk_http_ptr->flash_hdl, (char *)src, len, (u32)bk_http_ptr->flash_address);
-#else
-            		bk_flash_write_bytes(bk_http_ptr->flash_address, (uint8_t *)src, len);
-#endif
-            		//GLOBAL_INT_RESTORE();
-            		if (bk_http_ptr->wr_tmp_buf) {
-            			//GLOBAL_INT_DISABLE();
-#if CONFIG_FLASH_ORIGIN_API
-            			ddev_read(bk_http_ptr->flash_hdl, (char *)bk_http_ptr->wr_tmp_buf, len, (u32)bk_http_ptr->flash_address);
-#else
-            			bk_flash_read_bytes(bk_http_ptr->flash_address, (uint8_t *)bk_http_ptr->wr_tmp_buf, len);
-#endif
-            			//GLOBAL_INT_RESTORE();
-            			if (!os_memcmp(src, bk_http_ptr->wr_tmp_buf, len)) {
-            			} else
-            				os_printf("wr flash write err\n");
-            		}
-
-            		bk_http_ptr->flash_address += len;
-        		//os_printf("ad %x.\r\n",bk_http_ptr->flash_address);
-                    flash_erase_ready = 0;
-                    break;
-                }
-                else
-        		{
-                    rtos_delay_milliseconds(2);
-                }
-        	}
-        }
-}
 
 void http_flash_init(void)
 {
@@ -769,48 +485,9 @@ void http_flash_init(void)
 			os_printf("wr_tmp_buf malloc err\r\n");
 	}
 
-#if CONFIG_FLASH_ORIGIN_API
-	bk_http_ptr->pt = bk_flash_get_info(BK_PARTITION_OTA);
-	bk_http_ptr->flash_hdl = ddev_open(DD_DEV_TYPE_FLASH, &status, 0);
-	BK_ASSERT(DD_HANDLE_UNVALID != bk_http_ptr->flash_hdl);
-#else
-#ifndef CONFIG_HTTP_AB_PARTITION
-	bk_http_ptr->pt = bk_flash_partition_get_info(BK_PARTITION_OTA);
-#else
-#if CONFIG_OTA_POSITION_INDEPENDENT_AB
-	ota_partition_length = http_get_sapp_partition_length(BK_PARTITION_S_APP_USER);
-    if(update_part_flag == UPDATE_B_PART)
-    {
-        os_printf("UPDATE_B_PART\r\n");
-        bk_http_ptr->pt = bk_flash_partition_get_info(BK_PARTITION_S_APP_USER); //update B_parition
-    }
-    else
-    {
-        os_printf("UPDATE_A_PART\r\n");
-        bk_http_ptr->pt = bk_flash_partition_get_info(BK_PARTITION_APPLICATION);//update A_parition.
-    }
-#else
-    bk_http_ptr->pt = bk_flash_partition_get_info(BK_PARTITION_S_APP_USER);
-#endif
-
-#if CONFIG_OTA_EVADE_METHOD
-	uint8_t	download_status_flag = DOWNLOAD_START_FLAG;
-
-	ota_write_flash(BK_PARTITION_OTA_FINA_EXECUTIVE, download_status_flag, DOWNLOAD_STATUS_POS);
-#endif
-#endif
-#endif
-
 	bk_http_ptr->wr_last_len = 0;
 	ota_wr_block = 0;
-	bk_http_ptr->flash_address = bk_http_ptr->pt->partition_start_addr;
 
-#if CONFIG_FLASH_ORIGIN_API
-	bk_flash_enable_security(FLASH_PROTECT_NONE);
-#else
-	bk_flash_set_protect_type(FLASH_PROTECT_NONE);
-#endif
-	os_printf("ota write to 0x%x\r\n", bk_http_ptr->flash_address);
 }
 
 void http_flash_deinit(void)
@@ -825,37 +502,11 @@ void http_flash_deinit(void)
 
 	bk_flash_enable_security(FLASH_UNPROTECT_LAST_BLOCK);
 #else
-	bk_flash_set_protect_type(FLASH_UNPROTECT_LAST_BLOCK);
+	//bk_flash_set_protect_type(FLASH_UNPROTECT_LAST_BLOCK);
 #endif
 	os_printf("write over\r\n");
 }
-
-void http_wr_to_flash(char *page, UINT32 len)
-{
-	UINT8 *tmp;
-	UINT32 w_l = 0, i = 0;
-
-	i = 0;
-	tmp = (UINT8 *)page;
-	while (i < len) {
-		w_l = min(len - i, HTTP_FLASH_WR_BUF_MAX - bk_http_ptr->wr_last_len);
-		os_memcpy(bk_http_ptr->wr_buf + bk_http_ptr->wr_last_len, tmp + i, w_l);
-		i += w_l;
-		bk_http_ptr->wr_last_len += w_l;
-		if (bk_http_ptr->wr_last_len >= HTTP_FLASH_WR_BUF_MAX) {
-			//os_printf(".");
-#if CONFIG_OTA_TFTP//support bk ota format
-			store_block(ota_wr_block, bk_http_ptr->wr_buf, HTTP_FLASH_WR_BUF_MAX);
-			ota_wr_block++;
-#else                    //direct wrtie to flash
-			http_flash_wr(bk_http_ptr->wr_buf, HTTP_FLASH_WR_BUF_MAX);
 #endif
-			bk_http_ptr->wr_last_len = 0;
-		}
-	}
-}
-#endif
-
 
 #if CONFIG_UVC_OTA_DEMO
 static http_data_process_callback_func http_data_process_cb = NULL;
@@ -867,27 +518,18 @@ void http_data_process_register_callback(http_data_process_callback_func cb)
 
 int http_data_process(char *buf, UINT32 len, UINT32 recived, UINT32 total)
 {
+	int ret = BK_OK;
 #if CONFIG_UVC_OTA_DEMO
 	if(http_data_process_cb)
 		http_data_process_cb(buf, len, recived, total);
 	else
 #endif
 
-#if HTTP_WR_TO_FLASH
-		http_wr_to_flash(buf, len);
-		os_printf("cyg_recvlen_per:(%.2f)%%\r\n",(((float)(recived))/(total))*100);
-#else
-#if (CONFIG_SECURITY_OTA)
-	if (security_ota_parse_data(buf, len) !=0){
-		return BK_FAIL;
-	}
-
-#else
-	os_printf("d");
-#endif
+#if CONFIG_OTA_FUNCTION
+	ret = bk_ota_process_data(buf, len, recived, total);
 #endif
 
-	return BK_OK;
+	return ret;
 }
 
 int httpclient_retrieve_content(httpclient_t *client, char *data, int len, uint32_t timeout_ms,
@@ -999,10 +641,12 @@ int httpclient_retrieve_content(httpclient_t *client, char *data, int len, uint3
 		} else
 			readLen = client_data->retrieve_len;
 
-		log_debug("Total-Payload: %d Bytes; Read: %d Bytes", readLen, len);
+		os_printf("Total-Payload: %d Bytes; Read: %d Bytes", readLen, len);
 #if HTTP_WR_TO_FLASH
 		http_flash_init();
-		http_wr_to_flash(data, len);
+#endif
+#if CONFIG_OTA_FUNCTION
+	bk_ota_process_data(data, len, len,readLen);
 #endif
 #if (CONFIG_SECURITY_OTA)
 		security_ota_init();
@@ -1082,12 +726,10 @@ int httpclient_retrieve_content(httpclient_t *client, char *data, int len, uint3
 			len -= 2;
 		} else {
 			log_debug("no more (content-length)");
-#if HTTP_WR_TO_FLASH
-#if CONFIG_OTA_TFTP//support bk ota format
-			store_block(ota_wr_block, bk_http_ptr->wr_buf, bk_http_ptr->wr_last_len);
-#else                    //direct wrtie to flash
-			http_flash_wr(bk_http_ptr->wr_buf, bk_http_ptr->wr_last_len);
+#if CONFIG_OTA_FUNCTION
+			bk_ota_process_data((char*)bk_http_ptr->wr_buf, bk_http_ptr->wr_last_len, bk_http_ptr->wr_last_len,bk_http_ptr->http_total);
 #endif
+#if HTTP_WR_TO_FLASH
 			http_flash_deinit();
 #endif
 #if (CONFIG_SECURITY_OTA)

@@ -1,4 +1,10 @@
 menu "Ota"
+	config OTA_FUNCTION
+		bool "Enable do ota function"
+		default n
+		help
+			enable do ota function
+
 	config HTTP_AB_PARTITION
 		bool "Enable Http AB Partition"
 		default n

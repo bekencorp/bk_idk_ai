@@ -90,6 +90,26 @@ void get_http_ab_version(char *pcWriteBuffer, int xWriteBufferLen, int argc, cha
 #endif
 
 #if CONFIG_OTA_HTTP
+
+void http_new_ota_Command(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **argv)
+{
+	int ret = 0;
+	if (argc < 2)
+		goto HTTP_CMD_ERR;
+
+	ota_wr_destination_t  dest_id = os_strtoul(argv[2], NULL, 10);
+	os_printf("dest_id :%d \r\n", dest_id);
+	ret = bk_ota_start_download(argv[1], dest_id);
+
+	if (0 != ret)
+		os_printf("http_ota download failed.");
+
+	return;
+
+HTTP_CMD_ERR:
+	os_printf("Usage:http_ota [url:] [dest_id]\r\n");
+}
+
 void http_ota_Command(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **argv)
 {
 	int ret;
@@ -161,6 +181,7 @@ static const struct cli_command s_ota_commands[] = {
 
 #if CONFIG_OTA_HTTP
 	{"http_ota", "http_ota url", http_ota_Command},
+	{"http_new_ota", "http_ota url [dest_id]", http_new_ota_Command},
 #endif
 
 #if CONFIG_OTA_HTTPS

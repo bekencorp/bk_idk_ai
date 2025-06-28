@@ -434,7 +434,6 @@ CONFIG_DSP_SRC_ADD=0x130000
 # CONFIG_VFS is not set
 #@ bk vfs max file fd num
 CONFIG_VFS_MAX_FD_NUM=20
-CONFIG_VFS=y
 # end of Bk_vfs
 
 #
