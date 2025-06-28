@@ -9,5 +9,5 @@ Bootloader (TBC)
    bootloader和常规ota <bootloader_and_ota/index>
    ab位置无关升级<ab_position_independent_ota/index>
    安全ota升级 <bk_security_ota>
-
+   资源升级 <bk_resource_ota/index>
 
