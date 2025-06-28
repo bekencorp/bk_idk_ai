@@ -105,6 +105,7 @@ int ota_do_init_operation(void);
 void ota_do_deinit_operation(void);
 int ota_do_open_sysfile(void);
 void ota_do_umount_sysfile(void);
+ota_wr_destination_t ota_get_dest_id(void);
 
 uint32 http_get_sapp_partition_length(bk_partition_t partition);
 int ota_update_with_display_open(void);

@@ -83,13 +83,13 @@ int bk_http_ota_download(const char *uri)
 	ota_input_event_handler(EVT_OTA_START);
 
 #ifdef CONFIG_HTTP_AB_PARTITION
-	ret = bk_ota_get_current_partition();
-	OTA_LOGI("ret :0x%x \r\n",ret);
-	if(ret == EXEC_B_PART){
-		update_part_flag = UPDATE_A_PART;
-	} else{
-		update_part_flag = UPDATE_B_PART;
+#if CONFIG_OTA_EVADE_METHOD
+	if(ota_get_dest_id() == OTA_WR_TO_FLASH)
+	{
+		uint8_t	download_status_flag = DOWNLOAD_START_FLAG;
+		ota_write_flash(BK_PARTITION_OTA_FINA_EXECUTIVE, download_status_flag, DOWNLOAD_STATUS_POS);
 	}
+#endif
 #endif
 
 #if CONFIG_SYSTEM_CTRL
@@ -121,7 +121,6 @@ int bk_http_ota_download(const char *uri)
 		if(media_app_ota_disp_close() != BK_OK)
 		{
 			OTA_LOGE("disp close failed.ret:%d\r\n",ret);
-			ota_do_deinit_operation();
 			return BK_FAIL;
 		}
 	#endif
@@ -129,24 +128,27 @@ int bk_http_ota_download(const char *uri)
 		bk_wifi_ota_dtim(0);
 #endif
 	}else{
-
 #ifdef CONFIG_HTTP_AB_PARTITION
-		int ret_val = 0;
-		#ifdef CONFIG_OTA_HASH_FUNCTION
-		ret_val= ota_do_hash_check();
-		if(ret_val != BK_OK)
+		if(ota_get_dest_id() == OTA_WR_TO_FLASH)
 		{
-			OTA_LOGE("hash fail.\r\n");
-			ota_do_deinit_operation();
-			return  ret_val;
+			int ret_val = 0;
+			#ifdef CONFIG_OTA_HASH_FUNCTION
+			ret_val= ota_do_hash_check();
+			if(ret_val != BK_OK)
+			{
+				OTA_LOGE("hash fail.\r\n");
+				ota_do_deinit_operation();
+				return  ret_val;
+			}
+			#endif
+			ret_val = bk_ota_update_partition_flag(ret);
+			if(ret_val != BK_OK)
+			{
+				ota_do_deinit_operation();
+				return ret_val;
+			}
 		}
-		#endif
-		ret_val = bk_ota_update_partition_flag(ret);
-		if(ret_val != BK_OK)
-		{
-			ota_do_deinit_operation();
-			return ret_val;
-		}
+		ota_do_deinit_operation();
 		ota_input_event_handler(EVT_OTA_SUCCESS);
 #if CONFIG_OTA_DISPLAY_PICTURE_DEMO
 		if(media_app_ota_disp_close() != BK_OK)
@@ -155,7 +157,6 @@ int bk_http_ota_download(const char *uri)
 		}
 #endif
 		OTA_LOGI("ota_success.\r\n");
-		ota_do_deinit_operation();
 		bk_reboot();
 #else
 		OTA_LOGI("ota_success.\r\n");

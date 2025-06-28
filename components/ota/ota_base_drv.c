@@ -55,10 +55,6 @@ static int ota_do_init(f_ota_t* ota_ptr)
 #else
     ota_ptr->pt = bk_flash_partition_get_info(BK_PARTITION_S_APP_USER);
 #endif
-#if CONFIG_OTA_EVADE_METHOD
-	uint8_t	download_status_flag = DOWNLOAD_START_FLAG;
-	ota_write_flash(BK_PARTITION_OTA_FINA_EXECUTIVE, download_status_flag, DOWNLOAD_STATUS_POS);
-#endif
 #else
     ota_ptr->pt = bk_flash_partition_get_info(BK_PARTITION_OTA);
 #endif
@@ -306,7 +302,6 @@ static int ota_do_check_crc(f_ota_t* ota_ptr, uint32_t in_crc)
 static int ota_do_open_file(f_ota_t* ota_ptr)
 {
     ota_ptr->fd = open(ota_ptr->dest_path_name, (O_RDWR | O_CREAT ));
-
     if(ota_ptr->fd < 0)
     {
         OTA_LOGE("%s ota_ptr->fd :%d \r\n", __FUNCTION__, ota_ptr->fd);
@@ -322,7 +317,6 @@ static int ota_do_read_file(f_ota_t* ota_ptr, uint16_t len)
 {
     int ret = BK_FAIL;
 
-    OTA_LOGE("%s ota_ptr->fd :%d \r\n", __FUNCTION__, ota_ptr->fd);
     ret = read(ota_ptr->fd, ota_ptr->rd_buf, len);
     if(ret == len)
         ret = BK_OK;
@@ -337,7 +331,6 @@ static int ota_do_write_file(f_ota_t* ota_ptr, uint16_t len)
     int ret = BK_FAIL;
 
     ret = write(ota_ptr->fd, ota_ptr->wr_buf, len);
-
     if (ret == len)
     {
         // ret = ota_do_read_file(ota_ptr, len);

@@ -77,6 +77,11 @@ int ota_get_init_status(void)
 		return ota_info->fota_dl_info.init_flag;
 }
 
+ota_wr_destination_t ota_get_dest_id(void)
+{
+	return ota_info->ota_dest;
+}
+
 int ota_do_open_sysfile(void)
 {
 	int ret = BK_OK;
