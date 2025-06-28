@@ -60,7 +60,7 @@
   <project name="iot/wcn/components/micropython" path="components/micropython" revision="3c4436c860b58be3c8d0e351bbc163c16c78e4d9" upstream="bk_idk_release_ai_2.0.1" dest-branch="bk_idk_release_ai_2.0.1" groups="platform"/>
   <project name="iot/wcn/components/openssl" path="components/openssl" revision="0ccb7361a52b0960abc67de9a975326d64a0b5be" upstream="bk_idk_release_ai_2.0.1" dest-branch="bk_idk_release_ai_2.0.1" groups="wifi-host"/>
   <project name="iot/wcn/components/os_source" path="components/os_source" revision="71e1fe09bc45f964d231e6984d1af5116a501155" upstream="bk_idk_release_ai_2.0.1" dest-branch="bk_idk_release_ai_2.0.1" groups="platform"/>
-  <project name="iot/wcn/components/ota" path="components/ota" revision="c98b6faba3c9381ef8715afcf55ffeab27356605" upstream="bk_idk_release_ai_2.0.1" dest-branch="bk_idk_release_ai_2.0.1" groups="platform"/>
+  <project name="iot/wcn/components/ota" path="components/ota" revision="6366d591319e02ad352f30481c55613ad0da968e" upstream="bk_idk_release_ai_2.0.1" dest-branch="bk_idk_release_ai_2.0.1" groups="platform"/>
   <project name="iot/wcn/components/part_table" path="components/part_table" revision="078ad43699cf54ff212ee6b4e74e1d39949a2230" upstream="bk_idk_release_ai_2.0.1" dest-branch="bk_idk_release_ai_2.0.1" groups="platform"/>
   <project name="iot/wcn/components/psa_mbedtls" path="components/psa_mbedtls" revision="114522916849849fc47de917d76e5bedfa45759a" upstream="bk_idk_release_ai_2.0.1" dest-branch="bk_idk_release_ai_2.0.1" groups="platform"/>
   <project name="iot/wcn/components/qcbor" path="components/qcbor" revision="6a6a33b7ba6f61029f0cf8ad111bf1801ca1dd05" upstream="bk_idk_release_ai_2.0.1" dest-branch="bk_idk_release_ai_2.0.1" groups="platform"/>
