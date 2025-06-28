@@ -33,7 +33,8 @@ int bk_vfs_init(void) {
 	if (vfs_inited)
 		return vfs_inited > 0 ? 0 : -1;
 	vfs_inited = -1;
-	
+
+
 	ret = bk_lock_init();
 	if (ret)
 		return ret;

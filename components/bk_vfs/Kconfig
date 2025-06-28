@@ -2,10 +2,21 @@ menu "Bk_vfs"
 	config VFS
 		bool "Enable Vfs"
 		default n
-		
+
 	config VFS_MAX_FD_NUM
 			int "bk vfs max file fd num"
 			default 20
 			help
 				bk vfs max file fd num
+
+	config REMOTE_VFS_SERVER
+		depends on VFS
+		bool "Enable remote vfs server for multi CPUs using"
+		default n
+
+	config REMOTE_VFS_CLIENT
+		depends on !VFS
+		bool "Enable remote vfs client for multi CPUs using"
+		default n
+
 endmenu

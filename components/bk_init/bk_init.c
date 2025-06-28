@@ -444,5 +444,17 @@ extern int mp_do_startup(int heap_len);
 	extern bk_err_t bk_cdc_acm_startup(void);
 	bk_cdc_acm_startup();
 #endif
+
+
+#if(CONFIG_REMOTE_VFS_SERVER && CONFIG_SYS_CPU1)
+	extern bk_err_t bk_vfs_svr_init(void);
+	int ret = bk_vfs_svr_init();
+	if(ret != BK_OK)
+	{
+		BK_LOGE("vfs", "vfs svr create failed %d.\r\n", ret);
+	}
+#endif
+
+
 	return 0;
 }

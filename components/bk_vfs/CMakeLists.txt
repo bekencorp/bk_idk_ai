@@ -12,6 +12,19 @@ if(CONFIG_VFS)
 		"fatfs_adapter.c"
 		"littlefs_adapter.c"
 		)
+if (CONFIG_REMOTE_VFS_SERVER)
+	list(APPEND srcs
+		"bk_remote_vfs_server.c"
+		)
+endif()
+endif()
+
+
+if(CONFIG_REMOTE_VFS_CLIENT)
+	list(APPEND incs .)
+	list(APPEND srcs
+		"bk_remote_vfs_client.c"
+		)
 endif()
 
 armino_component_register(SRCS "${srcs}"

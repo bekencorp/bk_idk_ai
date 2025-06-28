@@ -144,7 +144,7 @@ if (CONFIG_FATFS)
 	list(APPEND srcs "cli_fatfs.c")
 endif()
 
-if (CONFIG_VFS)
+if (CONFIG_VFS OR CONFIG_REMOTE_VFS_CLIENT)
 	list(APPEND srcs
 		cli_vfs.c
 	)

@@ -1,7 +1,5 @@
 #include "cli.h"
 
-#if CONFIG_VFS
-
 #include <os/os.h>
 #include <os/mem.h>
 #include <os/str.h>
@@ -201,7 +199,8 @@ static int test_write_vfs(char *file_name, char *content)
 	}
 	
 	ret = write(fd, content, strlen(content) + 1);
-	//os_printf("write to %s, ret=%d\n", file_name, ret);
+	os_printf("write to %s, ret=%d\n", file_name, ret);
+
 	close(fd);
 	return ret;
 }
@@ -212,6 +211,128 @@ static int test_unlink_vfs(char *file_name)
 
 	ret = unlink(file_name);
 	return ret;
+}
+
+
+#define TEST_PERF_FILE_NAME     "/perf_test.bin"
+#define VFS_TEST_MAX_FILE_LEN   20
+
+static void test_vfs_perf_with_param(uint32_t TEST_BUF_SIZE, uint32_t TEST_ITERATIONS) {
+    int fd;        // File object
+    int res;
+    uint32_t start_time, end_time;
+    uint8_t *buffer= os_malloc(TEST_BUF_SIZE);
+    float f_perf_speed = 0;
+    uint32_t total_time = 0;
+
+    char cFileName[VFS_TEST_MAX_FILE_LEN];
+    sprintf(cFileName, "%s", TEST_PERF_FILE_NAME);
+    CLI_LOGI("open \"%s\"\r\n", cFileName);
+
+    if(buffer == NULL){
+        CLI_LOGE("%s os_malloc fail, size = %d. \n", __func__, TEST_BUF_SIZE);
+        return;
+    }
+
+    // Initialize test buffer with pattern
+    for(int i=0; i<TEST_BUF_SIZE; i++) {
+        buffer[i] = (uint8_t)(i % 256);
+    }
+
+    // Test write performance
+    start_time = rtos_get_time();
+    for(int i=0; i<TEST_ITERATIONS; i++) {
+        fd = open(cFileName, O_RDWR | O_CREAT | O_APPEND);
+        if(fd < 0) {
+            CLI_LOGE("Open for write failed, fd: %d\n", fd);
+            break;
+        }
+
+        res = write(fd, buffer, TEST_BUF_SIZE);
+        if(res != TEST_BUF_SIZE) {
+            CLI_LOGE("Write failed, fd: %d, bytes: %d\n", fd, res);
+        }
+
+        close(fd);
+    }
+    end_time = rtos_get_time();
+    CLI_LOGI(">>> Write test: %d iterations, %d bytes each, total time: %d ms\n", 
+             TEST_ITERATIONS, TEST_BUF_SIZE, end_time - start_time);
+
+    total_time = end_time - start_time;
+    f_perf_speed = (TEST_BUF_SIZE * TEST_ITERATIONS) / (total_time / 1000.0f) / 1024;
+    if(f_perf_speed < 0) {
+        CLI_LOGE("[ERROR] Write test failed\n");
+    } else {
+        CLI_LOGI("===== Write Throughput: %.2f KB/s======\n", f_perf_speed);
+    }
+
+
+    // Test read performance
+    start_time = rtos_get_time();
+    for(int i=0; i<TEST_ITERATIONS; i++) {
+        fd = open(cFileName, O_RDONLY);
+        if(fd < 0) {
+            CLI_LOGE("Open for read failed, fd: %d\n", fd);
+            break;
+        }
+
+        res = read(fd, buffer, TEST_BUF_SIZE);
+        if(res != TEST_BUF_SIZE) {
+            CLI_LOGE("Read failed, fd: %d, bytes: %d\n", fd, res);
+        }
+
+        close(fd);
+    }
+    end_time = rtos_get_time();
+    CLI_LOGI(">>> Read test: %d iterations, %d bytes each, total time: %d ms\n", 
+             TEST_ITERATIONS, TEST_BUF_SIZE, end_time - start_time);
+
+    total_time = end_time - start_time;
+    f_perf_speed = (TEST_BUF_SIZE * TEST_ITERATIONS) / (total_time / 1000.0f) / 1024;
+    if(f_perf_speed < 0) {
+        CLI_LOGE("[ERROR] Read test failed\n");
+    } else {
+        CLI_LOGI("===== Read Throughput: %.2f KB/s======\n", f_perf_speed);
+    }
+    os_free(buffer);
+}
+
+static void test_vfs_performance(void) {
+	BK_DUMP_OUT("+++++++++++++++++++++++++\r\n");
+	test_vfs_perf_with_param(102400, 100);
+	rtos_delay_milliseconds(50);
+	BK_DUMP_OUT("-------------------------\r\n\r\n\r\n\r\n");
+
+	BK_DUMP_OUT("+++++++++++++++++++++++++\r\n");
+	test_vfs_perf_with_param(10240, 100);
+	rtos_delay_milliseconds(50);
+	BK_DUMP_OUT("-------------------------\r\n\r\n\r\n\r\n");
+
+	BK_DUMP_OUT("+++++++++++++++++++++++++\r\n");
+	test_vfs_perf_with_param(8192, 100);
+	rtos_delay_milliseconds(50);
+	BK_DUMP_OUT("-------------------------\r\n\r\n\r\n\r\n");
+
+	BK_DUMP_OUT("+++++++++++++++++++++++++\r\n");
+	test_vfs_perf_with_param(2048, 100);
+	rtos_delay_milliseconds(50);
+	BK_DUMP_OUT("-------------------------\r\n\r\n\r\n\r\n");
+
+	BK_DUMP_OUT("+++++++++++++++++++++++++\r\n");
+	test_vfs_perf_with_param(1024, 100);
+	rtos_delay_milliseconds(50);
+	BK_DUMP_OUT("-------------------------\r\n\r\n\r\n\r\n");
+
+	BK_DUMP_OUT("+++++++++++++++++++++++++\r\n");
+	test_vfs_perf_with_param(640, 100);
+	rtos_delay_milliseconds(50);
+	BK_DUMP_OUT("-------------------------\r\n\r\n\r\n\r\n");
+
+	BK_DUMP_OUT("+++++++++++++++++++++++++\r\n");
+	test_vfs_perf_with_param(102400, 100);
+	rtos_delay_milliseconds(50);
+	BK_DUMP_OUT("-------------------------\r\n\r\n\r\n\r\n");
 }
 
 
@@ -307,6 +428,10 @@ void cli_vfs_test(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **arg
 
 		ret = test_unlink_vfs(file_name);
 		os_printf("unlink ret=%d\n", ret);
+	} else if (os_strcmp(argv[1], "perf") == 0) {
+		os_printf("==== vfs perf enter ====\r\n");
+		test_vfs_performance();
+		os_printf("==== vfs perf exit ====\r\n");
 	} else {
 		os_printf("vfs unknown sub cmd %s\n", argv[1]);
 	}
@@ -322,4 +447,3 @@ int cli_vfs_init(void)
 	return cli_register_commands(vfs_commands, VFS_CMD_CNT);
 }
 
-#endif

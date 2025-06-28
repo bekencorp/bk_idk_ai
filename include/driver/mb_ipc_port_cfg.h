@@ -39,6 +39,7 @@ typedef enum
 	
 	//   servers resided in cpu1.
 	CPU1_SERVER_ID_START = IPC_SVR_ID_START(1),
+	VFS_SERVER,
 	
 	//   servers resided in cpu2.
 	CPU2_SERVER_ID_START = IPC_SVR_ID_START(2),
@@ -50,6 +51,7 @@ typedef enum
 #if CONFIG_SYS_CPU0
 	//   clients resided in cpu0
 	CPU0_CLIENT_ID_START = IPC_CLIENT_ID_START(0),
+	VFS_CLIENT,
 #endif
 	
 #if CONFIG_SYS_CPU1
@@ -62,6 +64,7 @@ typedef enum
 	//   clients resided in cpu2
 	CPU2_CLIENT_ID_START = IPC_CLIENT_ID_START(2),
 	FLASH_CLIENT,
+	VFS_CLIENT,
 #endif
 
 } mb_ipc_client_id_t;

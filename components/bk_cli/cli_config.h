@@ -219,7 +219,7 @@ extern "C" {
     
 #endif
 
-#if (CONFIG_VFS_TEST && (CONFIG_SYS_CPU0))
+#if (CONFIG_VFS_TEST)
 #define CLI_CFG_VFS          1
 #else
 #define CLI_CFG_VFS          0
