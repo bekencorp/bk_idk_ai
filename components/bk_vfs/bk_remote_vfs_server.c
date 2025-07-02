@@ -320,7 +320,7 @@ static void vfs_read_handler(u32 handle, vfs_cmd_t *cmd_buff, u8 connect_id)
 
 static void vfs_write_handler(u32 handle, vfs_cmd_t *cmd_buff)
 {
-	u16     cpy_len, write_len = 0;
+	u32     cpy_len, write_len = 0;
 	int     write_status = BK_OK;
 	int     line_num = 0;
 
@@ -378,6 +378,32 @@ static void vfs_write_handler(u32 handle, vfs_cmd_t *cmd_buff)
 		TRACE_E(TAG, "0x%x, write fd:%d, ret_status=%d, ret_val= %d, line=%d.\r\n", handle, cmd_buff->fd, cmd_buff->ret_status, ret_val, line_num);
 
 
+	(void)ret_val;
+}
+
+
+static void vfs_stat_handler(u32 handle, vfs_cmd_t *cmd_buff)
+{
+	int ret_val = 0;
+	char *path =  os_malloc( strlen(cmd_buff->path) + 1 );
+
+	strncpy(path, cmd_buff->path, (strlen(cmd_buff->path)+1));
+
+#if CONFIG_CACHE_ENABLE
+	flush_dcache(cmd_buff->buff, sizeof(struct stat));
+#endif
+
+	ret_val = stat(path, (struct stat *)cmd_buff->buff);
+
+	cmd_buff->ret_status = ret_val;
+	TRACE_I(TAG, "%s @%d, 0x%x stat debug, cmd_buff->ret_status=%d, path=%s  !\r\n", __FUNCTION__, __LINE__, handle, cmd_buff->ret_status, path);
+
+
+	ret_val = mb_ipc_send(handle, VFS_CMD_STAT, (u8 *)cmd_buff, sizeof(vfs_cmd_t), VFS_SVR_WAIT_TIME);
+	if(ret_val != 0)
+		TRACE_E(TAG, "0x%x, vfs_stat: ret = %d.\r\n", handle, ret_val);
+
+	os_free(path);
 	(void)ret_val;
 }
 
@@ -445,6 +471,10 @@ static void vfs_cmd_handler(u32 handle, u8 connect_id)
 			
 		case VFS_CMD_WRITE:
 			vfs_write_handler(handle, &cmd_buff);
+			break;
+
+		case VFS_CMD_STAT:
+			vfs_stat_handler(handle, &cmd_buff);
 			break;
 
 		default:

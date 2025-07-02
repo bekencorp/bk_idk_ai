@@ -781,6 +781,91 @@ int bk_vfs_unlink(const char *pathname)
 }
 
 
+static bk_err_t remote_vfs_stat(const char *pathname, struct stat *statbuf)
+{
+	int  ret_val = BK_FAIL;
+	int  line_num = 0;
+	vfs_cmd_t	cmd_buff;
+
+	memset(&cmd_buff, 0, sizeof(cmd_buff));
+
+	cmd_buff.path =  os_malloc( strlen(pathname) + 1 );
+	strncpy(cmd_buff.path, pathname, (strlen(pathname)+1));
+	cmd_buff.buff = (u8 *)statbuf;
+
+
+
+	rtos_lock_mutex(&vfs_mutex);
+
+	int ret = mb_ipc_send(vfs_socket_handle, VFS_CMD_STAT,
+		(u8 *)&cmd_buff, sizeof(cmd_buff), VFS_OPERATE_TIMEOUT);
+	if(ret != 0)
+	{
+		line_num = __LINE__;
+		goto stat_exit;
+	}
+
+	u8   user_cmd = INVALID_USER_CMD_ID;
+	
+	memset(&cmd_buff, 0, sizeof(cmd_buff));
+
+	ret = mb_ipc_recv(vfs_socket_handle, &user_cmd, (u8 *)&cmd_buff, 
+		sizeof(cmd_buff), VFS_OPERATE_TIMEOUT);
+
+#if CONFIG_CACHE_ENABLE
+	flush_dcache(cmd_buff->buff, sizeof(struct stat));
+#endif
+
+	if(ret != sizeof(cmd_buff))
+	{
+		line_num = __LINE__;
+		goto stat_exit;
+	}
+
+	if(user_cmd != VFS_CMD_STAT)
+	{
+		line_num = __LINE__;
+		ret = user_cmd;
+		goto stat_exit;
+	}
+
+	if(cmd_buff.ret_status != BK_OK)
+	{
+		line_num = __LINE__;
+		ret = cmd_buff.ret_status;
+
+		goto stat_exit;
+	}
+
+	ret_val = cmd_buff.ret_status;
+
+stat_exit:
+
+	rtos_unlock_mutex(&vfs_mutex);
+
+#if LOCAL_TRACE
+	if(ret_val != BK_OK)
+		BK_LOGE(TAG, "%s @%d, ret=%d.\r\n", __FUNCTION__, line_num, ret);
+#endif
+
+	return ret_val;
+}
+
+
+int bk_vfs_stat(const char *pathname, struct stat *statbuf)
+{
+	int  ret_val = BK_FAIL;
+
+	if(bk_vfs_driver_init() != BK_OK)
+		return BK_FAIL;
+
+	ret_val = remote_vfs_stat(pathname, statbuf);
+
+	return ret_val;
+
+}
+
+
 bool bk_vfs_is_driver_inited()
 {
 	return s_vfs_client_init;

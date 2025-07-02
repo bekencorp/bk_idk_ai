@@ -12,12 +12,12 @@ enum
 	VFS_CMD_WRITE,
 	VFS_CMD_CLOSE,
 	VFS_CMD_UMOUNT,
+	VFS_CMD_STAT,
 } ;
 
 
 //const char *path, int oflag
 //int fd, void *buf, size_t count
-
 
 typedef struct
 {
@@ -26,7 +26,7 @@ typedef struct
 	int     fd;
 	u8      * buff;
 	u32     count;
-	int16   ret_status;
+	int     ret_status;
 	u32     crc;
 } vfs_cmd_t;
 

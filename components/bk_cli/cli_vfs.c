@@ -214,6 +214,19 @@ static int test_unlink_vfs(char *file_name)
 }
 
 
+static int test_stat_vfs(const char *pathname)
+{
+	int ret;
+
+	struct stat statbuf;
+
+	ret = stat(pathname, &statbuf);
+
+	os_printf("statbuf->st_size =%d, statbuf->st_mode = %d \r\n", statbuf.st_size , statbuf.st_mode);
+	return ret;
+}
+
+
 #define TEST_PERF_FILE_NAME     "/perf_test.bin"
 #define VFS_TEST_MAX_FILE_LEN   20
 
@@ -428,6 +441,19 @@ void cli_vfs_test(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **arg
 
 		ret = test_unlink_vfs(file_name);
 		os_printf("unlink ret=%d\n", ret);
+
+	} else if (os_strcmp(argv[1], "stat") == 0) {
+		char *path_name;
+		
+		if (argc < 3) {
+			os_printf("usage : vfs stat FULL_PATH_NAME\n");
+			return;
+		}
+		path_name = argv[2];
+
+		ret = test_stat_vfs(path_name);
+		os_printf("stat ret=%d\n", ret);
+
 	} else if (os_strcmp(argv[1], "perf") == 0) {
 		os_printf("==== vfs perf enter ====\r\n");
 		test_vfs_performance();
