@@ -15,6 +15,7 @@
 
 bk_usb_driver_comprehensive_ops cdc_usb_driver;
 
+static bool stop_tx_when_restore = false;
 static uint32_t acm_cnt = 0;
 static uint8_t *g_rx_buf_temp = NULL;
 
@@ -370,7 +371,15 @@ int32_t bk_cdc_acm_io_write_data(IPC_CDC_DATA_T *p_cdc_data)
 		bk_acm_trigger_tx();
 		ret = usbh_cdc_acm_bulk_out_transfer(acm_device, buf, tx_len, timeout);
 		if(ret != tx_len)
+		{
 			USB_CDC_LOGE("bk_cdc_acm_io_write_data fail, ret %d\r\n", ret);
+			if ((ret == -110) || (ret == -116))
+			{
+				bk_usb_cdc_send_ipc_cmd(CPU1_NOTIFY_RESTORE);
+				stop_tx_when_restore = true;
+				break;
+			}
+		}
 
 		rtos_delay_milliseconds(2);
 	}
@@ -529,6 +538,7 @@ void bk_cdc_acm_main(void)
 			{
 				case ACM_OPEN_IND:
 					bk_usb_cdc_open_ind();
+					stop_tx_when_restore = false;
 					break;
 				case ACM_INIT_IND:
 					bk_usb_cdc_init_ind();
@@ -625,8 +635,10 @@ void bk_cdc_acm_txmain(void)
 			switch (msg.type)
 			{
 				case ACM_BULKOUT_IND:
-					bk_cdc_acm_io_write_t(NULL);
-					break;
+					{
+						if (!stop_tx_when_restore)
+							bk_cdc_acm_io_write_t(NULL);
+					}break;
 				default:
 					break;
 			}

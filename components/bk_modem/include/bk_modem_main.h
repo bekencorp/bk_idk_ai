@@ -51,6 +51,7 @@ enum bk_modem_ppp_stop_reason_e
     NO_CARRIER_STOP,
     ABNORMAL_STOP,
     DSIC_STOP,
+    RESTORE_STOP,
 };
 
 typedef struct bus_message 

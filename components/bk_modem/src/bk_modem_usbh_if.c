@@ -63,6 +63,17 @@ void bk_modem_usbh_disconn_ind(void)
 	}
 }
 
+void bk_modem_usbh_restore_ind(void)
+{
+	if (g_modem_usb_state != MODEM_USB_DISCONN)
+	{
+		LOGI("[+]%s\n", __func__);
+		bk_modem_set_state(PPP_STOP);
+		bk_modem_send_msg(MSG_PPP_STOP, RESTORE_STOP, 0, NULL);
+		g_modem_usb_state = MODEM_USB_DISCONN;
+	}
+}
+
 uint8_t bk_modem_get_mode(void)
 {
 	if (bk_modem_env.bk_modem_ppp_mode == PPP_CMD_MODE)
@@ -81,7 +92,7 @@ uint8_t bk_modem_get_mode(void)
 void bk_modem_usbh_close(void)
 {
 	bk_usb_cdc_close();
-	g_modem_usb_state = MODEM_USB_IDLE;
+	//g_modem_usb_state = MODEM_USB_IDLE;
 }
 
 void bk_modem_usbh_bulkout_ind(char *p_tx, uint32_t l_tx)

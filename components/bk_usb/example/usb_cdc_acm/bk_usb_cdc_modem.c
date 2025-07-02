@@ -21,6 +21,7 @@
 #if (CONFIG_BK_MODEM)
 extern void bk_modem_usbh_conn_ind(uint32_t cnt);
 extern void bk_modem_usbh_disconn_ind(void);
+extern void bk_modem_usbh_restore_ind(void);
 extern void bk_modem_usbh_close(void);
 extern void bk_modem_usbh_bulkout_ind(char *p_tx, uint32_t l_tx);
 extern void bk_modem_usbh_bulkin_ind(uint8_t *p_rx, uint32_t l_rx);
@@ -31,6 +32,7 @@ extern uint8_t bk_modem_get_mode(void);
 
 void bk_modem_usbh_conn_ind(uint32_t cnt){ }
 void bk_modem_usbh_disconn_ind(void){ }
+void bk_modem_usbh_restore_ind(void){ }
 void bk_modem_usbh_close(void){ }
 void bk_modem_usbh_bulkout_ind(char *p_tx, uint32_t l_tx){ }
 void bk_modem_usbh_bulkin_ind(uint8_t *p_rx, uint32_t l_rx){ }
@@ -166,6 +168,11 @@ void bk_cdc_acm_bulkin_data(void)
 	cdc_send_rxmsg(CDC_STATUS_BULKIN_DATA, 0);
 }
 
+void bk_cdc_acm_restore()
+{
+	bk_modem_usbh_restore_ind();
+}
+
 void bk_cdc_acm_state_notify(CDC_STATUS_t * dev_state)
 {
 	uint32_t state = dev_state->status;
@@ -201,6 +208,8 @@ void bk_usb_cdc_rcv_notify_cp0(IPC_CDC_DATA_T *p)
 		case CPU1_UPLOAD_USB_CDC_DATA:
 			bk_cdc_acm_bulkin_data();
 			break;
+		case CPU1_NOTIFY_RESTORE:
+			bk_cdc_acm_restore();
 			break;
 		default:
 			break;
@@ -245,7 +254,8 @@ static int32_t bk_cdc_acm_modem_write_handle(char *p_tx, uint32_t l_tx)
 			rd = t_rd;
 	}
 
-	uint8_t segment_cnt = (l_tx + CDC_TX_MAX_SIZE - 1)/CDC_TX_MAX_SIZE;
+	// Sens a null pack if the tx length is a multiple of CDC_TX_MAX_SIZE.
+	uint8_t segment_cnt = l_tx / CDC_TX_MAX_SIZE + 1;
 	uint32_t ops = 0;
 	int data_cnt = 0;
 	uint32_t data_len = 0;

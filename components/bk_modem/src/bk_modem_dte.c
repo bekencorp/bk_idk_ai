@@ -358,6 +358,23 @@ void bk_modem_dte_handle_ppp_stop(BUS_MSG_T *msg)
             bk_modem_set_state(WAIT_MODEM_CONN);       
         }
     }
+    else if (stop_reason == RESTORE_STOP)
+    {
+        if (bk_modem_netif_stop_ppp() != BK_OK)
+        {
+            temp_flag = 6;
+            //goto fail;
+        }
+
+        bk_modem_netif_destroy_ppp();
+
+        bk_modem_usbh_close();
+        bk_modem_power_off_modem();
+        rtos_delay_milliseconds(2000);
+        bk_modem_set_state(WAIT_MODEM_CONN);
+        bk_modem_power_on_modem();
+        bk_modem_usbh_poweron_ind();
+    }
 
     BK_MODEM_LOGI("%s: ppp stop reason %d, old_state %d state %d\r\n", __func__, stop_reason, old_state, bk_modem_get_state());
 
