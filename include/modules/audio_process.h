@@ -126,6 +126,16 @@ typedef bk_err_t (*bk_aud_intf_update_sys_config_cb_t)(app_aud_sys_config_t *sys
 typedef bk_err_t (*bk_aud_intf_update_aec_config_cb_t)(app_aud_aec_config_t *aec_config_ptr);
 typedef bk_err_t (*bk_aud_intf_update_ul_eq_para_cb_t)(app_eq_t *ul_eq_para_ptr);
 typedef bk_err_t (*bk_aud_intf_update_dl_eq_para_cb_t)(app_eq_t *dl_eq_para_ptr);
+#define VAD_DELAY_BUF_NUM 32
+
+typedef struct {
+    int16_t vad_delay_buf[VAD_DELAY_BUF_NUM*320];
+    uint32_t read_ptr;
+    uint32_t write_ptr;
+    int16_t vad_flag[VAD_DELAY_BUF_NUM];
+    uint32_t vad_read_ptr;
+    uint32_t vad_write_ptr;
+} vad_delay_ring_buf_t;
 extern app_aud_para_t aud_para;
 
 void app_aud_eq_init(app_eq_t  *cust_eq_coe_ptr, uint32_t eq_id);
@@ -133,10 +143,11 @@ void app_aud_eq_process(int16_t *buff, uint16_t size, uint32 eq_id);
 bk_err_t audio_para_init(app_aud_para_t *aud_para_ptr);
 void voice_dl_process(int16 *buf, uint32 sample_points);
 void voice_process_init();
-void voice_ul_post_process(int16 *buf, uint32 sample_points);
+void voice_ul_post_process(int16 *buf, uint32 sample_points,int16 vad_flag,int16 *debug_buf);
 void voice_ul_pre_process(int16 *buf, uint32 sample_points);
 app_aud_para_t * get_app_aud_cust_para(void);
 void aud_tras_update_tx_size(int tx_size);
+void vad_delay_ring_buf_init(uint32_t samp_rate_points,uint32_t delay_num);
 #ifdef __cplusplus
 }
 #endif
