@@ -236,6 +236,7 @@ static int wpa_supplicant_ctrl_iface_select_network(
 	wpa_s->scan_min_time.usec = 0;
 
 #if defined(BK_SUPPLICANT) && defined(CONFIG_AUTO_RECONNECT)
+	wpa_s->notified_disconn = false;
 	/* reinit count */
 	if (wpa_s->auto_reconnect_max_count != 0)
 		wpa_s->auto_reconnect_count = wpa_s->auto_reconnect_max_count;

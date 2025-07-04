@@ -1574,6 +1574,10 @@ int wpa_supplicant_req_scan(struct wpa_supplicant *wpa_s, int sec, int usec)
 			wpa_s->auto_reconnect_max_count != 0) {
 			WPA_LOGI("%s: remain count %d\n", __func__, wpa_s->auto_reconnect_count);
 			if (wpa_s->auto_reconnect_count > 0) {
+				wifi_linkstate_reason_t info;
+				info.state = WIFI_LINKSTATE_STA_CONNECTING;
+				info.reason_code = WIFI_REASON_MAX;
+				mhdr_set_station_status(info);
 				wpa_s->auto_reconnect_count--;
 				eloop_register_timeout(sec, usec, wpa_supplicant_scan, wpa_s, NULL);
 			} else if (wpa_s->auto_reconnect_count == 0) {

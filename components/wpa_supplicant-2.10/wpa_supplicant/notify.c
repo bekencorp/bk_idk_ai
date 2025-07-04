@@ -328,33 +328,41 @@ void wpas_notify_disconnected(struct wpa_supplicant *wpa_s)
 	wifi_linkstate_reason_t state = mhdr_get_station_status();
 	bool local_generated = !!(wpa_s->disconnect_reason < 0);
 
-	/* negative reason code for local generated */
-	u16 reason = wpa_s->disconnect_reason < 0 ?
-		-wpa_s->disconnect_reason : wpa_s->disconnect_reason;
-
-	// take password wrong in action: wpas_notify_psk_mismatch set mac status in advance.
-	if (state.state == WIFI_LINKSTATE_STA_DISCONNECTED &&
-		(state.reason_code == WIFI_REASON_WRONG_PASSWORD ||
-		state.reason_code == WIFI_REASON_NO_AP_FOUND)) {
-		/* do nothing, just keep WIFI_REASON_WRONG_PASSWORD as its reason code. */
-		/* When fast connect, clean fast_connnect_set flag */
-		g_sta_param_ptr->fast_connect_set = 0;
-	} else {
-		state.reason_code = reason;
-		state.state = WIFI_LINKSTATE_STA_DISCONNECTED;
-	}
-	/* set mac status */
-	mhdr_set_station_status(state);
-
 #if defined(BK_SUPPLICANT) && defined(CONFIG_AUTO_RECONNECT)
-	if (!wpa_s->reconnect)
+	if (wpa_s->notified_disconn == false)
 #endif
 	{
-		sta_disconnected.local_generated = local_generated;
-		sta_disconnected.disconnect_reason = state.reason_code;
-		BK_LOG_ON_ERR(bk_event_post(EVENT_MOD_WIFI, EVENT_WIFI_STA_DISCONNECTED,
-				&sta_disconnected, sizeof(sta_disconnected), BEKEN_NEVER_TIMEOUT));
+		/* negative reason code for local generated */
+		u16 reason = wpa_s->disconnect_reason < 0 ?
+			-wpa_s->disconnect_reason : wpa_s->disconnect_reason;
+
+		// take password wrong in action: wpas_notify_psk_mismatch set mac status in advance.
+		if (state.state == WIFI_LINKSTATE_STA_DISCONNECTED &&
+			(state.reason_code == WIFI_REASON_WRONG_PASSWORD ||
+			state.reason_code == WIFI_REASON_NO_AP_FOUND)) {
+			/* do nothing, just keep WIFI_REASON_WRONG_PASSWORD as its reason code. */
+			/* When fast connect, clean fast_connnect_set flag */
+			g_sta_param_ptr->fast_connect_set = 0;
+		} else {
+			state.reason_code = reason;
+			state.state = WIFI_LINKSTATE_STA_DISCONNECTED;
+		}
+		/* set mac status */
+		mhdr_set_station_status(state);
+
+#if defined(BK_SUPPLICANT) && defined(CONFIG_AUTO_RECONNECT)
+		if (!wpa_s->reconnect)
+#endif
+		{
+			sta_disconnected.local_generated = local_generated;
+			sta_disconnected.disconnect_reason = state.reason_code;
+			BK_LOG_ON_ERR(bk_event_post(EVENT_MOD_WIFI, EVENT_WIFI_STA_DISCONNECTED,
+					&sta_disconnected, sizeof(sta_disconnected), BEKEN_NEVER_TIMEOUT));
+		}
 	}
+#if defined(BK_SUPPLICANT) && defined(CONFIG_AUTO_RECONNECT)
+	wpa_s->notified_disconn = true;
+#endif
 }
 #endif
 extern wifi_connect_tick_t sta_tick;
