@@ -1091,13 +1091,13 @@ bk_err_t websocket_client_set_uri(transport client, const char *uri)
 	memset(client->config, 0, sizeof(websocket_config_t));
 
 	if (puri.field_data[UF_SCHEMA].len) {
-		if (NULL == (client->config->scheme = (char *)os_zalloc(puri.field_data[UF_SCHEMA].len))) {
+		if (NULL == (client->config->scheme = (char *)os_zalloc(puri.field_data[UF_SCHEMA].len + 1))) {
 			BK_LOGE(TAG, "alloc scheme fail\r\n");
 			return BK_FAIL;
 		}
 		os_strncpy(client->config->scheme, uri + puri.field_data[UF_SCHEMA].off, puri.field_data[UF_SCHEMA].len);
-		//client->config->scheme[puri.field_data[UF_SCHEMA].len] = '\0';
-		os_printf("%s scheme:%s len:%d\r\n", __func__, client->config->scheme, puri.field_data[UF_SCHEMA].len);
+		client->config->scheme[puri.field_data[UF_SCHEMA].len] = '\0';
+		BK_LOGI(TAG, "%s scheme:%s len:%d\r\n", __func__, client->config->scheme, puri.field_data[UF_SCHEMA].len);
 	}
 
 	if (puri.field_data[UF_HOST].len) {
