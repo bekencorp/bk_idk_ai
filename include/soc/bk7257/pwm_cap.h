@@ -18,7 +18,7 @@
 extern "C" {
 #endif
 
-#define SOC_PWM_UNIT_NUM               2
+#define SOC_PWM_UNIT_NUM               1
 #define SOC_PWM_CHAN_NUM_PER_UNIT      6
 #define SOC_PWM_CHAN_NUM_PER_GROUP     2
 #define SOC_PWM_GROUP_NUM              3

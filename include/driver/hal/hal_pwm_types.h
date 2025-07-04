@@ -27,6 +27,7 @@ typedef enum
     PWM_MODE_CAPTUR = 2,
 }pwm_mode_t;
 
+//some chip don't have 12 PWM channels 
 typedef enum {
 	PWM_ID_0 = 0, /**< pwm id 0 */
 	PWM_ID_1,     /**< pwm id 1 */
