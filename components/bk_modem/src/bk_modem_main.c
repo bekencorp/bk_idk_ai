@@ -121,9 +121,9 @@ void bk_modem_del_resource(void)
     #endif    
 }
 
-void bk_modem_deinit(void)
+bk_err_t bk_modem_deinit(void)
 {
-    BK_MODEM_LOGI("%s \r\n", __func__);
+    BK_MODEM_LOGW("%s: status %d \r\n", __func__, bk_modem_status);
 
     if (bk_modem_status == 1)
     {
@@ -141,13 +141,15 @@ void bk_modem_deinit(void)
     {
         BK_MODEM_LOGE("bk modem already close, no need close again\r\n");
     }
+
+    return BK_OK;
 }
 
 bk_err_t bk_modem_init(void)
 {
     int ret;
 
-    BK_MODEM_LOGI("%s: status %d \r\n", __func__, bk_modem_status);
+    BK_MODEM_LOGW("%s: status %d \r\n", __func__, bk_modem_status);
 
     if (bk_modem_status == 1)
     {

@@ -59,10 +59,10 @@ static void on_ppp_status_changed(ppp_pcb *pcb, int err_code, void *ctx)
     switch (err_code) {
         case PPPERR_NONE:
             event_data.netif_if = NETIF_IF_PPP;
-            BK_MODEM_LOGI("Connected\r\n");
-            BK_MODEM_LOGI("IP address: %s\r\n", ip4addr_ntoa(netif_ip4_addr(netif)));
-            BK_MODEM_LOGI("Gateway: %s\r\n", ip4addr_ntoa(netif_ip4_gw(netif)));
-            BK_MODEM_LOGI("Netmask: %s\r\n", ip4addr_ntoa(netif_ip4_netmask(netif)));
+            BK_MODEM_LOGW("Connected\r\n");
+            BK_MODEM_LOGW("IP address: %s\r\n", ip4addr_ntoa(netif_ip4_addr(netif)));
+            BK_MODEM_LOGW("Gateway: %s\r\n", ip4addr_ntoa(netif_ip4_gw(netif)));
+            BK_MODEM_LOGW("Netmask: %s\r\n", ip4addr_ntoa(netif_ip4_netmask(netif)));
 #if IP_NAPT
 extern const ip_addr_t *sta_dns;
             sta_dns = dns_getserver(0);
@@ -214,7 +214,7 @@ int bk_modem_ppp_netif_event_cb(void *arg, event_module_t event_module,
     case EVENT_NETIF_GOT_IP4:
 		got_ip = (netif_event_got_ip4_t *)event_data;
 		if (got_ip->netif_if == NETIF_IF_PPP)
-			BK_MODEM_LOGI("BK PPP got ip\r\n");
+			BK_MODEM_LOGW("BK PPP got ip\r\n");
 		break;
 	default:
 		break;

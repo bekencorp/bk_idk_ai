@@ -15,6 +15,7 @@
 #include "cli.h"
 #include <components/usb.h>
 #include <components/usb_types.h>
+#include <components/modem_driver.h>
 #include <driver/audio_ring_buff.h>
 
 #if (CONFIG_BK_MODEM)
@@ -40,13 +41,11 @@ void cli_modem_config(char *pcWriteBuffer, int xWriteBufferLen, int argc, char *
 	if(is_init)
 	{
 		CLI_LOGI("bk modem config init.\r\n");
-		extern bk_err_t bk_modem_init(void);
 		bk_modem_init();
 	}
 	else
 	{
 		CLI_LOGI("bk modem config deinit.\r\n");
-		extern bk_err_t bk_modem_deinit(void);
 		bk_modem_deinit();
 	}
 }
