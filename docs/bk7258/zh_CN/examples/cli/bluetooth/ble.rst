@@ -33,10 +33,8 @@ BLE Cli
 		|           |  Range: 0x000020 to 0xFFFFFF(Time = N * 0.625 ms)                      |
 		+-----------+------------------------------------------------------------------------+
 		|param4     | Own_Address_Type                                                       |
-		|           |  | 0x00 : Public Device Address                                        |
-		|           |  | 0x01 : Random Device Address                                        |
-		|           |  | 0x02 : Resolvable Private Address,if no IRK use the public address  |
-		|           |  | 0x03 : Resolvable Private Address,if no IRK use the random address  |
+		|           |  | 0x00/0x01 : Public Device Address                                   |
+		|           |  | 0x02/0x03 : Random Device Address                                   |
 		+-----------+------------------------------------------------------------------------+
 		|param5     | adv_type                                                               |
 		|           |  | 0x00 : Legacy advertising                                           |
@@ -169,10 +167,8 @@ BLE Cli
 
 		+-----------+------------------------------------------------------------------------+
 		|param1     | Own_Address_Type                                                       |
-		|           |  | 0x00 : Public Device Address                                        |
-		|           |  | 0x01 : Random Device Address                                        |
-		|           |  | 0x02 : Resolvable Private Address,if no IRK use the public address  |
-		|           |  | 0x03 : Resolvable Private Address,if no IRK use the random address  |
+		|           |  | 0x00/0x01 : Public Device Address                                   |
+		|           |  | 0x02/0x03 : Random Device Address                                   |
 		+-----------+------------------------------------------------------------------------+
 		|param2     | Scanning_PHYs                                                          |
 		|           |  | 0x01 : Scan advertisements on the LE 1M PHY                         |
@@ -202,8 +198,8 @@ BLE Cli
 		+-----------+------------------------------------------------------------------------+
 
 	 - 测试用例
-		| 关闭扫描：``AT+BLESETSCANENABLE=0``
-		| 开启扫描：``AT+BLESETSCANENABLE=1``
+		| 关闭扫描：``AT+BLESCANENABLE=0``
+		| 开启扫描：``AT+BLESCANENABLE=1``
 
 	8.AT+BLECREATECONNECT
 	 - 功能说明
@@ -227,14 +223,14 @@ BLE Cli
 		|           |  | 2 : Scan connectable advertisements on the LE Coded PHY             |
 		+-----------+------------------------------------------------------------------------+
 		|param5     | Peer_Address_Type                                                      |
-		|           |  | 0x00 : Public Device Address or Public Identity Address             |
-		|           |  | 0x01 : Random Device Address or Random (static) Identity Address    |
+		|           |  | 0x00 : Public Device Address                                        |
+		|           |  | 0x04 : Random Device Address                                        |
 		+-----------+------------------------------------------------------------------------+
 		|param6     | Peer_Address                                                           |
 		+-----------+------------------------------------------------------------------------+
 
 	 - 测试用例
-		``AT+BLECREATECONNECT=17,0,1f4,1,1,db:b4:6f:66:8a:db``
+		``AT+BLECREATECONNECT=17,0,1f4,1,4,db:b4:6f:66:8a:db``
 
 	9.AT+BLECANCELCONNECT
 	 - 功能说明
