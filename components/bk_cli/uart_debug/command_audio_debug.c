@@ -321,7 +321,7 @@ void app_sys_config_dbg(uint8_t* params)
 				p_aud_para->sys_config_voice.mic0_analog_gain            = sys_dbg_sys_para->mic0_analog_gain;
 				p_aud_para->sys_config_voice.mic1_analog_gain            = sys_dbg_sys_para->mic1_analog_gain;
 				p_aud_para->sys_config_voice.speaker_chan0_digital_gain  = sys_dbg_sys_para->speaker_chan0_digital_gain;
-				p_aud_para->sys_config_voice.speaker_chan1_analog_gain   = sys_dbg_sys_para->speaker_chan0_analog_gain;
+				p_aud_para->sys_config_voice.speaker_chan0_analog_gain   = sys_dbg_sys_para->speaker_chan0_analog_gain;
 				p_aud_para->sys_config_voice.main_mic_select             = sys_dbg_sys_para->main_mic_select;
 				p_aud_para->sys_config_voice.mic_mode                    = sys_dbg_sys_para->mic_mode;
 				p_aud_para->sys_config_voice.spk_mode                    = sys_dbg_sys_para->spk_mode;
