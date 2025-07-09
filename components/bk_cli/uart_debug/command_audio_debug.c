@@ -190,6 +190,8 @@ void app_eq_dbg(uint8_t* params)
 				p_aud_para->eq_dl_voice.filters = eq_dbg_eq_para->filters;
 				p_aud_para->eq_dl_voice.eq_en   = eq_dbg_eq_para->eq_en;
 			#endif
+
+				BK_LOG_RAW("rcv eq_%d_params: \n", index);
 	        }
 	        else
 	        {
