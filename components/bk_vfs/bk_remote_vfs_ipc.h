@@ -13,6 +13,11 @@ enum
 	VFS_CMD_CLOSE,
 	VFS_CMD_UMOUNT,
 	VFS_CMD_STAT,
+	VFS_CMD_OPENDIR,
+	VFS_CMD_READDIR,
+	VFS_CMD_CLOSEDIR,
+	VFS_CMD_MKDIR,
+	VFS_CMD_FTRUNCATE,
 } ;
 
 
@@ -24,7 +29,7 @@ typedef struct
 	void    *path;
 	int     oflag;
 	int     fd;
-	u8      * buff;
+	void    * buff;
 	u32     count;
 	int     ret_status;
 	u32     crc;

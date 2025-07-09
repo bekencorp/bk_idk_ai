@@ -787,15 +787,13 @@ static bk_err_t remote_vfs_stat(const char *pathname, struct stat *statbuf)
 	int  line_num = 0;
 	vfs_cmd_t	cmd_buff;
 
+	rtos_lock_mutex(&vfs_mutex);
+
 	memset(&cmd_buff, 0, sizeof(cmd_buff));
 
 	cmd_buff.path =  os_malloc( strlen(pathname) + 1 );
 	strncpy(cmd_buff.path, pathname, (strlen(pathname)+1));
 	cmd_buff.buff = (u8 *)statbuf;
-
-
-
-	rtos_lock_mutex(&vfs_mutex);
 
 	int ret = mb_ipc_send(vfs_socket_handle, VFS_CMD_STAT,
 		(u8 *)&cmd_buff, sizeof(cmd_buff), VFS_OPERATE_TIMEOUT);
@@ -840,7 +838,7 @@ static bk_err_t remote_vfs_stat(const char *pathname, struct stat *statbuf)
 	ret_val = cmd_buff.ret_status;
 
 stat_exit:
-
+	os_free(cmd_buff.path);
 	rtos_unlock_mutex(&vfs_mutex);
 
 #if LOCAL_TRACE
@@ -859,12 +857,373 @@ int bk_vfs_stat(const char *pathname, struct stat *statbuf)
 	if(bk_vfs_driver_init() != BK_OK)
 		return BK_FAIL;
 
+	if(bk_vfs_mount_point_init() != BK_OK)
+		return BK_FAIL;
+
 	ret_val = remote_vfs_stat(pathname, statbuf);
 
 	return ret_val;
 
 }
 
+static DIR * remote_vfs_opendir(const char *name)
+{
+	bk_dir *dirp = NULL;
+	int  line_num = 0;
+	vfs_cmd_t	cmd_buff;
+
+	rtos_lock_mutex(&vfs_mutex);
+
+	memset(&cmd_buff, 0, sizeof(cmd_buff));
+
+	cmd_buff.path =  os_malloc(sizeof(bk_dir));
+	strncpy(cmd_buff.path, name, sizeof(bk_dir));
+
+	int ret = mb_ipc_send(vfs_socket_handle, VFS_CMD_OPENDIR,
+		(u8 *)&cmd_buff, sizeof(cmd_buff), VFS_OPERATE_TIMEOUT);
+	if(ret != 0)
+	{
+		line_num = __LINE__;
+		goto opendir_exit;
+	}
+
+	u8   user_cmd = INVALID_USER_CMD_ID;
+	
+	memset(&cmd_buff, 0, sizeof(cmd_buff));
+
+	ret = mb_ipc_recv(vfs_socket_handle, &user_cmd, (u8 *)&cmd_buff, 
+		sizeof(cmd_buff), VFS_OPERATE_TIMEOUT);
+
+#if CONFIG_CACHE_ENABLE
+	flush_dcache(cmd_buff->buff, sizeof(struct bk_dir));
+#endif
+
+	if(ret != sizeof(cmd_buff))
+	{
+		line_num = __LINE__;
+		goto opendir_exit;
+	}
+
+	if(user_cmd != VFS_CMD_OPENDIR)
+	{
+		line_num = __LINE__;
+		ret = user_cmd;
+		goto opendir_exit;
+	}
+
+	dirp = cmd_buff.buff;
+
+opendir_exit:
+	os_free(cmd_buff.path);
+	rtos_unlock_mutex(&vfs_mutex);
+#if LOCAL_TRACE
+	BK_LOGD(TAG, "%s @%d, ret=%d.\r\n", __FUNCTION__, line_num, ret);
+#endif
+
+	return (DIR *)dirp;
+}
+
+DIR *bk_vfs_opendir(const char *name)
+{
+	DIR *dirp = NULL;
+
+	if(bk_vfs_driver_init() != BK_OK) {
+		BK_LOGE(TAG, "%s @%d, init fail.\r\n", __FUNCTION__, __LINE__);
+	}
+
+	dirp = remote_vfs_opendir(name);
+
+	return dirp;
+}
+
+struct dirent *remote_vfs_readdir(DIR *name)
+{
+	struct dirent *dir_entry = NULL;
+	int  line_num = 0;
+	vfs_cmd_t	cmd_buff;
+
+	rtos_lock_mutex(&vfs_mutex);
+
+	memset(&cmd_buff, 0, sizeof(cmd_buff));
+
+	cmd_buff.path = os_malloc(sizeof(bk_dir));
+
+	int ret = mb_ipc_send(vfs_socket_handle, VFS_CMD_READDIR,
+		(u8 *)&cmd_buff, sizeof(cmd_buff), VFS_OPERATE_TIMEOUT);
+	if(ret != 0)
+	{
+		line_num = __LINE__;
+		goto readdir_exit;
+	}
+
+	u8   user_cmd = INVALID_USER_CMD_ID;
+	
+	memset(&cmd_buff, 0, sizeof(cmd_buff));
+
+	ret = mb_ipc_recv(vfs_socket_handle, &user_cmd, (u8 *)&cmd_buff, 
+		sizeof(cmd_buff), VFS_OPERATE_TIMEOUT);
+
+#if CONFIG_CACHE_ENABLE
+	flush_dcache(cmd_buff->buff, sizeof(struct dirent));
+#endif
+
+	if(ret != sizeof(cmd_buff))
+	{
+		line_num = __LINE__;
+		goto readdir_exit;
+	}
+
+	if(user_cmd != VFS_CMD_READDIR)
+	{
+		line_num = __LINE__;
+		ret = user_cmd;
+		goto readdir_exit;
+	}
+
+	dir_entry = cmd_buff.buff;
+
+readdir_exit:
+	os_free(cmd_buff.path);
+	rtos_unlock_mutex(&vfs_mutex);
+#if LOCAL_TRACE
+	BK_LOGD(TAG, "%s @%d, ret=%d.\r\n", __FUNCTION__, line_num, ret);
+#endif
+
+	return dir_entry;
+}
+
+struct dirent *bk_vfs_readdir(DIR *dirp_)
+{
+	struct dirent *dir_entry = NULL;
+	if(bk_vfs_driver_init() != BK_OK) {
+		BK_LOGE(TAG, "%s @%d, init fail.\r\n", __FUNCTION__, __LINE__);
+	}
+
+	dir_entry = remote_vfs_readdir(dirp_);
+
+	return dir_entry;
+}
+
+static int remote_vfs_closedir(DIR *dirp_)
+{
+	int  ret_val = BK_FAIL;
+	int  line_num = 0;
+	vfs_cmd_t	cmd_buff;
+
+
+	rtos_lock_mutex(&vfs_mutex);
+
+	memset(&cmd_buff, 0, sizeof(cmd_buff));
+	cmd_buff.path =  os_malloc(sizeof(bk_dir));
+	os_memcpy(cmd_buff.path, dirp_, sizeof(bk_dir));
+
+	int ret = mb_ipc_send(vfs_socket_handle, VFS_CMD_CLOSEDIR,
+		(u8 *)&cmd_buff, sizeof(cmd_buff), VFS_OPERATE_TIMEOUT);
+
+	if(ret != 0)
+	{
+		line_num = __LINE__;
+		goto closedir_exit;
+	}
+
+	u8	 user_cmd = INVALID_USER_CMD_ID;
+	
+	memset(&cmd_buff, 0, sizeof(cmd_buff));
+
+	ret = mb_ipc_recv(vfs_socket_handle, &user_cmd, (u8 *)&cmd_buff, 
+		sizeof(cmd_buff), VFS_OPERATE_TIMEOUT);
+
+	if(ret != sizeof(cmd_buff))
+	{
+		line_num = __LINE__;
+		goto closedir_exit;
+	}
+
+	if(user_cmd != VFS_CMD_CLOSEDIR)
+	{
+		line_num = __LINE__;
+		ret = user_cmd;
+		goto closedir_exit;
+	}
+
+	if(cmd_buff.ret_status != BK_OK)
+	{
+		line_num = __LINE__;
+		ret = cmd_buff.ret_status;
+
+		goto closedir_exit;
+	}
+	ret_val = cmd_buff.ret_status;
+
+closedir_exit:
+	os_free(cmd_buff.path);
+	rtos_unlock_mutex(&vfs_mutex);
+
+#if LOCAL_TRACE
+	if(ret_val == BK_FAIL)
+		BK_LOGE(TAG, "%s @%d, ret=%d.\r\n", __FUNCTION__, line_num, ret);
+#endif
+
+	return ret_val;
+}
+
+int bk_vfs_closedir(DIR *dirp_)
+{
+	int ret_val = BK_FAIL;
+
+	if(bk_vfs_driver_init() != BK_OK)
+		return BK_FAIL;
+
+	ret_val = remote_vfs_closedir(dirp_);
+
+	return ret_val;
+}
+
+static int remote_vfs_mkdir(const char *pathname, mode_t mode)
+{
+	int  ret_val = BK_FAIL;
+	int  line_num = 0;
+	vfs_cmd_t	cmd_buff;
+
+	rtos_lock_mutex(&vfs_mutex);
+
+	memset(&cmd_buff, 0, sizeof(cmd_buff));
+	cmd_buff.path =  os_malloc( strlen(pathname) + 1 );
+	strncpy(cmd_buff.path, pathname, (strlen(pathname)+1));
+	cmd_buff.oflag = mode;
+
+	int ret = mb_ipc_send(vfs_socket_handle, VFS_CMD_MKDIR,
+		(u8 *)&cmd_buff, sizeof(cmd_buff), VFS_OPERATE_TIMEOUT);
+
+	if(ret != 0)
+	{
+		line_num = __LINE__;
+		goto mkdir_exit;
+	}
+
+	u8	 user_cmd = INVALID_USER_CMD_ID;
+	
+	memset(&cmd_buff, 0, sizeof(cmd_buff));
+
+	ret = mb_ipc_recv(vfs_socket_handle, &user_cmd, (u8 *)&cmd_buff, 
+		sizeof(cmd_buff), VFS_OPERATE_TIMEOUT);
+
+	if(ret != sizeof(cmd_buff))
+	{
+		line_num = __LINE__;
+		goto mkdir_exit;
+	}
+
+	if(user_cmd != VFS_CMD_MKDIR)
+	{
+		line_num = __LINE__;
+		ret = user_cmd;
+		goto mkdir_exit;
+	}
+
+	if(cmd_buff.ret_status != BK_OK)
+	{
+		line_num = __LINE__;
+		ret = cmd_buff.ret_status;
+
+		goto mkdir_exit;
+	}
+	ret_val = cmd_buff.ret_status;
+
+mkdir_exit:
+	os_free(cmd_buff.path);
+	rtos_unlock_mutex(&vfs_mutex);
+
+#if LOCAL_TRACE
+	if(ret_val == BK_FAIL)
+		BK_LOGE(TAG, "%s @%d, ret=%d.\r\n", __FUNCTION__, line_num, ret);
+#endif
+
+	return ret_val;
+}
+
+int bk_vfs_mkdir(const char *pathname, mode_t mode)
+{
+	int ret_val = BK_FAIL;
+
+	if(bk_vfs_driver_init() != BK_OK)
+		return BK_FAIL;
+
+	ret_val = remote_vfs_mkdir(pathname, mode);
+
+	return ret_val;
+}
+
+
+static int remote_vfs_ftruncate(int fd, off_t offset)
+{
+	int  ret_val = BK_FAIL;
+	int  line_num = 0;
+	vfs_cmd_t	cmd_buff;
+
+	rtos_lock_mutex(&vfs_mutex);
+	cmd_buff.fd = fd;
+	cmd_buff.oflag = offset;
+	int ret = mb_ipc_send(vfs_socket_handle, VFS_CMD_FTRUNCATE,
+		(u8 *)&cmd_buff, sizeof(cmd_buff), VFS_OPERATE_TIMEOUT);
+
+	if(ret != 0)
+	{
+		line_num = __LINE__;
+		goto ftruncate;
+	}
+
+	u8	 user_cmd = INVALID_USER_CMD_ID;
+	
+	memset(&cmd_buff, 0, sizeof(cmd_buff));
+
+	ret = mb_ipc_recv(vfs_socket_handle, &user_cmd, (u8 *)&cmd_buff, 
+		sizeof(cmd_buff), VFS_OPERATE_TIMEOUT);
+
+	if(ret != sizeof(cmd_buff))
+	{
+		line_num = __LINE__;
+		goto ftruncate;
+	}
+
+	if(user_cmd != VFS_CMD_FTRUNCATE)
+	{
+		line_num = __LINE__;
+		ret = user_cmd;
+		goto ftruncate;
+	}
+
+	if(cmd_buff.ret_status != BK_OK)
+	{
+		line_num = __LINE__;
+		ret = cmd_buff.ret_status;
+
+		goto ftruncate;
+	}
+	ret_val = cmd_buff.ret_status;
+
+ftruncate:
+	rtos_unlock_mutex(&vfs_mutex);
+
+#if LOCAL_TRACE
+	if(ret_val == BK_FAIL)
+		BK_LOGE(TAG, "%s @%d, ret=%d.\r\n", __FUNCTION__, line_num, ret);
+#endif
+
+	return ret_val;
+}
+
+int bk_vfs_ftruncate(int fd, off_t offset)
+{
+	int ret_val = BK_FAIL;
+
+	if(bk_vfs_driver_init() != BK_OK)
+		return BK_FAIL;
+
+	ret_val = remote_vfs_ftruncate(fd, offset);
+
+	return ret_val;
+}
 
 bool bk_vfs_is_driver_inited()
 {

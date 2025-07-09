@@ -387,11 +387,12 @@ static void vfs_stat_handler(u32 handle, vfs_cmd_t *cmd_buff)
 	int ret_val = 0;
 	char *path =  os_malloc( strlen(cmd_buff->path) + 1 );
 
-	strncpy(path, cmd_buff->path, (strlen(cmd_buff->path)+1));
-
 #if CONFIG_CACHE_ENABLE
 	flush_dcache(cmd_buff->buff, sizeof(struct stat));
+	flush_dcache(cmd_buff->path, (strlen(cmd_buff->path)+1));
 #endif
+
+	strncpy(path, cmd_buff->path, (strlen(cmd_buff->path)+1));
 
 	ret_val = stat(path, (struct stat *)cmd_buff->buff);
 
@@ -404,6 +405,114 @@ static void vfs_stat_handler(u32 handle, vfs_cmd_t *cmd_buff)
 		TRACE_E(TAG, "0x%x, vfs_stat: ret = %d.\r\n", handle, ret_val);
 
 	os_free(path);
+	(void)ret_val;
+}
+
+static void vfs_opendir_handler(u32 handle, vfs_cmd_t *cmd_buff)
+{
+	int ret_val = 0;
+	char *path =  os_malloc( strlen(cmd_buff->path) + 1 );
+
+#if CONFIG_CACHE_ENABLE
+	flush_dcache(cmd_buff->path, (strlen(cmd_buff->path)+1));
+#endif
+
+	strncpy(path, cmd_buff->path, (strlen(cmd_buff->path)+1));
+
+	cmd_buff->buff = opendir(path);
+
+	TRACE_I(TAG, "%s @%d, 0x%x debug, path=%s  !\r\n", __FUNCTION__, __LINE__, handle, path);
+
+	ret_val = mb_ipc_send(handle, VFS_CMD_OPENDIR, (u8 *)cmd_buff, sizeof(vfs_cmd_t), VFS_SVR_WAIT_TIME);
+	if(ret_val != 0)
+		TRACE_E(TAG, "0x%x, ret = %d.\r\n", handle, ret_val);
+
+	os_free(path);
+	(void)ret_val;
+}
+
+static void vfs_readdir_handler(u32 handle, vfs_cmd_t *cmd_buff)
+{
+	int ret_val = 0;
+	DIR *path =  os_malloc(sizeof(bk_dir));
+
+#if CONFIG_CACHE_ENABLE
+	flush_dcache(cmd_buff->path, sizeof(bk_dir));
+#endif
+	os_memcpy(path, cmd_buff->path, sizeof(bk_dir));
+
+	cmd_buff->buff = readdir(path);
+
+	TRACE_I(TAG, "%s @%d, 0x%x debug, path=%s  !\r\n", __FUNCTION__, __LINE__, handle, path);
+
+
+	ret_val = mb_ipc_send(handle, VFS_CMD_READDIR, (u8 *)cmd_buff, sizeof(vfs_cmd_t), VFS_SVR_WAIT_TIME);
+	if(ret_val != 0)
+		TRACE_E(TAG, "0x%x, ret = %d.\r\n", handle, ret_val);
+
+	os_free(path);
+	(void)ret_val;
+}
+
+static void vfs_closedir_handler(u32 handle, vfs_cmd_t *cmd_buff)
+{
+	int ret_val = 0;
+	DIR *path =  os_malloc(sizeof(bk_dir));
+
+#if CONFIG_CACHE_ENABLE
+	flush_dcache(cmd_buff->path, sizeof(bk_dir));
+#endif
+	os_memcpy(path, cmd_buff->path, sizeof(bk_dir));
+
+	cmd_buff->ret_status = closedir(path);
+
+	TRACE_I(TAG, "%s @%d, 0x%x debug, path=%s  !\r\n", __FUNCTION__, __LINE__, handle, path);
+
+
+	ret_val = mb_ipc_send(handle, VFS_CMD_CLOSEDIR, (u8 *)cmd_buff, sizeof(vfs_cmd_t), VFS_SVR_WAIT_TIME);
+	if(ret_val != 0)
+		TRACE_E(TAG, "0x%x, ret = %d.\r\n", handle, ret_val);
+
+	os_free(path);
+	(void)ret_val;
+}
+
+static void vfs_mkdir_handler(u32 handle, vfs_cmd_t *cmd_buff)
+{
+	int ret_val = 0;
+	char *path =  os_malloc( strlen(cmd_buff->path) + 1 );
+
+#if CONFIG_CACHE_ENABLE
+	flush_dcache(cmd_buff->path, (strlen(cmd_buff->path)+1));
+#endif
+	strncpy(path, cmd_buff->path, (strlen(cmd_buff->path)+1));
+
+	cmd_buff->ret_status = mkdir(path, cmd_buff->oflag);
+
+	TRACE_I(TAG, "%s @%d, 0x%x mkdir debug, path=%s  !\r\n", __FUNCTION__, __LINE__, handle, path);
+
+	ret_val = mb_ipc_send(handle, VFS_CMD_MKDIR, (u8 *)cmd_buff, sizeof(vfs_cmd_t), VFS_SVR_WAIT_TIME);
+	if(ret_val != 0)
+		TRACE_E(TAG, "0x%x, ret = %d.\r\n", handle, ret_val);
+
+	os_free(path);
+	(void)ret_val;
+}
+
+static void vfs_ftruncate_handler(u32 handle, vfs_cmd_t *cmd_buff)
+{
+	int ret_val = 0;
+	int fd = cmd_buff->fd;
+	int offset = cmd_buff->oflag;
+
+	cmd_buff->ret_status = ftruncate(fd, offset);
+
+	TRACE_I(TAG, "%s @%d, 0x%x debug, fd=%d, offset=%d!\r\n", __FUNCTION__, __LINE__, handle, fd, offset);
+
+	ret_val = mb_ipc_send(handle, VFS_CMD_FTRUNCATE, (u8 *)cmd_buff, sizeof(vfs_cmd_t), VFS_SVR_WAIT_TIME);
+	if(ret_val != 0)
+		TRACE_E(TAG, "0x%x, ret = %d.\r\n", handle, ret_val);
+
 	(void)ret_val;
 }
 
@@ -476,6 +585,25 @@ static void vfs_cmd_handler(u32 handle, u8 connect_id)
 		case VFS_CMD_STAT:
 			vfs_stat_handler(handle, &cmd_buff);
 			break;
+
+		case VFS_CMD_OPENDIR:
+			vfs_opendir_handler(handle, &cmd_buff);
+			break;
+
+		case VFS_CMD_READDIR:
+			vfs_readdir_handler(handle, &cmd_buff);
+			break;
+
+		case VFS_CMD_CLOSEDIR:
+			vfs_closedir_handler(handle, &cmd_buff);
+			break;
+
+		case VFS_CMD_MKDIR:
+			vfs_mkdir_handler(handle, &cmd_buff);
+			break;
+
+		case VFS_CMD_FTRUNCATE:
+			vfs_ftruncate_handler(handle, &cmd_buff);
 
 		default:
 			vfs_error_handler(handle, user_cmd);
