@@ -44,7 +44,7 @@ The macro definitions related to the immunity interface are shown in the followi
 **APIs Usage**
 **********************
 
-When using the Wi-Fi audio/video function, please call the audio/video transmission policy APIs during audio/video initialization and before Wi-Fi connection:
+When using the Wi-Fi audio/video function, please call the audio/video transmission policy APIs during audio/video initialization:
 
    bk_err_t bk_wifi_set_wifi_media_mode(bool flag);
 
