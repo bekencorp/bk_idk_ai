@@ -134,6 +134,18 @@ bk_err_t bk_lcd_qspi_read_data(qspi_id_t qspi_id, uint8_t *data, const lcd_devic
  */
 bk_err_t bk_lcd_qspi_send_data(qspi_id_t qspi_id, const lcd_device_t *device, uint32_t *data, uint32_t data_len);
 
+#if CONFIG_LCD_QSPI_TE
+/**
+ * @brief     Waiting for the te signal
+ * 
+ * @param wait_ms the te waiting timeout
+ *
+ * @return
+ *    - None
+ */
+void lcd_qspi_te_wait(uint32_t wait_ms);
+#endif
+
 /**
  * @brief     Send a partial data to device display
  *

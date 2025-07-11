@@ -50,6 +50,14 @@ extern "C" {
 #else
 #define LCD_QSPI_RESET_PIN      GPIO_40
 #endif
+
+#if CONFIG_LCD_QSPI_TE
+#ifdef CONFIG_LCD_QSPI_TE_PIN
+#define LCD_QSPI_TE_PIN         CONFIG_LCD_QSPI_TE_PIN
+#else
+#define LCD_QSPI_TE_PIN         GPIO_6
+#endif
+#endif
 #endif
 #endif
 
