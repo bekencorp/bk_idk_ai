@@ -207,7 +207,7 @@ extern "C" {
 #define CLI_CFG_SD          0
 #endif
 
-#if (CONFIG_FATFS && (CONFIG_SYS_CPU0))
+#if (CONFIG_FATFS)
 #define CLI_FATFS          1
 #else
     
