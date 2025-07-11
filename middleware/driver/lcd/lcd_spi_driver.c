@@ -116,7 +116,6 @@ static bool dma_is_repeat_mode = false;
 
 static uint8_t s_lcd_spi_flag = 1;
 static uint8_t lcd_spi_first_disp = 1;
-static bool lcd_spi_open_status = false;
 #if CONFIG_LCD_SPI_TE
 static beken_semaphore_t lcd_spi_te_sem = NULL;
 #endif
@@ -747,12 +746,6 @@ void lcd_spi_init(uint8_t id, const lcd_device_t *device)
         return;
     }
 
-    if (lcd_spi_open_status == true)
-    {
-        LCD_SPI_LOGW("%s has inited\r\n", __func__);
-        return;
-    }
-
 #if LCD_SPI_REFRESH_WITH_QSPI
 #if (CONFIG_LCD_SPI_DEVICE_NUM > 1)
     if (lcd_spi_qspi_is_init == 0) {
@@ -796,19 +789,12 @@ void lcd_spi_init(uint8_t id, const lcd_device_t *device)
 #if CONFIG_LCD_SPI_TE
     lcd_spi_te_init();
 #endif
-    lcd_spi_open_status = true;
 
     LCD_SPI_LOGI("%s[%d] is complete\r\n", __func__, id);
 }
 
 void lcd_spi_deinit(uint8_t id)
 {
-    if (lcd_spi_open_status == false)
-    {
-        LCD_SPI_LOGW("%s has deinited\r\n", __func__);
-        return;
-    }
-
     if (lcd_spi_first_disp == 0) {
         lcd_spi_backlight_close();
         lcd_spi_first_disp = 1;
@@ -840,18 +826,11 @@ void lcd_spi_deinit(uint8_t id)
     lcd_spi_driver_deinit(id);
 #endif
 
-    lcd_spi_open_status = false;
-
     LCD_SPI_LOGI("%s is complete\r\n", __func__);
 }
 
 void lcd_spi_display_frame(uint8_t id, uint8_t *frame_buffer, uint32_t width, uint32_t height)
 {
-    if (lcd_spi_open_status == false)
-    {
-        return;
-    }
-
     uint8_t column_value[4] = {0};
     uint8_t row_value[4] = {0};
     column_value[2] = ((width - 1) >> 8) & 0xFF;
@@ -905,11 +884,6 @@ void lcd_spi_set_display_area(uint8_t id, uint16_t x_start, uint16_t x_end, uint
 
 bk_err_t lcd_spi_partial_display(uint8_t id, uint8_t *disp_buffer, uint32_t data_len)
 {
-    if (lcd_spi_open_status == false)
-    {
-        return BK_FAIL;
-    }
-
     lcd_spi_send_data(id, disp_buffer, data_len);
 
     return BK_OK;
