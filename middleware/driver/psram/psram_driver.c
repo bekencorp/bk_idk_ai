@@ -26,10 +26,17 @@
 #endif
 
 #define PSRAM_CHECK_FLAG   0x3CA5C3A5
+#define PSRAM_INIT_WAIT_TIMEOUT_MS   100
 typedef struct {
 	uint32_t psram_id;
 	uint32_t magic_code;
 } psram_flash_t;
+
+#if (CONFIG_SYS_CPU0)
+static volatile bool s_psram_init_in_progress = false;
+static volatile bool s_psram_init_done = false;
+#endif
+
 
 #if (CONFIG_PSRAM_AUTO_DETECT)
 static bool s_psram_id_need_write = false;
@@ -201,12 +208,41 @@ bk_err_t bk_psram_id_auto_detect(void)
 	return BK_OK;
 }
 
+
+
 bk_err_t bk_psram_init(void)
 {
 #if (CONFIG_SYS_CPU0)
-	if (s_psram_server_is_init) {
+	if (s_psram_init_done) {
 		return BK_OK;
 	}
+
+	if (s_psram_init_in_progress)
+	{
+		if (rtos_is_in_interrupt_context())
+		{
+			return BK_ERR_BUSY;
+		}
+		else
+		{
+			int wait_ms = 0;
+			while (!s_psram_init_done)
+			{
+				rtos_delay_milliseconds(1);
+				wait_ms++;
+				if (wait_ms >= PSRAM_INIT_WAIT_TIMEOUT_MS)
+				{
+					PSRAM_LOGE("PSRAM init wait timeout!\n");
+					return BK_ERR_TIMEOUT;
+				}
+			}
+			return BK_OK;
+		}
+	}
+
+	s_psram_init_in_progress = true;
+
+	PSRAM_LOGI("Starting PSRAM init...\n");
 
 	uint32_t chip_id = 0, actual_id = 0;
 
@@ -229,6 +265,7 @@ bk_err_t bk_psram_init(void)
 	if (actual_id == 0)
 	{
 		PSRAM_LOGE("%s, fail!\r\n", __func__);
+		s_psram_init_in_progress = false;
 		return BK_FAIL;
 	}
 
@@ -262,6 +299,10 @@ bk_err_t bk_psram_init(void)
 
 	s_psram_server_is_init = true;
 
+	s_psram_init_done = true;
+	s_psram_init_in_progress = false;
+
+	PSRAM_LOGI("PSRAM init success\n");
 	return BK_OK;
 #else
 	return BK_FAIL;
@@ -271,13 +312,29 @@ bk_err_t bk_psram_init(void)
 bk_err_t bk_psram_deinit(void)
 {
 #if (CONFIG_SYS_CPU0)
+
 	if (!s_psram_server_is_init) {
 		return BK_OK;
+	}
+
+	if (s_psram_init_in_progress) {
+		if (rtos_is_in_interrupt_context()) {
+			return BK_ERR_BUSY;
+		} else {
+			int wait_count = 0;
+			while (s_psram_init_in_progress) {
+				rtos_delay_milliseconds(1);
+				if (++wait_count > 100) {
+					return BK_ERR_TIMEOUT;
+				}
+			}
+		}
 	}
 
 	psram_hal_power_clk_enable(0);
 
 	s_psram_server_is_init = false;
+	s_psram_init_done = false;
 
 	return BK_OK;
 #else
