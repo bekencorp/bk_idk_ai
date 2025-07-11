@@ -409,16 +409,12 @@ int ota_extract_path_segment(char *in_name, char *out_name)
 		token = strtok(NULL, "/");
 	}
 
-	if(last_token !=NULL){
-		char *dot_pos = strchr(last_token, '.');
-		if (dot_pos) {
-			*dot_pos = '\0';
-			strncpy(out_name, last_token, strlen(last_token));
-			ret = BK_OK;
-		} else {
-			OTA_LOGE(".string extension not found\n");
-		}
-	}else{
+	if(last_token != NULL) {
+		/*Keep the file extension and directly copy the last token”.*/
+		strncpy(out_name, last_token, strlen(last_token));
+		out_name[strlen(last_token)] = '\0';
+		ret = BK_OK;
+	} else {
 		OTA_LOGE(".string last_token is NULL\n");
 	}
 
