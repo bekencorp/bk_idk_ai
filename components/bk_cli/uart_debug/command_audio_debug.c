@@ -61,78 +61,70 @@ void aud_eq_load_param(void)
 	int32_t log_level = bk_get_printf_sync();
 	bk_set_printf_sync(1);
 	{
-		#if (!CONFIG_SHELL_ASYNCLOG)
-			uint32_t i = 0;
-			uint32_t port = bkreg_tx_get_uart_port();
-		#endif
-			uint32_t tx_len = 12;
-			uint8_t tmp[APP_AUD_PARAS_TX_TMP_LEN] = {0};
-			tmp[0] = 0x01;
-			tmp[1] = 0xe0;
-			tmp[2] = 0xfc;
-			tmp[3] = tx_len - 4;
-			tmp[4] = 0xb2;
-			tmp[5] = 0xfe;
-			tmp[6]  = (p_aud_para->eq_dl_voice.eq_load.f_gain)&0xFF;
-			tmp[7]  = (p_aud_para->eq_dl_voice.eq_load.f_gain>>8)&0xFF;
-			tmp[8]  = (p_aud_para->eq_dl_voice.eq_load.f_gain>>16)&0xFF;
-			tmp[9]  = (p_aud_para->eq_dl_voice.eq_load.f_gain>>24)&0xFF;
-			tmp[10] = (p_aud_para->eq_dl_voice.eq_load.samplerate)&0xFF;
-			tmp[11] = (p_aud_para->eq_dl_voice.eq_load.samplerate>>8)&0xFF;
+		uint32_t tx_len = 12;
+		uint8_t tmp[APP_AUD_PARAS_TX_TMP_LEN] = {0};
+		tmp[0] = 0x01;
+		tmp[1] = 0xe0;
+		tmp[2] = 0xfc;
+		tmp[3] = tx_len - 4;
+		tmp[4] = 0xb2;
+		tmp[5] = 0xfe;
+		tmp[6]  = (p_aud_para->eq_dl_voice.eq_load.f_gain)&0xFF;
+		tmp[7]  = (p_aud_para->eq_dl_voice.eq_load.f_gain>>8)&0xFF;
+		tmp[8]  = (p_aud_para->eq_dl_voice.eq_load.f_gain>>16)&0xFF;
+		tmp[9]  = (p_aud_para->eq_dl_voice.eq_load.f_gain>>24)&0xFF;
+		tmp[10] = (p_aud_para->eq_dl_voice.eq_load.samplerate)&0xFF;
+		tmp[11] = (p_aud_para->eq_dl_voice.eq_load.samplerate>>8)&0xFF;
 
-		#if CONFIG_SHELL_ASYNCLOG
-			shell_log_raw_data((uint8_t *)&tmp[0], tx_len);
-		#else
-			for (i = 0; i < tx_len; i ++) {
-				uart_write_byte(port, tmp[i]);
-			}
-		#endif //#if CONFIG_SHELL_ASYNCLOG
+	#if 1
+		for(uint32_t i = 0; i <(tx_len); i++)
+		{
+			BK_LOG_RAW("%02x", tmp[i]);
+		}
+		BK_LOG_RAW("\n");
+	#endif
 	}
 
 	{
-		#if (!CONFIG_SHELL_ASYNCLOG)
-			uint32_t i = 0;
-			uint32_t port = bkreg_tx_get_uart_port();
-		#endif
-			uint32_t tx_len = 0x15;
-			uint8_t tmp[APP_AUD_PARAS_TX_TMP_LEN] = {0};
-			tmp[0] = 0x01;
-			tmp[1] = 0xe0;
-			tmp[2] = 0xfc;
-			tmp[3] = tx_len - 4;
-			tmp[4] = 0xb2;
-			tmp[5] = 0xfa;
+		uint32_t tx_len = 0x15;
+		uint8_t tmp[APP_AUD_PARAS_TX_TMP_LEN] = {0};
+		tmp[0] = 0x01;
+		tmp[1] = 0xe0;
+		tmp[2] = 0xfc;
+		tmp[3] = tx_len - 4;
+		tmp[4] = 0xb2;
+		tmp[5] = 0xfa;
 
-			for (uint8_t index = 0; index < 15; index++)
+		for (uint8_t index = 0; index < 15; index++)
+		{
+			tmp[6] = index;
+			tmp[7] = p_aud_para->eq_dl_voice.eq_load.eq_load_para[index].enable;
+
+			tmp[8]  = (p_aud_para->eq_dl_voice.eq_load.eq_load_para[index].freq>>24)&0xFF;
+			tmp[9]  = (p_aud_para->eq_dl_voice.eq_load.eq_load_para[index].freq>>16)&0xFF;
+			tmp[10] = (p_aud_para->eq_dl_voice.eq_load.eq_load_para[index].freq>>8)&0xFF;
+			tmp[11] = (p_aud_para->eq_dl_voice.eq_load.eq_load_para[index].freq>>0)&0xFF;
+
+			tmp[12] = (p_aud_para->eq_dl_voice.eq_load.eq_load_para[index].gain>>24)&0xFF;
+			tmp[13] = (p_aud_para->eq_dl_voice.eq_load.eq_load_para[index].gain>>16)&0xFF;
+			tmp[14] = (p_aud_para->eq_dl_voice.eq_load.eq_load_para[index].gain>>8)&0xFF;
+			tmp[15] = (p_aud_para->eq_dl_voice.eq_load.eq_load_para[index].gain>>0)&0xFF;
+
+			tmp[16] = (p_aud_para->eq_dl_voice.eq_load.eq_load_para[index].q_val>>24)&0xFF;
+			tmp[17] = (p_aud_para->eq_dl_voice.eq_load.eq_load_para[index].q_val>>16)&0xFF;
+			tmp[18] = (p_aud_para->eq_dl_voice.eq_load.eq_load_para[index].q_val>>8)&0xFF;
+			tmp[19] = (p_aud_para->eq_dl_voice.eq_load.eq_load_para[index].q_val>>0)&0xFF;
+
+			tmp[20] = p_aud_para->eq_dl_voice.eq_load.eq_load_para[index].type;
+
+			rtos_delay_milliseconds(10);
+		#if 1
+			for(uint32_t i = 0; i <(tx_len); i++)
 			{
-				tmp[6] = index;
-				tmp[7] = p_aud_para->eq_dl_voice.eq_load.eq_load_para[index].enable;
-
-				tmp[8]  = (p_aud_para->eq_dl_voice.eq_load.eq_load_para[index].freq>>24)&0xFF;
-				tmp[9]  = (p_aud_para->eq_dl_voice.eq_load.eq_load_para[index].freq>>16)&0xFF;
-				tmp[10] = (p_aud_para->eq_dl_voice.eq_load.eq_load_para[index].freq>>8)&0xFF;
-				tmp[11] = (p_aud_para->eq_dl_voice.eq_load.eq_load_para[index].freq>>0)&0xFF;
-
-				tmp[12] = (p_aud_para->eq_dl_voice.eq_load.eq_load_para[index].gain>>24)&0xFF;
-				tmp[13] = (p_aud_para->eq_dl_voice.eq_load.eq_load_para[index].gain>>16)&0xFF;
-				tmp[14] = (p_aud_para->eq_dl_voice.eq_load.eq_load_para[index].gain>>8)&0xFF;
-				tmp[15] = (p_aud_para->eq_dl_voice.eq_load.eq_load_para[index].gain>>0)&0xFF;
-
-				tmp[16] = (p_aud_para->eq_dl_voice.eq_load.eq_load_para[index].q_val>>24)&0xFF;
-				tmp[17] = (p_aud_para->eq_dl_voice.eq_load.eq_load_para[index].q_val>>16)&0xFF;
-				tmp[18] = (p_aud_para->eq_dl_voice.eq_load.eq_load_para[index].q_val>>8)&0xFF;
-				tmp[19] = (p_aud_para->eq_dl_voice.eq_load.eq_load_para[index].q_val>>0)&0xFF;
-
-				tmp[20] = p_aud_para->eq_dl_voice.eq_load.eq_load_para[index].type;
-
-				rtos_delay_milliseconds(10);
-			#if CONFIG_SHELL_ASYNCLOG
-				shell_log_raw_data((uint8_t *)&tmp[0], tx_len);
-			#else
-				for (i = 0; i < tx_len; i ++) {
-					uart_write_byte(port, tmp[i]);
-				}
-			#endif //#if CONFIG_SHELL_ASYNCLOG
+				BK_LOG_RAW("%02x", tmp[i]);
+			}
+			BK_LOG_RAW("\n");
+		#endif
 		}
 	}
 	bk_set_printf_sync(log_level);
@@ -274,10 +266,6 @@ void app_sys_config_dbg(uint8_t* params)
 	{
 		case 0xF0:
 		{
-	#if (!CONFIG_SHELL_ASYNCLOG)
-			uint32_t i = 0;
-			uint32_t port = bkreg_tx_get_uart_port();
-	#endif
 			uint32_t tx_len = APP_SYS_PARA_TX_TOTALLEN;
 			uint8_t tmp[APP_AUD_PARAS_TX_TMP_LEN] = {0};
 			tmp[0] = 0x01; tmp[1] = 0xe0; tmp[2] = 0xfc;
@@ -293,13 +281,13 @@ void app_sys_config_dbg(uint8_t* params)
 			tmp[13] = p_aud_para->sys_config_voice.spk_mode;
 			tmp[14] = p_aud_para->sys_config_voice.mic_vbias;
 
-	#if CONFIG_SHELL_ASYNCLOG
-			shell_log_raw_data((uint8_t *)&tmp[0], tx_len);
-	#else
-			for (i = 0; i < tx_len; i ++) {
-				uart_write_byte(port, tmp[i]);
+		#if 1
+			for(uint32_t i = 0; i <(tx_len); i++)
+			{
+				BK_LOG_RAW("%02x", tmp[i]);
 			}
-	#endif //#if CONFIG_SHELL_ASYNCLOG
+			BK_LOG_RAW("\n");
+		#endif
 		}
 			break;
 		case 0xF9:
@@ -368,10 +356,6 @@ void app_aec_para_dbg(uint8_t* params)
 	{
 		case 0xF0:
 		{
-	#if (!CONFIG_SHELL_ASYNCLOG)
-			uint32_t i = 0;
-			uint32_t port = bkreg_tx_get_uart_port();
-	#endif
 			uint32_t tx_len = APP_AEC_PARA_TX_TOTALLEN;
 			uint8_t tmp[APP_AUD_PARAS_TX_TMP_LEN] = {0};
 			tmp[0] = 0x01; tmp[1] = 0xe0; tmp[2] = 0xfc;
@@ -401,13 +385,13 @@ void app_aec_para_dbg(uint8_t* params)
 			tmp[27] = (p_aud_para->aec_config_voice.vad_eng_threshold)&0xFF;
 			tmp[28] = p_aud_para->aec_config_voice.dual_mic_enable;
 			tmp[29] = (p_aud_para->aec_config_voice.dual_mic_distance);
-		#if CONFIG_SHELL_ASYNCLOG
-			shell_log_raw_data((uint8_t *)&tmp[0], tx_len);
-		#else
-			for (i = 0; i < tx_len; i ++) {
-				uart_write_byte(port, tmp[i]);
+		#if 1
+			for(uint32_t i = 0; i <(tx_len); i++)
+			{
+				BK_LOG_RAW("%02x", tmp[i]);
 			}
-		#endif //#if CONFIG_SHELL_ASYNCLOG
+			BK_LOG_RAW("\n");
+		#endif
 		}
 			break;
 		case 0xFF:
