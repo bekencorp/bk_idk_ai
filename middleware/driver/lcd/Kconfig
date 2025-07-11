@@ -21,6 +21,10 @@ menu "LCD"
 			2 - RGB565
 			3 - RGB888
 
+	config LCD_QSPI_TE
+		bool "Enable LCD QSPI TE"
+		default n
+
 	config LCD_POWER_GPIO_CTRL
 		bool "Enable lcd power gpio ctrl"
 		default n
@@ -37,4 +41,8 @@ menu "LCD"
 		depends on LCD_SPI
 		int "Set lcd spi device number"
 		default 1
+
+	config LCD_SPI_TE
+		bool "Enable LCD SPI TE"
+		default n
 endmenu

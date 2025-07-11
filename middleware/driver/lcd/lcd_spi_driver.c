@@ -17,6 +17,7 @@
 #include <os/mem.h>
 #include <driver/spi.h>
 #include <driver/dma.h>
+#include "bk_general_dma.h"
 #include <driver/gpio.h>
 #include "gpio_driver.h"
 #include <driver/lcd.h>
@@ -26,9 +27,6 @@
 #include <driver/qspi_types.h>
 #include <driver/lcd_spi.h>
 #include "bk_misc.h"
-#include <driver/dma.h>
-#include "bk_general_dma.h"
-
 
 #define LCD_SPI_TAG "lcd_spi"
 
@@ -94,6 +92,12 @@
 #define LCD_SPI_DC_PIN              GPIO_9
 #endif
 
+#ifdef CONFIG_LCD_SPI_TE_PIN
+#define LCD_SPI_TE_PIN              CONFIG_LCD_SPI_TE_PIN
+#else
+#define LCD_SPI_TE_PIN              GPIO_6
+#endif
+
 #endif
 
 #define LCD_SPI_DEVICE_CASET        0x2A
@@ -112,6 +116,10 @@ static bool dma_is_repeat_mode = false;
 
 static uint8_t s_lcd_spi_flag = 1;
 static uint8_t lcd_spi_first_disp = 1;
+static bool lcd_spi_open_status = false;
+#if CONFIG_LCD_SPI_TE
+static beken_semaphore_t lcd_spi_te_sem = NULL;
+#endif
 #if (CONFIG_LCD_SPI_DEVICE_NUM > 1)
 static uint8_t lcd_spi_qspi_is_init = 0;
 #endif
@@ -666,10 +674,82 @@ void lcd_spi_backlight_close(void)
     BK_LOG_ON_ERR(gpio_dev_unmap(LCD_SPI_BACKLIGHT_PIN));
 }
 
+#if CONFIG_LCD_SPI_TE
+static void lcd_spi_te_int_isr(gpio_id_t id)
+{
+    if (lcd_spi_te_sem && id == LCD_SPI_TE_PIN)
+    {
+        rtos_set_semaphore(&lcd_spi_te_sem);
+    }
+}
+
+static bk_err_t lcd_spi_te_init(void)
+{
+    bk_err_t ret = BK_OK;
+
+    ret = rtos_init_semaphore(&lcd_spi_te_sem, 1);
+    if (ret != kNoErr)
+    {
+        LCD_SPI_LOGE("%s lcd_spi_te_sem init failed\r\n", __func__);
+        return ret;
+    }
+
+    gpio_config_t config;
+    config.io_mode = GPIO_INPUT_ENABLE;
+    config.pull_mode = GPIO_PULL_UP_EN;
+    config.func_mode = GPIO_SECOND_FUNC_DISABLE;
+
+    BK_LOG_ON_ERR(gpio_dev_unmap(LCD_SPI_TE_PIN));
+    bk_gpio_set_config(LCD_SPI_TE_PIN, &config);
+
+    int int_type = GPIO_INT_TYPE_FALLING_EDGE;
+    bk_gpio_register_isr(LCD_SPI_TE_PIN , lcd_spi_te_int_isr);
+    BK_LOG_ON_ERR(bk_gpio_set_interrupt_type(LCD_SPI_TE_PIN, int_type));
+    bk_gpio_enable_interrupt(LCD_SPI_TE_PIN);
+
+    return ret;
+}
+
+static bk_err_t lcd_spi_te_deinit(void)
+{
+    bk_err_t ret = BK_OK;
+
+    bk_gpio_disable_interrupt(LCD_SPI_TE_PIN);
+    BK_LOG_ON_ERR(gpio_dev_unmap(LCD_SPI_TE_PIN));
+
+    ret = rtos_deinit_semaphore(&lcd_spi_te_sem);
+    if (ret != kNoErr)
+    {
+        LCD_SPI_LOGE("%s lcd_spi_te_sem deinit failed\r\n", __func__);
+        return ret;
+    }
+
+    return ret;
+}
+
+void lcd_spi_te_wait(uint32_t wait_ms)
+{
+    if (lcd_spi_te_sem)
+    {
+        bk_err_t ret = rtos_get_semaphore(&lcd_spi_te_sem, wait_ms);
+        if (ret != kNoErr)
+        {
+            LCD_SPI_LOGE("lcd_spi_te_sem get failed\r\n");
+        }
+    }
+}
+#endif
+
 void lcd_spi_init(uint8_t id, const lcd_device_t *device)
 {
     if (device == NULL) {
         LCD_SPI_LOGE("lcd spi device not found\r\n");
+        return;
+    }
+
+    if (lcd_spi_open_status == true)
+    {
+        LCD_SPI_LOGW("%s has inited\r\n", __func__);
         return;
     }
 
@@ -710,17 +790,33 @@ void lcd_spi_init(uint8_t id, const lcd_device_t *device)
         }
     } else {
         LCD_SPI_LOGE("lcd spi device init cmd is null\r\n");
+        return;
     }
+
+#if CONFIG_LCD_SPI_TE
+    lcd_spi_te_init();
+#endif
+    lcd_spi_open_status = true;
 
     LCD_SPI_LOGI("%s[%d] is complete\r\n", __func__, id);
 }
 
 void lcd_spi_deinit(uint8_t id)
 {
+    if (lcd_spi_open_status == false)
+    {
+        LCD_SPI_LOGW("%s has deinited\r\n", __func__);
+        return;
+    }
+
     if (lcd_spi_first_disp == 0) {
         lcd_spi_backlight_close();
         lcd_spi_first_disp = 1;
     }
+
+#if CONFIG_LCD_SPI_TE
+    lcd_spi_te_deinit();
+#endif
 
     lcd_spi_device_gpio_deinit(id);
 
@@ -743,10 +839,19 @@ void lcd_spi_deinit(uint8_t id)
 #else
     lcd_spi_driver_deinit(id);
 #endif
+
+    lcd_spi_open_status = false;
+
+    LCD_SPI_LOGI("%s is complete\r\n", __func__);
 }
 
 void lcd_spi_display_frame(uint8_t id, uint8_t *frame_buffer, uint32_t width, uint32_t height)
 {
+    if (lcd_spi_open_status == false)
+    {
+        return;
+    }
+
     uint8_t column_value[4] = {0};
     uint8_t row_value[4] = {0};
     column_value[2] = ((width - 1) >> 8) & 0xFF;
@@ -768,10 +873,18 @@ void lcd_spi_display_frame(uint8_t id, uint8_t *frame_buffer, uint32_t width, ui
     lcd_spi_send_data(id, frame_buffer, width * height * 2);
 }
 
-void lcd_spi_partial_display(uint8_t id, uint16_t x_start, uint16_t x_end, uint16_t y_start, uint16_t y_end, uint8_t *disp_buffer)
+void lcd_spi_set_display_area(uint8_t id, uint16_t x_start, uint16_t x_end, uint16_t y_start, uint16_t y_end)
 {
     uint8_t column_value[4] = {0};
     uint8_t row_value[4] = {0};
+
+    if (lcd_spi_first_disp == 1) {
+#if (LCD_SPI_REFRESH_WITH_QSPI_MAPPING_MODE == 1)
+        dma_is_repeat_mode = false;
+#endif
+        lcd_spi_backlight_open();
+        lcd_spi_first_disp = 0;
+    }
 
     column_value[0] = (x_start >> 8) & 0xFF;
     column_value[1] = x_start & 0xFF;
@@ -782,19 +895,22 @@ void lcd_spi_partial_display(uint8_t id, uint16_t x_start, uint16_t x_end, uint1
     row_value[2] = (y_end >> 8) & 0xFF;
     row_value[3] = y_end & 0xFF;
 
-    if (lcd_spi_first_disp == 1) {
-#if (LCD_SPI_REFRESH_WITH_QSPI_MAPPING_MODE == 1)
-        dma_is_repeat_mode = false;
-#endif
-        lcd_spi_backlight_open();
-        lcd_spi_first_disp = 0;
-    }
-
     lcd_spi_send_cmd(id, LCD_SPI_DEVICE_CASET);
     lcd_spi_send_data(id, column_value, 4);
     lcd_spi_send_cmd(id, LCD_SPI_DEVICE_RASET);
     lcd_spi_send_data(id, row_value, 4);
 
     lcd_spi_send_cmd(id, LCD_SPI_DEVICE_RAMWR);
-    lcd_spi_send_data(id, disp_buffer, (x_end - x_start + 1) * (y_end - y_start + 1) * 2);
+}
+
+bk_err_t lcd_spi_partial_display(uint8_t id, uint8_t *disp_buffer, uint32_t data_len)
+{
+    if (lcd_spi_open_status == false)
+    {
+        return BK_FAIL;
+    }
+
+    lcd_spi_send_data(id, disp_buffer, data_len);
+
+    return BK_OK;
 }

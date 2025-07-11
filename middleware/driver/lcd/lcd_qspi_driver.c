@@ -55,6 +55,11 @@ static dma_id_t lcd_qspi_dma_id = DMA_ID_MAX;
 static uint8_t s_lcd_qspi_flag = 1;
 static uint8_t lcd_qspi_dma_is_init = 0;
 
+#if CONFIG_LCD_QSPI_TE
+static beken_semaphore_t lcd_qspi_te_sem = NULL;
+bool lcd_qspi_te_flag = false;
+#endif
+
 extern media_debug_t *media_debug;
 
 static void lcd_qspi_dma_finish_isr(void)
@@ -371,7 +376,7 @@ bk_err_t lcd_qspi_get_dma_repeat_once_len(const lcd_device_t *device)
     uint32_t value = 0;
     uint8_t i = 0;
 
-    for (i = 4; i < 20; i++) {
+    for (i = 4; i < 13; i++) {
         len = device->qspi->frame_len / i;
         if (len <= 0x10000) {
             value = device->qspi->frame_len % i;
@@ -385,6 +390,69 @@ bk_err_t lcd_qspi_get_dma_repeat_once_len(const lcd_device_t *device)
 
     return len;
 }
+
+#if CONFIG_LCD_QSPI_TE
+static void lcd_qspi_te_int_isr(gpio_id_t id)
+{
+    if (lcd_qspi_te_sem && id == LCD_QSPI_TE_PIN && lcd_qspi_te_flag == true) {
+        rtos_set_semaphore(&lcd_qspi_te_sem);
+    }
+}
+
+static bk_err_t lcd_qspi_te_init(void)
+{
+    bk_err_t ret = BK_OK;
+
+    ret = rtos_init_semaphore(&lcd_qspi_te_sem, 1);
+    if (ret != kNoErr)
+    {
+        LCD_QSPI_LOGE("%s lcd_spi_te_sem init failed\r\n", __func__);
+        return ret;
+    }
+
+    gpio_config_t config;
+    config.io_mode = GPIO_INPUT_ENABLE;
+    config.pull_mode = GPIO_PULL_UP_EN;
+    config.func_mode = GPIO_SECOND_FUNC_DISABLE;
+
+    BK_LOG_ON_ERR(gpio_dev_unmap(LCD_QSPI_TE_PIN));
+    bk_gpio_set_config(LCD_QSPI_TE_PIN, &config);
+
+    int int_type = GPIO_INT_TYPE_FALLING_EDGE;
+    bk_gpio_register_isr(LCD_QSPI_TE_PIN , lcd_qspi_te_int_isr);
+    BK_LOG_ON_ERR(bk_gpio_set_interrupt_type(LCD_QSPI_TE_PIN, int_type));
+    bk_gpio_enable_interrupt(LCD_QSPI_TE_PIN);
+
+    return ret;
+}
+
+static bk_err_t lcd_qspi_te_deinit(void)
+{
+    bk_err_t ret = BK_OK;
+
+    bk_gpio_disable_interrupt(LCD_QSPI_TE_PIN);
+    BK_LOG_ON_ERR(gpio_dev_unmap(LCD_QSPI_TE_PIN));
+
+    ret = rtos_deinit_semaphore(&lcd_qspi_te_sem);
+    if (ret != kNoErr)
+    {
+        LCD_QSPI_LOGE("%s lcd_spi_te_sem deinit failed\r\n", __func__);
+        return ret;
+    }
+
+    return ret;
+}
+
+void lcd_qspi_te_wait(uint32_t wait_ms)
+{
+    if (lcd_qspi_te_sem) {
+        bk_err_t ret = rtos_get_semaphore(&lcd_qspi_te_sem, wait_ms);
+        if (ret != kNoErr) {
+            LCD_QSPI_LOGE("lcd_qspi_te_sem get failed\r\n");
+        }
+    }
+}
+#endif
 
 bk_err_t bk_lcd_qspi_init(qspi_id_t qspi_id, const lcd_device_t *device)
 {
@@ -461,6 +529,10 @@ bk_err_t bk_lcd_qspi_init(qspi_id_t qspi_id, const lcd_device_t *device)
         return BK_FAIL;
     }
 
+#if CONFIG_LCD_QSPI_TE
+    lcd_qspi_te_init();
+#endif
+
     return BK_OK;
 }
 
@@ -468,7 +540,6 @@ bk_err_t bk_lcd_qspi_deinit(qspi_id_t qspi_id)
 {
     bk_err_t ret = BK_OK;
 
-#if CONFIG_SOC_BK7236XX
     if (lcd_qspi_dma_is_init == 1) {
         bk_dma_stop(lcd_qspi_dma_id);
         bk_dma_free(DMA_DEV_DTCM, lcd_qspi_dma_id);
@@ -481,6 +552,9 @@ bk_err_t bk_lcd_qspi_deinit(qspi_id_t qspi_id)
 
         lcd_qspi_dma_is_init = 0;
     }
+
+#if CONFIG_LCD_QSPI_TE
+    lcd_qspi_te_deinit();
 #endif
 
     BK_LOG_ON_ERR(bk_qspi_deinit(qspi_id));
