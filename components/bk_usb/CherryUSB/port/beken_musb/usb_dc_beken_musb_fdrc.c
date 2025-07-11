@@ -128,6 +128,10 @@ static void musb_write_packet(uint8_t ep_idx, uint8_t *buffer, uint16_t len)
     uint32_t count8;
     int i;
 
+    if (!buffer) {
+        return;
+    }
+
     if ((uint32_t)buffer & 0x03) {
         buf8 = buffer;
         for (i = 0; i < len; i++) {
@@ -158,6 +162,10 @@ static void musb_read_packet(uint8_t ep_idx, uint8_t *buffer, uint16_t len)
     uint32_t count32;
     uint32_t count8;
     int i;
+
+    if (!buffer) {
+        return;
+    }
 
     if ((uint32_t)buffer & 0x03) {
         buf8 = buffer;
