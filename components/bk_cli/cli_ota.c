@@ -94,7 +94,8 @@ void get_http_ab_version(char *pcWriteBuffer, int xWriteBufferLen, int argc, cha
 void http_new_ota_Command(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **argv)
 {
 	int ret = 0;
-	if (argc < 2)
+
+	if (argc < 3)
 		goto HTTP_CMD_ERR;
 
 	ota_wr_destination_t  dest_id = os_strtoul(argv[2], NULL, 10);
