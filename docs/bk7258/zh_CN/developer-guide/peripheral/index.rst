@@ -19,3 +19,4 @@
    I2S <bk_i2s>
    NFC <bk_nfc_brief_introduction>
    GSENSOR <bk_gsensor>
+   MODEM_DRIVER <bk_modem>

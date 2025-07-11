@@ -128,7 +128,8 @@ INPUT = \
     ../../../include/modules/mp3dec.h \
     ../../../include/driver/rott_driver.h \
     ../../../include/driver/rott_types.h \
-    ../../../include/modules/pm.h
+    ../../../include/modules/pm.h \
+    ../../../include/components/modem_driver.h
 
 ## Get warnings for functions that have no documentation for their parameters or return value
 ##
