@@ -23,6 +23,8 @@
 #define AT_CMD_LEN_MAX (128)
 #define AT_RSP_LEN_MAX (256)
 
+#define AT_RSP_TIMER_MS_ONCE (20)
+#define AT_RSP_TIMER_MS_TOTAL (5000)
 
 static beken_semaphore_t g_modem_at_semaphore = NULL;
 beken2_timer_t func_proc = {0};
@@ -74,7 +76,7 @@ static void bk_modem_at_timeout_cb(void* larg, void* rarg)
 {
 	static uint8_t timer_cnt = 0;
 
-	if (timer_cnt * 20 >= 5000)
+	if (timer_cnt * AT_RSP_TIMER_MS_ONCE >= AT_RSP_TIMER_MS_TOTAL)
 		BK_MODEM_LOGI("AT command_timer is too long\r\n");
 
 	if (g_modem_at_semaphore == NULL)
@@ -84,7 +86,7 @@ static void bk_modem_at_timeout_cb(void* larg, void* rarg)
 		return;
 	}
 
-	if ((g_modem_at_rsp_segment_cnt < 2) && (timer_cnt * 20 < 5000))
+	if ((g_modem_at_rsp_segment_cnt < 2) && (timer_cnt * AT_RSP_TIMER_MS_ONCE < AT_RSP_TIMER_MS_TOTAL))
 	{
 		timer_cnt ++;
 		rtos_start_oneshot_timer(&func_proc);
@@ -106,6 +108,19 @@ void bk_modem_at_rcv_resp(const char *resp,uint32_t len)
 	if(len>=AT_RSP_LEN_MAX)
 	{
 		BK_MODEM_LOGI("rcv len err len %\r\n",len);
+		return;
+	}
+
+	if (g_modem_at_rsp_segment_cnt > 3)
+	{
+		BK_MODEM_LOGI("rcv cnt is more than 3. len is %d, %d \r\n", g_modem_at_rsp_len, len);
+		return;
+	}
+
+	if (g_modem_at_rsp_len + len > AT_RSP_LEN_MAX)
+	{
+		BK_MODEM_LOGI("len is %d now, rcv len %d, total len is more than 256. cnt is %d \r\n",
+					g_modem_at_rsp_len, len, g_modem_at_rsp_segment_cnt);
 		return;
 	}
 
@@ -140,7 +155,7 @@ bk_err_t bk_modem_at_cmd_send(const char *cmd, uint8_t max_retry, uint32_t timeo
 	while (retry--)
 	{
 		BK_MODEM_LOGI("modem_device_write: %d\r\n", retry);
-		os_memset(g_modem_at_rsp_buf, 0x0, sizeof(g_modem_at_rsp_buf));
+		os_memset(g_modem_at_rsp_buf, 0x0, AT_RSP_LEN_MAX);
 		g_modem_at_rsp_segment_cnt = 0;
 		g_modem_at_rsp_len = 0;
 		
@@ -582,7 +597,7 @@ bk_err_t bk_modem_at_init(void)
 		return BK_FAIL;
 	}
 
-	ret = rtos_init_oneshot_timer(&func_proc,20,bk_modem_at_timeout_cb,NULL,NULL);
+	ret = rtos_init_oneshot_timer(&func_proc,AT_RSP_TIMER_MS_ONCE,bk_modem_at_timeout_cb,NULL,NULL);
 	if(ret != BK_OK){
 		BK_MODEM_LOGI("init timer failed\r\n");
 		return BK_FAIL;
