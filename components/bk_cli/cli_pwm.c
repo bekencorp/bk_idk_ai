@@ -5,6 +5,11 @@
 
 #if CONFIG_PWM
 
+#ifndef PWM_CLOCK_SRC_XTAL
+#define PWM_CLOCK_SRC_XTAL 26000000
+#endif
+#define _PERIOD_2_FREQ(period)    ((period == 0) ? (0) : (PWM_CLOCK_SRC_XTAL / (period)))
+
 static void cli_pwm_help(void)
 {
 	CLI_LOGI("pwm_driver init\n");
@@ -240,16 +245,44 @@ static void cli_pwm_capture_cmd(char *pcWriteBuffer, int xWriteBufferLen, int ar
 
 		config.isr = cli_pwm_capture_isr;
 		BK_LOG_ON_ERR(bk_pwm_capture_init(chan, &config));
-		CLI_LOGI("pwm_capture init, chan=%d\n", chan);
+		CLI_LOGD("pwm_capture init, chan=%d\n", chan);
 	} else if (os_strcmp(argv[2], "start") == 0) {
 		BK_LOG_ON_ERR(bk_pwm_capture_start(chan));
-		CLI_LOGI("pwm_capture start, chan=%d\n", chan);
+		CLI_LOGD("pwm_capture start, chan=%d\n", chan);
 	} else if (os_strcmp(argv[2], "stop") == 0) {
 		BK_LOG_ON_ERR(bk_pwm_capture_stop(chan));
-		CLI_LOGI("pwm_capture stop, chan=%d\n", chan);
+		CLI_LOGD("pwm_capture stop, chan=%d\n", chan);
 	} else if (os_strcmp(argv[2], "deinit") == 0) {
 		BK_LOG_ON_ERR(bk_pwm_capture_deinit(chan));
-		CLI_LOGI("pwm_capture deinit, chan=%d\n", chan);
+		CLI_LOGD("pwm_capture deinit, chan=%d\n", chan);
+	} else if (os_strcmp(argv[2], "capture_example") == 0) {
+		pwm_capture_init_config_t config = {0};
+		float duty_ratio = 0;
+
+		config.edge = PWM_CAPTURE_POS;
+		config.isr = NULL;
+		BK_LOG_ON_ERR(bk_pwm_capture_deinit(chan));
+		BK_LOG_ON_ERR(bk_pwm_capture_init(chan, &config));
+		BK_LOG_ON_ERR(bk_pwm_capture_start(chan));
+
+		uint32_t period_cycle = bk_pwm_capture_get_period_duty_cycle(chan, 1000);
+		CLI_LOGD("pwm_capture period_cycle:%d, freq:%dHz\n", period_cycle, _PERIOD_2_FREQ(period_cycle));
+		BK_LOG_ON_ERR(bk_pwm_capture_stop(chan));
+		BK_LOG_ON_ERR(bk_pwm_capture_deinit(chan));
+
+		config.edge = PWM_CAPTURE_EDGE;
+		config.isr = NULL;
+		BK_LOG_ON_ERR(bk_pwm_capture_init(chan, &config));
+		BK_LOG_ON_ERR(bk_pwm_capture_start(chan));
+		uint32_t duty_cycle = bk_pwm_capture_get_period_duty_cycle(chan, 1000);
+		if (period_cycle == 0) {
+			duty_ratio = 0;
+		} else {
+			duty_ratio = (float)duty_cycle / (float)period_cycle;
+		}
+		CLI_LOGD("pwm_capture duty_cycle:%d, duty_ratio:%f\r\n", duty_cycle, duty_ratio);
+		BK_LOG_ON_ERR(bk_pwm_capture_stop(chan));
+		BK_LOG_ON_ERR(bk_pwm_capture_deinit(chan));
 	} else {
 		cli_pwm_help();
 		return;
