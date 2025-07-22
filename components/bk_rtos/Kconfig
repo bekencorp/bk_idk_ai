@@ -115,10 +115,24 @@ menu "Bk_rtos"
 			help
 				set OS adapter layer timer Debug count value   
 
-        config FREERTOS_HISTORY_CPU_PERCENT
+		 config FREERTOS_HISTORY_CPU_PERCENT
 			bool "Enable FreeRTOS CPU usage percent record"
-			default n        
-    
+			default n     
+
+		config USE_STATIC_TASK_NAME
+			bool "Use Static Task Name"
+			default n
+			help
+				When this marco is enabled, the task name will be set as constant string.
+				and the incoming parameters are directly used internally, not copied.
+
+		config DYNAMIC_TASK_NAME_LEN
+			int "set Dynamic Task Name Len"
+			default 16
+			help
+				When the task name used the native method of FreeRTOS,
+				this marco set the maximum length of the name
+
 	endmenu
 
 	menu "Modify LITEOS_M Config"
