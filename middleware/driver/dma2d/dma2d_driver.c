@@ -528,7 +528,7 @@ void bk_dma2d_memcpy_or_pixel_convert(dma2d_memcpy_pfc_t *pixel_convert)
 	dma2d_config.init.red_blue_swap   = pixel_convert->output_red_blue_swap;               /**< No R&B swap for the output image */
 	dma2d_config.init.alpha_inverted = DMA2D_REGULAR_ALPHA;            /**< No alpha inversion for the output image */
 	dma2d_config.init.trans_ability = TRANS_16BYTES; 
-	dma2d_config.init.out_byte_by_byte_reverse = NO_REVERSE;
+	dma2d_config.init.out_byte_by_byte_reverse = pixel_convert->out_byte_by_byte_reverse;
 
 	/**< Foreground layer Configuration */
 	dma2d_config.layer_cfg[DMA2D_FOREGROUND_LAYER].alpha_mode = DMA2D_NO_MODIF_ALPHA;    /**< Keep original Alpha from ARGB4444 input */

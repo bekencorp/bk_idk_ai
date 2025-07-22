@@ -1013,6 +1013,7 @@ bk_err_t lcd_driver_display_continue(void)
 		lcd_hal_8080_start_transfer(1);
 		if(s_lcd.device.id != LCD_DEVICE_NT35510_MCU)
 		{
+            lcd_hal_8080_cmd_param_count(1);
 			lcd_hal_8080_write_cmd(0x3c);
 		}
 		else

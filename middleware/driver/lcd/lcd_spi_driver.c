@@ -349,7 +349,7 @@ static bk_err_t lcd_spi_get_dma_repeat_once_len(const lcd_device_t *device)
     uint32_t value = 0;
     uint8_t i = 0;
 
-    for (i = 4; i < 20; i++) {
+    for (i = 4; i < 13; i++) {
         len = device->spi->frame_len / i;
         if (len <= 0x10000) {
             value = device->spi->frame_len % i;
