@@ -47,7 +47,7 @@
 
 #define FLASH_SVR_EVENTS         (FLASH_SVR_CONNECT_EVENTS | FLASH_SVR_QUIT_EVENT)
 
-#define FLASH_SVR_WAIT_TIME      10
+#define FLASH_SVR_WAIT_TIME      50
 
 
 static u8 s_flash_svr_init = 0;
@@ -207,7 +207,7 @@ static void flash_read_handler(u32 handle, flash_cmd_t *cmd_buff, u8 connect_id)
 		#ifdef  DYNAMIC_FLASH_BUFFER
 		os_free(read_buff);
 		#endif
-		TRACE_E(TAG, "%s @%d, 0x%x send failed!\r\n", __FUNCTION__, __LINE__, handle);
+		TRACE_E(TAG, "%s @%d, 0x%x send failed, ret_val = %d!\r\n", __FUNCTION__, __LINE__, handle, ret_val);
 		return;
 	}
 
