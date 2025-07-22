@@ -854,10 +854,6 @@ static void cli_psram_cmd_handle_ext(char *pcWriteBuffer, int xWriteBufferLen, i
 				bk_psram_set_clk(PSRAM_160M);
 				break;
 
-			case 240:
-				bk_psram_set_clk(PSRAM_240M);
-				break;
-
 			default:
 				CLI_LOGE("can not support this clk!\r\n");
 				break;
@@ -1065,7 +1061,7 @@ static void cli_psram_cmd_handle_ext(char *pcWriteBuffer, int xWriteBufferLen, i
 			start = os_strtoul(argv[4], NULL, 16);
 			end = os_strtoul(argv[5], NULL, 16);
 		}
-			
+
 		else
 			enable = 0;
 
