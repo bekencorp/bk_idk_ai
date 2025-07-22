@@ -14,6 +14,16 @@ menu "PSRAM"
 		bool "Use psram_malloc at os_malloc failed."
 		default n
 
+	config PSRAM_CLOCK
+		int "PSRAM Running Clock"
+		depends on PSRAM
+		default 2
+		help
+	  		Select PSRAM operating clock.
+			1: 160M
+			2: 120M
+			3: 80M
+
 	config PSRAM_HEAP_BASE
 		depends on PSRAM_AS_SYS_MEMORY
 		hex "Set psram_malloc base address"

@@ -124,6 +124,7 @@ void psram_hal_config(void);
 uint32_t psram_hal_config_init(uint32_t id);
 
 void psram_hal_set_clk(psram_clk_t clk);
+psram_clk_t psram_hal_get_clk(void);
 
 void psram_hal_set_voltage(psram_voltage_t voltage);
 

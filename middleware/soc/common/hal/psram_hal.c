@@ -75,14 +75,26 @@ uint32_t psram_hal_cmd_read(uint32_t addr)
 	return 0;
 }
 
+psram_clk_t psram_hal_get_clk(void)
+{
+	uint32_t sel = sys_drv_psram_clk_sel_get();
+	uint32_t div = sys_drv_psram_get_clkdiv();
+
+	if (sel == 0 && div == 0)
+		return PSRAM_160M;
+	else if (sel == 1 && div == 1)
+		return PSRAM_120M;
+	else if (sel == 0 && div == 1)
+		return PSRAM_80M;
+	else
+		return PSRAM_ERROR;
+
+}
+
 void psram_hal_set_clk(psram_clk_t clk)
 {
 	switch (clk)
 	{
-		case PSRAM_240M:
-			sys_drv_psram_clk_sel(1);	 // clk sel: 0-320 1-480
-			sys_drv_psram_set_clkdiv(0); //frq:  F/(2 + (1+div))
-			break;
 		case PSRAM_160M:
 			sys_drv_psram_clk_sel(0);	 // clk sel: 0-320 1-480
 			sys_drv_psram_set_clkdiv(0); //frq:  F/(2 + (1+div))

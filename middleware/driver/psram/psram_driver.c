@@ -25,6 +25,10 @@
 #include "bk_ef.h"
 #endif
 
+#ifndef CONFIG_PSRAM_CLOCK
+#define CONFIG_PSRAM_CLOCK  PSRAM_120M
+#endif
+
 #define PSRAM_CHECK_FLAG   0x3CA5C3A5
 #define PSRAM_INIT_WAIT_TIMEOUT_MS   100
 typedef struct {
@@ -64,6 +68,19 @@ bk_err_t bk_psram_set_clk(psram_clk_t clk)
 
 	return ret;
 }
+
+psram_clk_t bk_psram_get_clk(void)
+{
+	psram_clk_t clk = psram_hal_get_clk();
+
+	if (clk == PSRAM_ERROR)
+	{
+		PSRAM_LOGE("Unknown PSRAM clock setting!\r\n");
+	}
+
+	return clk;
+}
+
 bk_err_t bk_psram_heap_init_flag_set(bool init)
 {
 	bk_err_t ret = BK_OK;
@@ -269,8 +286,8 @@ bk_err_t bk_psram_init(void)
 		return BK_FAIL;
 	}
 
-	// set psram clk
-	bk_psram_set_clk(PSRAM_120M);
+	// set psram clk,default is 120M
+	bk_psram_set_clk((psram_clk_t)CONFIG_PSRAM_CLOCK);
 
 	PSRAM_LOGI("%s, %x-%x\r\n", __func__, actual_id, chip_id);
 

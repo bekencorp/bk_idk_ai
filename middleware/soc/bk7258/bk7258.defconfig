@@ -600,6 +600,8 @@ CONFIG_PSRAM_WRITE_THROUGH=y
 CONFIG_PSRAM_CALIBRATE=y
 #@ Enable PSRAM id auto detect function
 CONFIG_PSRAM_AUTO_DETECT=y
+#@ PSRAM init CLK
+CONFIG_PSRAM_CLOCK=2
 # end of PSRAM
 
 #@ Enable LDO self low power mode

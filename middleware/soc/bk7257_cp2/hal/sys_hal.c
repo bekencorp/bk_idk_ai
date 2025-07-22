@@ -136,7 +136,7 @@ void sys_hal_module_power_ctrl(power_module_name_t module,power_module_state_t p
 			sys_ll_set_cpu1_int_halt_clk_op_cpu1_pwr_dw(POWER_MODULE_STATE_OFF);
 		}
 	} else if(module == POWER_MODULE_NAME_TCM1_PGEN) {
-		if(power_state == POWER_MODULE_STATE_ON) {		
+		if(power_state == POWER_MODULE_STATE_ON) {
 			/*TODO
 			  sys_ll_set_cpu_power_sleep_wakeup_tcm1_pgen(0);*/
 			while(1){;}
@@ -2142,6 +2142,16 @@ uint32_t sys_hal_psram_ldo_status()
 void sys_hal_psram_dpll_enable(uint32_t enable)
 {
 	sys_ll_set_ana_reg5_en_dpll(enable);
+}
+
+uint32_t sys_hal_psram_clk_sel_get(void)
+{
+	return sys_ll_get_cpu_clk_div_mode2_cksel_psram();
+}
+
+uint32_t sys_hal_psram_get_clkdiv(void)
+{
+	return sys_ll_get_cpu_clk_div_mode2_ckdiv_psram();
 }
 
 void sys_hal_psram_clk_sel(uint32_t value)

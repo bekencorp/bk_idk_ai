@@ -2404,6 +2404,16 @@ void sys_hal_psram_dpll_enable(uint32_t enable)
 	sys_ll_set_ana_reg5_en_dpll(enable);
 }
 
+uint32_t sys_hal_psram_clk_sel_get(void)
+{
+	return sys_ll_get_cpu_clk_div_mode2_cksel_psram();
+}
+
+uint32_t sys_hal_psram_get_clkdiv(void)
+{
+	return sys_ll_get_cpu_clk_div_mode2_ckdiv_psram();
+}
+
 void sys_hal_psram_clk_sel(uint32_t value)
 {
 	sys_ll_set_cpu_clk_div_mode2_cksel_psram(value);
@@ -2725,7 +2735,7 @@ static void sys_hal_pwd_rosc()
 			}
 		}
 	}
-	
+
 }
 //TODO the module owner can put the sys init to better place
 void sys_hal_early_init(void)

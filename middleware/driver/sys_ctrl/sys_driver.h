@@ -474,6 +474,8 @@ uint32_t sys_drv_psram_dpll_enable(uint32_t value);
 uint32_t sys_drv_psram_ldo_enable(uint32_t value);
 uint32_t sys_drv_psram_clk_sel(uint32_t value);
 uint32_t sys_drv_psram_set_clkdiv(uint32_t value);
+uint32_t sys_drv_psram_clk_sel_get(void);
+uint32_t sys_drv_psram_get_clkdiv(void);
 uint32_t sys_drv_psram_psldo_vsel(uint32_t value);
 uint32_t sys_drv_psram_psldo_vset(uint32_t psldo_swb, uint32_t vpsramsel);
 uint32_t sys_drv_psram_psram_disckg(uint32_t value);

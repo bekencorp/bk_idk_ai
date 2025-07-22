@@ -287,6 +287,16 @@ void sys_drv_qspi_set_src_clk_div(uint32_t id, uint32_t value)
 	sys_drv_exit_critical(int_level);
 }
 
+uint32_t sys_drv_psram_clk_sel_get(void)
+{
+	return sys_hal_psram_clk_sel_get();
+}
+
+uint32_t sys_drv_psram_get_clkdiv(void)
+{
+	return sys_hal_psram_get_clkdiv();
+}
+
 uint32_t sys_drv_psram_clk_sel(uint32_t value)
 {
 	uint32_t int_level = sys_drv_enter_critical();
