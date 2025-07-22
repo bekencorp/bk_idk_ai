@@ -394,6 +394,12 @@ int32_t bk_cdc_acm_io_write_t(IPC_CDC_DATA_T *p_cdc_data)
 {
 	int32_t ret = 0;
 
+	if (stop_tx_when_restore)
+	{
+		USB_CDC_LOGI("%s: stop tx when restoring. \n", __func__);
+		return ret;
+	}
+
 	ret = bk_cdc_acm_io_write_data(p_cdc_data);
 	if (ret < 0) 
 	{
@@ -491,6 +497,12 @@ static void bk_usb_acm_count_dev_callback(void *data1, void *data2)
 
 static void bk_usb_acm_count_dev_checktimer(uint32 data)
 {
+	if (g_acm_state != data)
+	{
+		USB_CDC_LOGI("clear acm_cnt. state from %d to %d\n", g_acm_state, data);
+		acm_cnt = 0;
+	}
+
 	if (rtos_is_oneshot_timer_running(&acm_count_dev_onetimer))
 	{
 		rtos_stop_oneshot_timer(&acm_count_dev_onetimer);
@@ -537,6 +549,7 @@ void bk_cdc_acm_main(void)
 			switch (msg.type)
 			{
 				case ACM_OPEN_IND:
+					USB_CDC_LOGI("%s: ACM_OPEN_IND. %d\n", __func__, stop_tx_when_restore);
 					bk_usb_cdc_open_ind();
 					stop_tx_when_restore = false;
 					break;
@@ -545,6 +558,7 @@ void bk_cdc_acm_main(void)
 					break;
 				case ACM_CONNECT_IND:
 					{
+						USB_CDC_LOGI("%s: ACM_CONNECT_IND. %d\n", __func__, stop_tx_when_restore);
 						g_first_rx_urb_set = 0;                      
 						int32_t idx = bk_usb_acm_find_ppp_dev();
 						if (idx < 0) {
@@ -561,15 +575,19 @@ void bk_cdc_acm_main(void)
 					break;
 				case ACM_DISCONNECT_IND:
 					{
-						g_cdc_data_tol->p_status->dev_cnt = acm_cnt = 0;
-						g_cdc_data_tol->p_status->status = CDC_STATUS_DISCON;
-						acm_device = NULL;
-						bk_usb_cdc_send_ipc_cmd(CPU1_UPDATE_USB_CDC_STATE);
+						USB_CDC_LOGI("%s: ACM_DISCONNECT_IND. %d\n", __func__, stop_tx_when_restore);
+						if (!stop_tx_when_restore)
+						{
+							g_cdc_data_tol->p_status->dev_cnt = acm_cnt = 0;
+							g_cdc_data_tol->p_status->status = CDC_STATUS_DISCON;
+							acm_device = NULL;
+							bk_usb_cdc_send_ipc_cmd(CPU1_UPDATE_USB_CDC_STATE);
+						}
 					}
 					break;
 				case ACM_EXIT_IND:
 					{
-						USB_CDC_LOGD("ACM_EXIT_IND\n");
+						USB_CDC_LOGD("%s: ACM_EXIT_IND. %d\n", __func__, stop_tx_when_restore);
 					//	bk_usb_device_set_using_status(0, USB_CDC_DEVICE);
 					//	bk_usb_cdc_update_state_notify(CDC_STATUS_DISCON);
 					//	goto exit;
@@ -577,6 +595,7 @@ void bk_cdc_acm_main(void)
 					break;
 				case ACM_CLOSE_IND:
 					{
+						USB_CDC_LOGI("%s: ACM_CLOSE_IND. %d\n", __func__, stop_tx_when_restore);
 						bk_usb_cdc_close_ind();
 					//	goto exit;
 					}
@@ -635,10 +654,8 @@ void bk_cdc_acm_txmain(void)
 			switch (msg.type)
 			{
 				case ACM_BULKOUT_IND:
-					{
-						if (!stop_tx_when_restore)
-							bk_cdc_acm_io_write_t(NULL);
-					}break;
+					bk_cdc_acm_io_write_t(NULL);
+					break;
 				default:
 					break;
 			}
@@ -872,9 +889,9 @@ void bk_usb_get_cdc_instance(struct usbh_hubport *hport, uint8_t intf, uint32_t 
 
 void bk_usb_cdc_connect_notify(struct usbh_hubport *hport, uint8_t intf, uint32_t class)
 {
-	bk_usb_get_cdc_instance(hport, intf, class);
-
 	bk_usb_acm_count_dev_checktimer(ACM_CONNECT_IND);
+
+	bk_usb_get_cdc_instance(hport, intf, class);
 }
 
 void bk_usb_cdc_disconnect_notify(struct usbh_hubport *hport, uint8_t intf, uint32_t class)

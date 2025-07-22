@@ -179,11 +179,9 @@ void bk_cdc_acm_state_notify(CDC_STATUS_t * dev_state)
 	switch(state)
 	{
 		case CDC_STATUS_CONN:
-			LOGI("CDC_STATUS_CONN\n");
 			cdc_send_msg(CDC_STATUS_CONN, dev_state->dev_cnt);
 			break;
 		case CDC_STATUS_DISCON:
-			LOGI("CDC_STATUS_DISCON\n");
 			cdc_send_msg(CDC_STATUS_DISCON, 0);
 			break;
 		default:
@@ -301,6 +299,9 @@ static int32_t bk_cdc_acm_modem_write_handle(char *p_tx, uint32_t l_tx)
 static bk_err_t bk_cdc_acm_init_malloc(void)
 {
 	uint32_t i = 0;
+
+	LOGI("%s\r\n", __func__);
+
 	g_cdc_ipc = (IPC_CDC_DATA_T *)psram_malloc(sizeof(IPC_CDC_DATA_T));
 	if (g_cdc_ipc == NULL)
 	{
@@ -418,6 +419,9 @@ static bk_err_t bk_cdc_acm_init_malloc(void)
 static void bk_cdc_acm_init_free(void)
 {
 	uint32_t i = 0;
+
+	LOGI("%s\r\n", __func__);
+
 	if (g_cdc_ipc) {
 		psram_free(g_cdc_ipc);
 		g_cdc_ipc = NULL;
@@ -550,21 +554,25 @@ static void bk_cdc_demo_task(beken_thread_arg_t arg)
 			switch (msg.type)
 			{
 				case CDC_STATUS_OPEN:
+					LOGI("%s: CDC_STATUS_OPEN, %d \n", __func__, g_cdc_close);
 					g_cdc_close = 0;
 					bk_usb_cdc_send_ipc_cmd(CPU0_OPEN_USB_CDC);
 					break;
 				case CDC_STATUS_CLOSE:
+					LOGI("%s: CDC_STATUS_CLOSE, %d \n", __func__, g_cdc_close);
 					g_cdc_close = 1;
 					bk_usb_cdc_send_ipc_cmd(CPU0_CLOSE_USB_CDC);
 					break;
 				case CDC_STATUS_CONN:
 					{
+						LOGI("%s: CDC_STATUS_CONN, %d \n", __func__, g_cdc_close);
 						uint32_t cnt = (uint32_t)msg.data;
 						bk_modem_usbh_conn_ind(cnt);
 					}
 					break;
 				case CDC_STATUS_DISCON:
 					{
+						LOGI("%s: CDC_STATUS_DISCON, %d \n", __func__, g_cdc_close);
 						bk_cdc_acm_deinit();
 						bk_modem_usbh_disconn_ind();
 						if (g_cdc_close == 1) {
