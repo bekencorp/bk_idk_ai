@@ -118,21 +118,10 @@ typedef struct {
     int payload_offset;
 } bk_websocket_event_data_t;
 
-void bk_websocket_register_cb(websocket_event_cb cb);
-bk_err_t websocket_client_set_uri(transport client, const char *uri);
 transport websocket_client_init(const websocket_client_input_t *input);
 bk_err_t websocket_client_destroy(transport client);
-void websocket_client_task(beken_thread_arg_t *thread_param);
 int websocket_client_start(transport client);
-bk_err_t websocket_client_stop(transport client);
-bk_err_t websocket_start(websocket_client_input_t *websocket_cfg);
-bk_err_t websocket_recv(transport client);
-bk_err_t websocket_send_text(websocket_client_input_t *websocket_cfg);
-bk_err_t websocket_send_ping(void);
-bk_err_t websocket_stop(void);
-bk_err_t websocket_send_ping_pong(websocket_client_input_t *websocket_cfg);
 bool websocket_client_is_connected(transport client);
-void bk_websocket_register_events(transport client,bk_event_handler_t event_handler);
 int websocket_client_send_text(transport client, const char *data, int len, int timeout);
 int websocket_client_send_binary(transport client, const char *data, int len, int timeout);
 
