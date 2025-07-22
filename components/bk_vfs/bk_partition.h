@@ -8,6 +8,7 @@ enum LFS_PARTITION_TYPE {
 	LFS_MEM,
 	LFS_FLASH,
 	LFS_SPI_FLASH,
+	LFS_QSPI_FLASH,
 };
 
 struct bk_little_fs_partition {

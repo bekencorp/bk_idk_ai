@@ -13,6 +13,12 @@
 
 #include "lfs.h"
 
+#if CONFIG_QSPI_FLASH
+#include <driver/qspi.h>
+#include <driver/qspi_flash.h>
+#endif
+
+
 #define FS_LITTLEFS "littlefs"
 
 #define USE_RAMBD 1
@@ -130,8 +136,14 @@ static int setup_lfs_config(struct lfs_config *config, const struct bk_little_fs
 	lfs_flashbd_t *bd;
 	int ret;
 
-	if (!part || !part->part_flash.start_addr || !part->part_flash.size) {
-		printf("no start_addr or size\n");
+	if (!part || !part->part_flash.size) {
+		printf("no size\n");
+		return -1;
+	}
+
+	//avoid 0 addr is used by LFS,0 is for codes in internal flash
+	if((part->part_type == LFS_FLASH) && (!part->part_flash.start_addr)) {
+		printf("no start_addr\n");
 		return -1;
 	}
 
@@ -158,16 +170,31 @@ static int setup_lfs_config(struct lfs_config *config, const struct bk_little_fs
 		config->prog = lfs_spi_flashbd_prog;
 		config->erase = lfs_spi_flashbd_erase;
 		config->sync = lfs_spi_flashbd_sync;
-	} else {
+	}
+#if CONFIG_QSPI_FLASH
+	else if (part->part_type == LFS_QSPI_FLASH) {
+		extern bk_err_t bk_qspi_flash_init(qspi_id_t id);
+		ret = bk_qspi_flash_init(CONFIG_LITTLEFS_QSPI_FLASH_ID);
+		if (ret) {
+			free(config->context);
+			return -1;
+		}
+		config->read = lfs_qspi_flashbd_read;
+		config->prog = lfs_qspi_flashbd_prog;
+		config->erase = lfs_qspi_flashbd_erase;
+		config->sync = lfs_qspi_flashbd_sync;
+	}
+#endif
+	else {
 		os_free(config->context);
 		return -1;
 	}
 
-	config->read_size = 512;
-	config->prog_size = 512;
+	config->read_size = 256;
+	config->prog_size = 256;
 	config->block_size = 4096;
 	config->block_count = part->part_flash.size / config->block_size;
-	config->cache_size = 512;
+	config->cache_size = 2048;
 	config->lookahead_size = 512;
 	config->block_cycles = 500;
 

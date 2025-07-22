@@ -1,10 +1,15 @@
 #include "lfs_flashbd.h"
-
+#include <os/os.h>
 #include <common/bk_include.h>
 #include <driver/flash_types.h>
 #include <driver/flash.h>
 #include <driver/spi.h>
 #include <driver/dma.h>
+
+#if CONFIG_QSPI_FLASH
+#include <driver/qspi.h>
+#include <driver/qspi_flash.h>
+#endif
 
 int lfs_flashbd_createcfg(const struct lfs_config *cfg,
         const struct lfs_flashbd_config *bdcfg) {
@@ -245,5 +250,86 @@ int lfs_spi_flashbd_sync(const struct lfs_config *cfg)
 	return -1;
 }
 
+#endif
+
+#if CONFIG_QSPI_FLASH 
+
+static int qspi_inited = 0;
+
+int lfs_qspi_flashbd_init(void) {
+	int ret;
+
+	if (qspi_inited)
+		return 0;
+	qspi_inited = 1;
+
+	ret = bk_qspi_driver_init();
+	if (ret)
+		return ret;
+
+	ret = bk_qspi_flash_init(CONFIG_LITTLEFS_QSPI_FLASH_ID);
+
+	return ret;
+}
+
+int lfs_qspi_flashbd_read(const struct lfs_config *cfg, lfs_block_t block,
+        lfs_off_t off, void *buffer, lfs_size_t size) {
+    LFS_FLASHBD_TRACE("lfs_qspi_flashbd_read(%p, "
+                "0x%"PRIx32", %"PRIu32", %p, %"PRIu32")",
+            (void*)cfg, block, off, buffer, size);
+    lfs_flashbd_t *bd = cfg->context;
+
+    // check if read is valid
+    LFS_ASSERT(off  % cfg->read_size == 0);
+    LFS_ASSERT(size % cfg->read_size == 0);
+    LFS_ASSERT(block < cfg->block_count);
+
+    // read data
+	bk_qspi_flash_read(CONFIG_LITTLEFS_QSPI_FLASH_ID, cfg->block_size*block+off+bd->start_addr,buffer,size);
+
+    LFS_FLASHBD_TRACE("lfs_qspi_flashbd_read -> %d", 0);
+    return 0;
+}
+
+int lfs_qspi_flashbd_prog(const struct lfs_config *cfg, lfs_block_t block,
+        lfs_off_t off, const void *buffer, lfs_size_t size) {
+    LFS_FLASHBD_TRACE("lfs_qspi_flashbd_prog(%p, "
+                "0x%"PRIx32", %"PRIu32", %p, %"PRIu32")",
+            (void*)cfg, block, off, buffer, size);
+    lfs_flashbd_t *bd = cfg->context;
+
+    // check if write is valid
+    LFS_ASSERT(off  % cfg->prog_size == 0);
+    LFS_ASSERT(size % cfg->prog_size == 0);
+    LFS_ASSERT(block < cfg->block_count);
+
+    // progflash data
+	bk_qspi_flash_write(CONFIG_LITTLEFS_QSPI_FLASH_ID, cfg->block_size*block+off+bd->start_addr,(uint8_t *)buffer,size);
+
+    LFS_FLASHBD_TRACE("lfs_qspi_flashbd_prog -> %d", 0);
+    return 0;
+}
+
+int lfs_qspi_flashbd_erase(const struct lfs_config *cfg, lfs_block_t block) {
+    LFS_FLASHBD_TRACE("lfs_qspi_flashbd_erase(%p, 0x%"PRIx32")", (void*)cfg, block);
+    lfs_flashbd_t *bd = cfg->context;
+
+    // check if erase is valid
+    LFS_ASSERT(block < cfg->block_count);
+
+    // erase
+	bk_qspi_flash_erase(CONFIG_LITTLEFS_QSPI_FLASH_ID, cfg->block_size*block+bd->start_addr, cfg->block_size);
+
+    LFS_FLASHBD_TRACE("lfs_qspi_flashbd_erase -> %d", 0);
+    return 0;
+}
+
+int lfs_qspi_flashbd_sync(const struct lfs_config *cfg) {
+    LFS_FLASHBD_TRACE("lfs_qspi_flashbd_sync(%p)", (void*)cfg);
+    // sync does nothing
+    (void)cfg;
+    LFS_FLASHBD_TRACE("lfs_qspi_flashbd_sync -> %d", 0);
+    return 0;
+}
 #endif
 

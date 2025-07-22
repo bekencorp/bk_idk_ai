@@ -67,6 +67,14 @@ int lfs_spi_flashbd_prog(const struct lfs_config *cfg, lfs_block_t block,
 int lfs_spi_flashbd_erase(const struct lfs_config *cfg, lfs_block_t block);
 int lfs_spi_flashbd_sync(const struct lfs_config *cfg);
 
+int lfs_qspi_flashbd_init(void);
+int lfs_qspi_flashbd_read(const struct lfs_config *cfg, lfs_block_t block,
+        lfs_off_t off, void *buffer, lfs_size_t size);
+int lfs_qspi_flashbd_prog(const struct lfs_config *cfg, lfs_block_t block,
+        lfs_off_t off, const void *buffer, lfs_size_t size);
+int lfs_qspi_flashbd_erase(const struct lfs_config *cfg, lfs_block_t block);
+int lfs_qspi_flashbd_sync(const struct lfs_config *cfg);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

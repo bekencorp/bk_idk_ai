@@ -66,6 +66,15 @@ void bk_qspi_flash_set_protect_none(qspi_id_t id);
 bk_err_t bk_qspi_flash_erase_sector(qspi_id_t id, uint32_t addr);
 
 /**
+ * @brief      QSPI flash erase
+ *
+ * @return
+ *    - BK_OK: succeed
+ *    - others: other errors.
+ */
+bk_err_t bk_qspi_flash_erase(qspi_id_t id, uint32_t addr, uint32_t size);
+
+/**
  * @brief      QSPI flash enable quad mode
  *
  * @return

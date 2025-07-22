@@ -34,6 +34,8 @@
 #define FLASH_QUAD_WR_CMD          0x32
 #define FLASH_QUAD_RD_CMD          0xeb
 #define FLASH_ERASE_SECTOR_CMD     0x20
+#define FLASH_ERASE_32K_CMD        0x52
+#define FLASH_ERASE_64K_CMD        0xd8
 #define FLASH_PAGE_SIZE            0x100
 #define FLASH_PAGE_MASK            (FLASH_PAGE_SIZE - 1)
 #define FLASH_SECTOR_SIZE          0x1000
@@ -45,6 +47,11 @@
 #define FLASH_PROTECT_NONE_DATA    0
 #define QSPI_CMD1_LEN              8
 
+#define QFLASH_MAX_CAPACITY (16*1024*1024)  // unit: byte.
+#define QFLASH_SECTOR_SIZE  (4*1024)        // unit: byte.
+#define QFLASH_PAGE_SIZE    (256)           // unit: byte.
+#define QFLASH_WORD_SIZE    (4)             // unit: byte.
+
 static void bk_qspi_flash_wait_wip_done(qspi_id_t id);
 
 bk_err_t bk_qspi_flash_init(qspi_id_t id)
@@ -54,6 +61,10 @@ bk_err_t bk_qspi_flash_init(qspi_id_t id)
 	config.src_clk_div = 0x4;
 	config.clk_div = 0x2;
 	BK_LOG_ON_ERR(bk_qspi_init(id, &config));
+
+	bk_qspi_flash_set_protect_none(id);
+	bk_qspi_flash_quad_enable(id);
+
 	return BK_OK;
 }
 
@@ -207,6 +218,107 @@ bk_err_t bk_qspi_flash_erase_sector(qspi_id_t id, uint32_t addr)
 	return BK_OK;
 }
 
+bk_err_t bk_qspi_flash_erase_32k(qspi_id_t id, uint32_t addr)
+{
+	qspi_cmd_t erase_sector_cmd = {0};
+
+	bk_qspi_flash_wren(id);
+
+	erase_sector_cmd.device = QSPI_FLASH;
+	erase_sector_cmd.wire_mode = QSPI_1WIRE;
+	erase_sector_cmd.work_mode = INDIRECT_MODE;
+	erase_sector_cmd.op = QSPI_WRITE;
+	erase_sector_cmd.cmd = FLASH_ERASE_32K_CMD;
+	erase_sector_cmd.addr = addr;
+
+	BK_LOG_ON_ERR(bk_qspi_command(id, &erase_sector_cmd));
+	bk_qspi_flash_wait_wip_done(id);
+
+	return BK_OK;
+}
+
+bk_err_t bk_qspi_flash_erase_64k(qspi_id_t id, uint32_t addr)
+{
+	qspi_cmd_t erase_sector_cmd = {0};
+
+	bk_qspi_flash_wren(id);
+
+	erase_sector_cmd.device = QSPI_FLASH;
+	erase_sector_cmd.wire_mode = QSPI_1WIRE;
+	erase_sector_cmd.work_mode = INDIRECT_MODE;
+	erase_sector_cmd.op = QSPI_WRITE;
+	erase_sector_cmd.cmd = FLASH_ERASE_64K_CMD;
+	erase_sector_cmd.addr = addr;
+
+	BK_LOG_ON_ERR(bk_qspi_command(id, &erase_sector_cmd));
+	bk_qspi_flash_wait_wip_done(id);
+
+	return BK_OK;
+}
+
+bk_err_t bk_qspi_flash_erase_type(qspi_id_t id, uint32_t addr, uint32_t type)
+{
+	bk_err_t ret = BK_OK;
+
+	switch(type)
+	{
+		case FLASH_ERASE_SECTOR_CMD:
+			bk_qspi_flash_erase_sector(id, addr);
+		break;
+		case FLASH_ERASE_32K_CMD:
+			bk_qspi_flash_erase_32k(id, addr);
+			break;
+		case FLASH_ERASE_64K_CMD:
+			bk_qspi_flash_erase_64k(id, addr);
+		break;
+		default:
+			bk_qspi_flash_erase_sector(id, addr);
+		break;
+	}
+
+	return ret;
+}
+
+//bk_err_t qflash_erase(uint32_t addr, uint32_t size)
+bk_err_t bk_qspi_flash_erase(qspi_id_t id, uint32_t addr, uint32_t size)
+{
+    QSPI_LOGD("[%s]addr=0x%08X, size=%u.\r\n", __func__, addr, size);
+
+    if ( (addr >= QFLASH_MAX_CAPACITY) || (size > QFLASH_MAX_CAPACITY) || ((addr + size) > QFLASH_MAX_CAPACITY) )
+    {
+        QSPI_LOGE("[%s] addr or size paras error!\r\n", __func__);
+        return BK_FAIL;
+    }
+
+    if ( 0 == size )
+    {
+        QSPI_LOGE("[%s] buff or size paras error!\r\n", __func__);
+        return BK_FAIL;
+    }
+
+    bk_err_t ret = BK_OK;
+    uint32_t temp;
+
+    for (temp=0; temp<size; temp+=QFLASH_SECTOR_SIZE)
+    {
+        #if (CONFIG_TASK_WDT)
+            extern void bk_task_wdt_feed(void);
+            bk_task_wdt_feed();
+        #endif
+
+        ret = bk_qspi_flash_erase_sector(id, addr+temp);
+        if (BK_OK != ret)
+        {
+            QSPI_LOGE("[%s] bk_qspi_flash_erase_sector fail!\r\n", __func__);
+            return BK_FAIL;
+        }
+    }
+
+    QSPI_LOGD("[%s] erase sector range[%u ~ %u].\r\n", __func__, addr/QFLASH_SECTOR_SIZE, addr/QFLASH_SECTOR_SIZE + temp/QFLASH_SECTOR_SIZE - 1);
+
+    return ret;
+}
+
 bk_err_t bk_qspi_flash_single_page_program(qspi_id_t id, uint32_t addr, const void *data, uint32_t size)
 {
 	qspi_cmd_t page_program_cmd = {0};
@@ -321,6 +433,7 @@ bk_err_t bk_qspi_flash_quad_read(qspi_id_t id, uint32_t addr, void *data, uint32
 	return BK_OK;
 }
 
+#if 1
 bk_err_t bk_qspi_flash_write(qspi_id_t id, uint32_t base_addr, const void *data, uint32_t size)
 {
 	uint8_t buf[QSPI_FIFO_LEN_MAX] = {0};
@@ -363,7 +476,171 @@ bk_err_t bk_qspi_flash_write(qspi_id_t id, uint32_t base_addr, const void *data,
 
 	return BK_OK;
 }
+#else
+//bk_err_t qflash_write(qspi_id_t id, uint32_t addr, const uint8_t *buff, uint32_t size)
+bk_err_t bk_qspi_flash_write(qspi_id_t id, uint32_t addr, const void *buff, uint32_t size)
+{
+    QSPI_LOGD("[%s] addr=0x%08X, buff=0x%08X, size=%u.\r\n", __func__, addr, buff, size);
 
+    bk_err_t ret = BK_OK;
+
+    if ( (addr >= QFLASH_MAX_CAPACITY) || (size > QFLASH_MAX_CAPACITY) || ((addr + size) > QFLASH_MAX_CAPACITY) )
+    {
+        QSPI_LOGE("[%s] addr or size paras error!\r\n", __func__);
+        return BK_FAIL;
+    }
+
+    if ( (NULL==buff) || (0 == size) )
+    {
+        QSPI_LOGE("[%s] buff or size paras error!\r\n", __func__);
+        return BK_FAIL;
+    }
+
+    uint32_t head_addr = 0, head_size = 0;
+    uint32_t mid_addr = 0, mid_size = 0;
+    uint32_t tail_addr = 0, tail_size = 0;
+    uint32_t head_frag_addr = 0, head_frag_size = 0;
+    uint32_t tail_frag_addr = 0, tail_frag_size = 0;
+
+    if (addr%QFLASH_PAGE_SIZE)
+    {
+        head_addr = addr;
+        head_size = ( size > (QFLASH_PAGE_SIZE - (addr%QFLASH_PAGE_SIZE)) )?  (QFLASH_PAGE_SIZE - (addr%QFLASH_PAGE_SIZE)) : size;
+        size -= head_size;
+    }
+
+    if (size >= QFLASH_PAGE_SIZE)
+    {
+        mid_addr = addr + head_size;
+        mid_size = (size / QFLASH_PAGE_SIZE) * QFLASH_PAGE_SIZE;
+        size -= mid_size;
+    }
+
+    if (size > 0)
+    {
+        tail_addr = addr + head_size + mid_size;
+        tail_size = size;
+    }
+
+    QSPI_LOGD("[%s] h_addr=0x%08X, h_size=%u, m_addr=0x%08X, m_size=%u, t_addr=0x%08X, t_size=%u.\r\n", __func__, head_addr, head_size, mid_addr, mid_size, tail_addr, tail_size);
+
+    if (head_size)
+    {
+        if (head_addr % QFLASH_WORD_SIZE)
+        {
+            head_frag_addr = (head_addr/QFLASH_WORD_SIZE)*QFLASH_WORD_SIZE;
+            head_frag_size = (head_size > (QFLASH_WORD_SIZE - (head_addr % QFLASH_WORD_SIZE)))? (QFLASH_WORD_SIZE - (head_addr % QFLASH_WORD_SIZE)) : head_size;
+            head_size -= head_frag_size;
+        }
+
+        QSPI_LOGD("[%s] hf_addr=0x%08X, hf_size=%u, h_addr=0x%08X, h_size=%u.\r\n", __func__, head_frag_addr, head_frag_size, head_addr+head_frag_size, head_size);
+
+        #if (CONFIG_TASK_WDT)
+            extern void bk_task_wdt_feed(void);
+            bk_task_wdt_feed();
+        #endif
+
+        if (head_frag_size > 0)
+        {
+            uint8_t temp_word[QFLASH_WORD_SIZE] = {0xFF, 0xFF, 0xFF, 0xFF};
+
+            ret = bk_qspi_flash_read(id, head_frag_addr, temp_word, sizeof(temp_word));
+            if (BK_OK != ret)
+            {
+                QSPI_LOGE("[%s] qflash_read head frag fail[ret=%d]!\r\n", __func__, ret);
+                return ret;
+            }
+
+            os_memcpy((uint8_t *)(temp_word + (head_addr % QFLASH_WORD_SIZE)), (uint8_t *)buff, head_frag_size);
+            ret = bk_qspi_flash_write(id, head_frag_addr, temp_word, sizeof(temp_word));
+            if (BK_OK != ret)
+            {
+                QSPI_LOGE("[%s] bk_qspi_flash_write head fail[ret=%d]!\r\n", __func__, ret);
+                return ret;
+            }
+        }
+
+        if (head_size > 0)
+        {
+            ret = bk_qspi_flash_write(id, head_addr+head_frag_size, buff+head_frag_size, head_size);
+            if (BK_OK != ret)
+            {
+                QSPI_LOGE("[%s] bk_qspi_flash_write head fail[ret=%d]!\r\n", __func__, ret);
+                return ret;
+            }
+        }
+    }
+
+    if (mid_size)
+    {
+        for (uint32_t offset=0; offset<mid_size; offset+=QFLASH_PAGE_SIZE)
+        {
+            #if (CONFIG_TASK_WDT)
+                extern void bk_task_wdt_feed(void);
+                bk_task_wdt_feed();
+            #endif
+
+            ret = bk_qspi_flash_write(id, mid_addr+offset, buff+head_frag_size+head_size+offset, QFLASH_PAGE_SIZE);
+            if (BK_OK != ret)
+            {
+                QSPI_LOGE("[%s] bk_qspi_flash_write middle fail[ret=%d, offset=%d]!\r\n", __func__, ret, offset);
+                return ret;
+            }
+        }
+    }
+
+    if (tail_size)
+    {
+        if (tail_size % QFLASH_WORD_SIZE)
+        {
+            tail_frag_size = tail_size % QFLASH_WORD_SIZE;
+            tail_size -= tail_frag_size;
+            tail_frag_addr = tail_addr + tail_size;
+        }
+
+        QSPI_LOGD("[%s] t_addr=0x%08X, t_size=%u, tf_addr=0x%08X, tf_size=%u.\r\n", __func__, tail_addr, tail_size, tail_frag_addr, tail_frag_size);
+
+        #if (CONFIG_TASK_WDT)
+            extern void bk_task_wdt_feed(void);
+            bk_task_wdt_feed();
+        #endif
+
+        if (tail_size > 0)
+        {
+            ret = bk_qspi_flash_write(id, tail_addr, buff+head_frag_size+head_size+mid_size, tail_size);
+            if (BK_OK != ret)
+            {
+                QSPI_LOGE("[%s] bk_qspi_flash_write tail fail[ret=%d]!\r\n", __func__, ret);
+                return ret;
+            }
+        }
+
+        if (tail_frag_size > 0)
+        {
+            uint8_t temp_word[QFLASH_WORD_SIZE] = {0xFF, 0xFF, 0xFF, 0xFF};
+
+            ret = bk_qspi_flash_read(id, tail_frag_addr, temp_word, sizeof(temp_word));
+            if (BK_OK != ret)
+            {
+                QSPI_LOGE("[%s] qflash_read tail frag fail[ret=%d]!\r\n", __func__, ret);
+                return ret;
+            }
+
+            os_memcpy((uint8_t *)(temp_word), (uint8_t *)(buff+head_frag_size+head_size+mid_size+tail_size), tail_frag_size);
+            ret = bk_qspi_flash_write(id, tail_frag_addr, temp_word, sizeof(temp_word));
+            if (BK_OK != ret)
+            {
+                QSPI_LOGE("[%s] bk_qspi_flash_write tail frag fail[ret=%d]!\r\n", __func__, ret);
+                return ret;
+            }
+        }
+    }
+
+    return ret;
+}
+#endif
+
+#if 1
 bk_err_t bk_qspi_flash_read(qspi_id_t id, uint32_t base_addr, void *data, uint32_t size)
 {
 	uint8_t buf[QSPI_FIFO_LEN_MAX] = {0};
@@ -381,6 +658,80 @@ bk_err_t bk_qspi_flash_read(qspi_id_t id, uint32_t base_addr, void *data, uint32
 
 	return BK_OK;
 }
+#else
+//bk_err_t qflash_read(uint32_t addr, uint8_t *buff, uint32_t size)
+bk_err_t bk_qspi_flash_read(qspi_id_t id, uint32_t base_addr, void *data, uint32_t size)
+{
+    QSPI_LOGD("[%s] base_addr=0x%08X, data=0x%08X, size=%u.\r\n", __func__, base_addr, data, size);
+
+    bk_err_t ret = BK_OK;
+
+    if ( (base_addr >= QFLASH_MAX_CAPACITY) || (size > QFLASH_MAX_CAPACITY) || ((base_addr + size) > QFLASH_MAX_CAPACITY) )
+    {
+        QSPI_LOGE("[%s] base_addr or size paras error!\r\n", __func__);
+        return BK_FAIL;
+    }
+
+    if ( (NULL==data) || (0 == size) )
+    {
+        QSPI_LOGE("[%s] data or size paras error!\r\n", __func__);
+        return BK_FAIL;
+    }
+
+    uint32_t total_read_size = 0;
+    uint32_t word_read_size = (size/QFLASH_WORD_SIZE)*QFLASH_WORD_SIZE;
+    uint32_t tail_read_size = size - word_read_size;
+
+    if (word_read_size > 0)
+    {
+        uint32_t temp_size = 0;
+        for (uint32_t offset=0; offset<word_read_size; offset+=QFLASH_PAGE_SIZE)
+        {
+            #if (CONFIG_TASK_WDT)
+                extern void bk_task_wdt_feed(void);
+                bk_task_wdt_feed();
+            #endif
+
+            temp_size = ((word_read_size - offset) >= QFLASH_PAGE_SIZE)? QFLASH_PAGE_SIZE : (word_read_size - offset);
+
+            ret = bk_qspi_flash_quad_read(id, base_addr+offset, (uint8_t *)data+offset, temp_size);
+            if (BK_OK != ret)
+            {
+                QSPI_LOGE("[%s] bk_qspi_flash_quad_read fail[ret=%d]!\r\n", __func__, ret);
+                return BK_FAIL;
+            }
+            else
+            {
+                total_read_size += temp_size;
+            }
+        }
+    }
+    
+    if (tail_read_size)
+    {
+        #if (CONFIG_TASK_WDT)
+            extern void bk_task_wdt_feed(void);
+            bk_task_wdt_feed();
+        #endif
+
+        uint8_t temp_word[QFLASH_WORD_SIZE] = {0};
+
+        ret = bk_qspi_flash_quad_read(id, base_addr+total_read_size, temp_word, sizeof(temp_word));
+        if (BK_OK != ret)
+        {
+            QSPI_LOGE("[%s] bk_qspi_flash_quad_read fail[ret=%d]!\r\n", __func__, ret);
+            return BK_FAIL;
+        }
+        else
+        {
+            os_memcpy((uint8_t *)((uint8_t *)data+total_read_size), (uint8_t *)temp_word, tail_read_size);
+            total_read_size += tail_read_size;
+        }
+    }
+
+    return ret;
+}
+#endif
 
 void bk_qspi_flash_quad_enable(qspi_id_t id) {
 	uint32_t status_reg_data = 0;

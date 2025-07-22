@@ -18,4 +18,9 @@ menu "Littlefs"
 			depends on LITTLEFS
 			bool "no config littlefs partition"
 	endchoice
+
+	config LITTLEFS_QSPI_FLASH_ID
+		int "The QSPI-Flash uses which QSPI Port, QSPI_ID_0 or others"
+		depends on LITTLEFS && QSPI
+		default 0
 endmenu

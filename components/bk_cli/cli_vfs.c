@@ -95,6 +95,39 @@ static int test_mount_spi_lfs(char *mount_point) {
 	return ret;
 }
 
+static int test_format_qspi_lfs(void) {
+	struct bk_little_fs_partition partition;
+	char *fs_name = NULL;
+
+	int ret;
+
+	fs_name = "littlefs";
+	partition.part_type = LFS_QSPI_FLASH;
+	partition.part_flash.start_addr = 0;
+	partition.part_flash.size = 0x400000;
+
+	ret = mkfs("PART_NONE", fs_name, &partition);
+
+	return ret;
+}
+
+static int test_mount_qspi_lfs(char *mount_point) {
+	struct bk_little_fs_partition partition;
+	char *fs_name = NULL;
+
+	int ret;
+
+	fs_name = "littlefs";
+	partition.part_type = LFS_QSPI_FLASH;
+	partition.part_flash.start_addr = 0;
+	partition.part_flash.size = 0x400000;
+	partition.mount_path = mount_point;
+
+	ret = mount("SOURCE_NONE", partition.mount_path, fs_name, 0, &partition);
+
+	return ret;
+}
+
 static int test_format_fatfs(void) {
 	struct bk_fatfs_partition partition;
 	char *fs_name = NULL;
@@ -213,6 +246,74 @@ static int test_unlink_vfs(char *file_name)
 	return ret;
 }
 
+static int vfs_scan_files(char *path)
+{
+    int ret = BK_OK;
+    DIR *dir;
+    struct dirent *dir_info;
+
+    dir = opendir(path);                 /* Open the directory */
+    if (dir != NULL)
+    {
+        os_printf("%s/\r\n", (path+1));
+        while (1)
+        {
+            dir_info = readdir(dir);         /* Read a directory item */
+            if (dir_info == NULL)
+            {
+                break;  /* Break on error */
+            }
+            if (dir_info->d_name[0] == 0)
+            {
+                break;  /* Break on end of dir */
+            }
+            if (dir_info->d_type == DT_DIR)
+            {
+                /* It is a directory */
+                char *pathTemp = os_malloc(strlen(path)+strlen(dir_info->d_name)+2);
+                if(pathTemp == NULL)
+                {
+                    os_printf("%s:os_malloc dir fail \r\n", __func__);
+                    ret = BK_FAIL;
+                    break;
+                }
+                sprintf(pathTemp, "%s/%s", path, dir_info->d_name);
+                ret = vfs_scan_files(pathTemp);      /* Enter the directory */
+                if (ret != BK_OK)
+                {
+                    os_free(pathTemp);
+                    pathTemp = 0;
+                    break;
+                }
+                if(pathTemp)
+                {
+                    os_free(pathTemp);
+                    pathTemp = 0;
+                }
+            }
+            else
+            {
+                /* It is a file. */
+                os_printf("%s/%s\r\n", (path+1), dir_info->d_name);
+            }
+        }
+        closedir(dir);
+    }
+    else
+    {
+        os_printf("opendir %s failed\r\n", path);
+        ret = BK_FAIL;
+    }
+
+    return ret;
+}
+
+static int test_scan_vfs(char *dir_name)
+{
+	int ret;
+	ret = vfs_scan_files(dir_name);
+	return ret;
+}
 
 static int test_stat_vfs(const char *pathname)
 {
@@ -367,6 +468,8 @@ void cli_vfs_test(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **arg
 			ret = test_format_lfs();
 		else if (os_strcmp(argv[2], "spi_lfs") == 0)
 			ret = test_format_spi_lfs();
+		else if (os_strcmp(argv[2], "qspi_lfs") == 0)
+			ret = test_format_qspi_lfs();
 		else if (os_strcmp(argv[2], "fatfs") == 0)
 			ret = test_format_fatfs();
 		else {
@@ -387,6 +490,8 @@ void cli_vfs_test(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **arg
 			ret = test_mount_lfs(mount_point);
 		else if (os_strcmp(argv[2], "spi_lfs") == 0)
 			ret = test_mount_spi_lfs(mount_point);
+		else if (os_strcmp(argv[2], "qspi_lfs") == 0)
+			ret = test_mount_qspi_lfs(mount_point);
 		else if (os_strcmp(argv[2], "fatfs") == 0)
 			ret = test_mount_fatfs(mount_point);
 		else {
@@ -441,7 +546,17 @@ void cli_vfs_test(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **arg
 
 		ret = test_unlink_vfs(file_name);
 		os_printf("unlink ret=%d\n", ret);
+	} else if (os_strcmp(argv[1], "scan") == 0) {
+		char *dir_name;
 
+		if (argc < 3) {
+			os_printf("usage : vfs scan FULL_FILE_NAME\n");
+			return;
+		}
+		dir_name = argv[2];
+
+		ret = test_scan_vfs(dir_name);
+		os_printf("scan ret=%d\n", ret);
 	} else if (os_strcmp(argv[1], "stat") == 0) {
 		char *path_name;
 		
