@@ -29,10 +29,10 @@ extern "C" {
 #define BK_ERR_PSRAM_AREA              (BK_ERR_PSRAM_BASE - 5)
 
 typedef enum {
-	PSRAM_240M = 0,
-	PSRAM_160M,
+	PSRAM_160M = 1,
 	PSRAM_120M,
-	PSRAM_80M
+	PSRAM_80M ,
+	PSRAM_ERROR =0xFF
 } psram_clk_t;
 
 typedef enum {

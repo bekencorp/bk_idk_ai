@@ -236,10 +236,10 @@ static inline void bk_psram_word_memcpy(void *dst_t, void *src_t, unsigned int l
  *
  * This API to get psram heap init flag:
  *   - init: true:init ;false:uninit
- * 
+ *
  * @return
  *  heap_init_flag
- * 
+ *
  */
 bool bk_psram_heap_init_flag_get();
 /**
@@ -338,7 +338,7 @@ bk_err_t bk_psram_memread(uint8_t *start_addr, uint8_t *data_buf, uint32_t len);
  *
  * This API used to set psram work clk
  *
- * @param clk:80/120/160/240
+ * @param clk:80/120/160
  *
  * @attation 1. current only support 80/120/160
  *
@@ -347,6 +347,29 @@ bk_err_t bk_psram_memread(uint8_t *start_addr, uint8_t *data_buf, uint32_t len);
  *    - others: other errors.
  */
 bk_err_t bk_psram_set_clk(psram_clk_t clk);
+
+/**
+ * @brief     Get current PSRAM clock configuration
+ *
+ * This API returns the current working clock setting of the PSRAM.
+ *
+ * @note
+ *   - The returned clock value corresponds to predefined enum `psram_clk_t`.
+ *   - Currently supported values:
+ *       - PSRAM_80M
+ *       - PSRAM_120M
+ *       - PSRAM_160M
+ *   - If the hardware clock configuration is unknown or unsupported,
+ *     the function returns `PSRAM_ERROR`.
+ *
+ * @attention Ensure the system has properly initialized PSRAM and clock
+ *            configuration before calling this API.
+ *
+ * @return
+ *    - psram_clk_t enum value representing current PSRAM clock.
+ *    - Returns PSRAM_ERROR if the clock setting is invalid or unrecognized.
+ */
+psram_clk_t bk_psram_get_clk(void);
 
 /**
  * @brief     set psram voltage
