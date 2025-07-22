@@ -33,6 +33,7 @@
 #endif
 #include "bk_uart_debug.h"
 #include "bk_api_cli.h"
+#include <os/mem.h>
 
 
 #define TAG "cli"
@@ -64,6 +65,9 @@ extern int video_demo_register_cmd(void);
 
 
 #define SHELL_TASK_PRIORITY               4
+
+#define SHELL_CHECK_MINI_REMAIN_STACK    (7 * 1024 + 128)
+#define SHELL_TASK_CHECK_CNT             (100)
 
 
 /* Find the command 'name' in the cli commands table.
@@ -173,6 +177,7 @@ int handle_shell_input(char *inbuf, int in_buf_size, char * outbuf, int out_buf_
 	int 	err = kNoErr;
 
 	struct cmd_parameter cmd_par;
+    volatile uint8_t shell_wait_cnt = 0;
 
 	while((in_buf_size > 0) && (*inbuf == ' '))
 	{
@@ -215,28 +220,45 @@ int handle_shell_input(char *inbuf, int in_buf_size, char * outbuf, int out_buf_
 	}
 	else
 	#endif
-    ret = rtos_create_thread(&shell_handle_thread_handle,
-                                4,
-                                "shell_handle",
-                                (beken_thread_function_t)handle_shell_input_proxy,
-                                1024*7,
-                                (beken_thread_arg_t)(&cmd_par));
-	if (ret != kNoErr)
-	{
-			os_printf("Error: Failed create shell_handle_thread_handle in SRAM: %d\r\n",ret);
-			//BK_ASSERT(0);
-#if CONFIG_PSRAM_AS_SYS_MEMORY		//try again in PSRAM
-			ret = rtos_create_psram_thread(&shell_handle_thread_handle,
-									4,
-									"shell_handle",
-									(beken_thread_function_t)handle_shell_input_proxy,
-									1024*7,
-									(beken_thread_arg_t)(&cmd_par));
-#endif
-			if (ret != kNoErr)
-				BK_ASSERT(0);
-		}
 
+    /* If you send  cli commands too quickly,it may cause memory exhaustion.
+    Here we wait for enough memory before responding to command */
+    while(1) {
+        ret = rtos_create_thread(&shell_handle_thread_handle,
+                                    4,
+                                    "shell_handle",
+                                    (beken_thread_function_t)handle_shell_input_proxy,
+                                    1024*7,
+                                    (beken_thread_arg_t)(&cmd_par));
+       
+        if (ret != kNoErr) 
+        {
+            os_printf("Error: Failed to create shell_handle_thread_handle thread: %d\r\n",ret);
+    #if CONFIG_PSRAM_AS_SYS_MEMORY		//try again in PSRAM
+            ret = rtos_create_psram_thread(&shell_handle_thread_handle,
+                                    4,
+                                    "shell_handle",
+                                    (beken_thread_function_t)handle_shell_input_proxy,
+                                    1024* 7,
+                                    (beken_thread_arg_t)(&cmd_par));
+    #endif
+        }
+        if (ret == kNoErr) 
+        {
+            break;
+        } 
+        else 
+        {       
+            shell_wait_cnt++;
+            if(shell_wait_cnt >= SHELL_TASK_CHECK_CNT) 
+            {
+                BK_LOGD(NULL,"Error: Failed to create shell_handle_thread_handle thread: %d\r\n", ret);
+                BK_ASSERT(0);
+            }
+
+            rtos_delay_milliseconds(20);
+        }         		   
+    }
 
 	err = rtos_get_semaphore(&wait_shell_handle_semaphore,BEKEN_WAIT_FOREVER);
 	if(err)
