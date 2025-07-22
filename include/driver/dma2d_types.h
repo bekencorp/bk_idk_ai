@@ -381,6 +381,7 @@ typedef struct
 	uint8_t output_alpha;                /**< dst data alpha,depend on alpha_mode */
 	red_blue_swap_t input_red_blue_swap;        /**< src img red blue swap, select DMA2D_RB_SWAP or  DMA2D_RB_REGULAR */
 	red_blue_swap_t output_red_blue_swap;        /**< src img red blue swap, select DMA2D_RB_SWAP or  DMA2D_RB_REGULAR */
+    date_reverse_t out_byte_by_byte_reverse;
 }dma2d_memcpy_pfc_t;
 
 typedef struct {

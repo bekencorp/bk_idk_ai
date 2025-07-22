@@ -237,6 +237,23 @@ typedef struct
 } lcd_device_t;
 
 
+typedef struct {
+    /** area define*/
+	uint16_t start_x;
+	uint16_t start_y;
+    uint16_t end_x;
+	uint16_t end_y;
+
+	uint16_t width;
+	uint16_t height;
+
+    uint8_t *buffer;
+    void (*pre_refresh)(void); //callback before refresh
+    void (*post_refresh)(void *); //refresh complete callback
+    const lcd_device_t *lcd_device;
+} lcd_partial_area_t;
+
+
 /*
  * @}
  */
