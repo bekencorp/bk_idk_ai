@@ -73,8 +73,10 @@ int wifi_init(const wifi_init_config_t *config)
 	bk_pm_clock_ctrl(PM_CLK_ID_PHY, PM_CLK_CTRL_PWR_UP);
 
 	/* Wi-Fi VOTE RF */
-    rf_module_vote_ctrl(RF_OPEN, RF_BY_WIFI_BIT);
+	rf_module_vote_ctrl(RF_OPEN, RF_BY_WIFI_BIT);
 
+	extern void coex_ictw_report_wifi_open_status(bool is_wifi_open);
+	coex_ictw_report_wifi_open_status(true);
 	/*
 	 * UMAC/LMAC init.
 	 *
@@ -119,9 +121,6 @@ int wifi_init(const wifi_init_config_t *config)
 
 	/* start wpa_supplicant/hostapd eloop thread */
 	wpas_thread_start(); //TODO Choose a better name
-	
-	extern void coex_ictw_report_wifi_open_status(bool is_wifi_open);
-	coex_ictw_report_wifi_open_status(true);
 
 	return BK_OK;
 }
