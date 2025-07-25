@@ -165,24 +165,6 @@ menu "Lwip_intf_v2_1"
 		help
 			Set the size of the heap memory. The recommended value is 51200 .
 
-	config LWIP_MEM_MAX_RX_SIZE
-		int "Default size of the max memory rx used"
-		range 1 102400
-		default 38400
-		help
-			Set the size of the max memory rx used. The recommended value is 
-			38400 ((LWIP_MEM_SIZE*3)/4).
-
-	config LWIP_MEM_MAX_TX_SIZE
-		int "Default the size of the max memory tx used"
-		range 1 102400
-		default 42666
-		help
-			Set the size of the max memory tx used. The recommended value is 
-			42666 ((LWIP_MEM_SIZE*5)/6).
-			If the application will send a lot of data 
-			that needs to be copied, this should be set high.
-
 	config LWIP_TCP_MSS
 		int "Maximum Segment Size (MSS)"
 		default 1460
@@ -197,7 +179,7 @@ menu "Lwip_intf_v2_1"
 
 	config LWIP_TCP_SND_BUF
 		int "Default send buffer size"
-		default 29200 # 20 * default MSS
+		default 14600 # 20 * default MSS
 		range 2440 65535
 		help
 			Set default send buffer size for new TCP sockets.
@@ -213,7 +195,7 @@ menu "Lwip_intf_v2_1"
 
 	config LWIP_TCP_WND
 		int "Default receive window size"
-		default 29200 # 20 * default MSS
+		default 14600 # 20 * default MSS
 		range 2440 65535
 		help
 			Set default TCP receive window size for new TCP sockets.
@@ -275,7 +257,7 @@ menu "Lwip_intf_v2_1"
 
 	config LWIP_TCP_FAST_RETRANSMISSION
 		bool "TCP Fast Retransmissions"
-		default n
+		default y
 		help
 			The configuration can enable TCP fast retransmission, 
 			with macro configuration set to default as enabled. 
