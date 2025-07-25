@@ -1346,9 +1346,9 @@ void bk_psram_heap_get_used_state(void) {
 		mem_overflow_check(pxLink);
 	}
 
-	if (arch_is_enter_exception() == 1) {
-		stack_mem_dump(psram_used_area_begin, psram_used_area_end);
-	}
+	// if (arch_is_enter_exception() == 1) {
+	// 	stack_mem_dump(psram_used_area_begin, psram_used_area_end);
+	// }
 
 	if (arch_is_enter_exception() == 0) {
 		xTaskResumeAll();
