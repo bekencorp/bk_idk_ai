@@ -1374,7 +1374,14 @@ transport websocket_client_init(const websocket_client_input_t *input)
 	client->ws_event_handler = input->ws_event_handler;
 
 	//set autoreconnect
-	client->auto_reconnect = true;
+	if (input->disable_auto_reconnect)
+	{
+		client->auto_reconnect = false;
+	}
+	else
+	{
+		client->auto_reconnect = true;
+	}
 
 	//init lock
 	rtos_init_mutex(&client->mutex);
