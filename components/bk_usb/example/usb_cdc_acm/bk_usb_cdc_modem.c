@@ -50,7 +50,7 @@ static beken_thread_t cdc_demo_rxtask = NULL;
 static beken_queue_t cdc_msg_txqueue = NULL;
 static beken_thread_t cdc_demo_txtask = NULL;
 
-static uint8_t g_cdc_close = 0;
+static uint8_t g_cdc_state = 0;
 
 static uint8_t g_temp_rx_buf[512] = {0};
 static uint32_t g_temp_rx_len = 0;
@@ -239,6 +239,9 @@ static int32_t bk_cdc_acm_modem_write_handle(char *p_tx, uint32_t l_tx)
 		return ret;
 	}
 
+	if ((g_cdc_state == CDC_STATUS_DISCON) || (g_cdc_state == CDC_STATUS_CLOSE))
+		return ret;
+
 	uint8_t * p_buf = NULL;
 	uint8_t rd = g_multi_acm_total->p_data->p_cdc_data_tx->rd;
 	uint8_t wd = g_multi_acm_total->p_data->p_cdc_data_tx->wd;
@@ -287,6 +290,13 @@ static int32_t bk_cdc_acm_modem_write_handle(char *p_tx, uint32_t l_tx)
 			}
 			rtos_delay_milliseconds(2);
 		}
+
+		if ((g_cdc_state == CDC_STATUS_DISCON) || (g_cdc_state == CDC_STATUS_CLOSE))
+		{
+			LOGI("%s: stop write. \n", __func__);
+			break;
+		}
+
 		rd = g_multi_acm_total->p_data->p_cdc_data_tx->rd;
 	}
 
@@ -554,31 +564,31 @@ static void bk_cdc_demo_task(beken_thread_arg_t arg)
 			switch (msg.type)
 			{
 				case CDC_STATUS_OPEN:
-					LOGI("%s: CDC_STATUS_OPEN, %d \n", __func__, g_cdc_close);
-					g_cdc_close = 0;
+					LOGI("%s: CDC_STATUS_OPEN, %d \n", __func__, g_cdc_state);
+					g_cdc_state = CDC_STATUS_OPEN;
 					bk_usb_cdc_send_ipc_cmd(CPU0_OPEN_USB_CDC);
 					break;
 				case CDC_STATUS_CLOSE:
-					LOGI("%s: CDC_STATUS_CLOSE, %d \n", __func__, g_cdc_close);
-					g_cdc_close = 1;
+					LOGI("%s: CDC_STATUS_CLOSE, %d \n", __func__, g_cdc_state);
+					g_cdc_state = CDC_STATUS_CLOSE;
 					bk_usb_cdc_send_ipc_cmd(CPU0_CLOSE_USB_CDC);
 					break;
 				case CDC_STATUS_CONN:
 					{
-						LOGI("%s: CDC_STATUS_CONN, %d \n", __func__, g_cdc_close);
+						LOGI("%s: CDC_STATUS_CONN, %d \n", __func__, g_cdc_state);
+						g_cdc_state = CDC_STATUS_CONN;
 						uint32_t cnt = (uint32_t)msg.data;
 						bk_modem_usbh_conn_ind(cnt);
 					}
 					break;
 				case CDC_STATUS_DISCON:
 					{
-						LOGI("%s: CDC_STATUS_DISCON, %d \n", __func__, g_cdc_close);
+						LOGI("%s: CDC_STATUS_DISCON, %d \n", __func__, g_cdc_state);
 						bk_cdc_acm_deinit();
 						bk_modem_usbh_disconn_ind();
-						if (g_cdc_close == 1) {
+						if (g_cdc_state == CDC_STATUS_CLOSE)
 							bk_cdc_acm_init_free();
-							g_cdc_close = 0;
-						}
+						g_cdc_state = CDC_STATUS_DISCON;
 					}
 					break;
 				case CDC_STATUS_INIT_PARAM:
