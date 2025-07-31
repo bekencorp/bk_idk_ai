@@ -41,37 +41,24 @@ extern bk_err_t bk_cdc_acm_startup(void);
 extern void bk_usb_cdc_modem(void);
 extern void bk_usb_cdc_open(void);
 
-static BK_MODEM_USB_STATE_T g_modem_usb_state = MODEM_USB_IDLE;
 
 void bk_modem_usbh_conn_ind(uint32_t cnt)
 {
 	LOGI("[+]%s, %d\n", __func__, cnt);
-	if (g_modem_usb_state != MODEM_USB_CONN)
-	{
-		bk_modem_send_msg(MSG_MODEM_CONN_IND, cnt,0,0);
-		g_modem_usb_state = MODEM_USB_CONN;
-	}
+	bk_modem_send_msg(MSG_MODEM_CONN_IND, cnt,0,0);
 }
 
 void bk_modem_usbh_disconn_ind(void)
 {
-	if (g_modem_usb_state != MODEM_USB_DISCONN)
-	{
-		LOGI("[+]%s\n", __func__);
-		bk_modem_send_msg(MSG_MODEM_DISC_IND, 0,0,0);
-		g_modem_usb_state = MODEM_USB_DISCONN;
-	}
+	LOGI("[+]%s\n", __func__);
+	bk_modem_send_msg(MSG_MODEM_DISC_IND, 0,0,0);
 }
 
 void bk_modem_usbh_restore_ind(void)
 {
-	if (g_modem_usb_state != MODEM_USB_DISCONN)
-	{
-		LOGI("[+]%s\n", __func__);
-		bk_modem_set_state(PPP_STOP);
-		bk_modem_send_msg(MSG_PPP_STOP, RESTORE_STOP, 0, NULL);
-		g_modem_usb_state = MODEM_USB_DISCONN;
-	}
+	LOGI("[+]%s\n", __func__);
+	bk_modem_set_state(PPP_STOP);
+	bk_modem_send_msg(MSG_PPP_STOP, RESTORE_STOP, 0, NULL);
 }
 
 uint8_t bk_modem_get_mode(void)
@@ -92,7 +79,6 @@ uint8_t bk_modem_get_mode(void)
 void bk_modem_usbh_close(void)
 {
 	bk_usb_cdc_close();
-	//g_modem_usb_state = MODEM_USB_IDLE;
 }
 
 void bk_modem_usbh_bulkout_ind(char *p_tx, uint32_t l_tx)
