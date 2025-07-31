@@ -10,5 +10,6 @@
    PWM <bk_pwm>
    SDIO <bk_sdio>
    SPI <bk_spi>
+   QSPI <bk_qspi>
    I2S <bk_i2s>
    Mailbox <bk_mailbox>

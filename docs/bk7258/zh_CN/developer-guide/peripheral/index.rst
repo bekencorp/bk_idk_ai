@@ -12,6 +12,7 @@
    TRNG <bk_trng>
    SARADC <bk_adc>
    SPI <bk_spi>
+   QSPI <bk_qspi>
    UART <bk_uart>
    WDT <bk_wdt>
    I2C <bk_i2c>
