@@ -911,15 +911,14 @@ static bk_err_t sdio_host_cpu_write_fifo(const uint8_t *write_data, uint32_t dat
 		while((sdio_host_hal_is_tx_fifo_write_ready(hal)) == 0)
 		{
 			i++;
-			if(i % 0x400000 == 0)
-				SDIO_HOST_LOGE("FIFO can't write i=0x%08x", i);
 
-			//avoid dead in while
-			if(i == 0x1000000 * 8) {
-				SDIO_HOST_LOGE("FIFO write fail,the write data is invalid");
+			if(i % 0x400000 == 0) {
+				SDIO_HOST_LOGE("FIFO can't write i=0x%08x.\r\n", i);
+				SDIO_HOST_LOGE("=== RESET SDCARD ===\r\n");
 				error_state = BK_ERR_SDIO_HOST_DATA_TIMEOUT;
-				break;
+				return error_state;
 			}
+
 		}
 
 //NOTES:SDIO V1P0:write data should be reverted sequence by software, and read data should revert by ASIC of "SD_BYTE_SEL"
@@ -1148,7 +1147,7 @@ bk_err_t bk_sdio_host_read_fifo(uint32_t *save_v_p)
 
 static bk_err_t sdio_host_cpu_read_blks_fifo(uint8_t *data, uint32_t blk_cnt)
 {
-	bk_err_t error_state = BK_OK;
+	bk_err_t error_state = BK_FAIL;
 	uint32_t read_data = 0, index = 0;
 	uint32_t data_size = blk_cnt * 512;
 
