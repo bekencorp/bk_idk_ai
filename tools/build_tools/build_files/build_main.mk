@@ -70,6 +70,11 @@ else
 	PROJECT_BUILD_DIR := build/$(PROJECT_NAME)
 endif
 
+PROJECT_ABS_DIR := $(shell realpath $(PROJECT_DIR))
+ifeq ("$(wildcard $(PROJECT_ABS_DIR))", "")
+    $(error "PROJECT DIR $(PROJECT_ABS_DIR) does not exist")
+endif
+
 # overwrite project config
 -include $(ARMINO_DIR)/middleware/soc/$(ARMINO_SOC)/soc_config.mk
 -include $(ARMINO_DIR)/components/part_table/part_table.mk
