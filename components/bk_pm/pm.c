@@ -836,6 +836,14 @@ bk_err_t bk_pm_module_vote_power_ctrl(pm_power_module_name_e module, pm_power_mo
 #endif
 }
 #if CONFIG_SYS_CPU0
+uint32_t bk_pm_get_audio_vote_pwr_state()
+{
+	return s_pm_audio_pm_state;
+}
+uint32_t bk_pm_get_video_vote_pwr_state()
+{
+	return s_pm_video_pm_state ;
+}
 uint32_t bk_pm_low_vol_vote_state_get()
 {
 	return ((s_pm_sleeped_modules & s_pm_enter_low_vol_modules) == s_pm_enter_low_vol_modules);
@@ -2063,12 +2071,6 @@ pm_cpu_freq_e bk_pm_module_current_cpu_freq_get(pm_dev_id_e module)
 
 bk_err_t bk_pm_module_vote_cpu_freq(pm_dev_id_e module, pm_cpu_freq_e cpu_freq)
 {
-#if CONFIG_CLK_FORCE_MAX_CPU_FREQ_320M
-	if(PM_CPU_FRQ_480M == cpu_freq)
-	{
-		cpu_freq = PM_CPU_FRQ_320M;
-	}
-#endif
 #if CONFIG_SYS_CPU1
 #if CONFIG_MAILBOX
 	uint64_t previous_tick  = 0;
@@ -2142,6 +2144,14 @@ bk_err_t bk_pm_module_vote_cpu_freq(pm_dev_id_e module, pm_cpu_freq_e cpu_freq)
 	}
 	else
 	{
+		if((freq_max == PM_CPU_FRQ_480M)||(freq_max == PM_CPU_FRQ_320M))
+		{
+			bk_pm_module_vote_vdddig_ctrl(PM_VDDDIG_MODULE_CPU_FREQ,PM_VDDDIG_HIGH_STATE_ON);
+		}
+		else
+		{
+			bk_pm_module_vote_vdddig_ctrl(PM_VDDDIG_MODULE_CPU_FREQ,PM_VDDDIG_HIGH_STATE_OFF);
+		}
 		ret = sys_drv_switch_cpu_bus_freq(freq_max);
 	}
 	if (ret == BK_OK)

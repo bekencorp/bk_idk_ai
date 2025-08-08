@@ -89,6 +89,23 @@ typedef enum
 
 typedef enum
 {
+	PM_VDDDIG_MODULE_PSRAM       = 0,
+	PM_VDDDIG_MODULE_CPU_FREQ       ,// 1
+	PM_VDDDIG_MODULE_MAX            ,// attention: MAX value can not exceed 31.
+}pm_vdddig_module_e;
+
+typedef enum
+{
+	PM_VDDDIG_HIGH_STATE_ON = 0,
+    PM_VDDDIG_HIGH_STATE_OFF,
+	PM_VDDDIG_HIGH_STATE_NONE
+}pm_vdddig_high_state_e;
+typedef struct {
+	uint32_t cpu_freq:		6;	    //PM_CPU_FRQ_60M
+	uint32_t vdddig:		0xB;	//vdddig
+}cpu_freq_vdddig_t;
+typedef enum
+{
 	PM_MAILBOX_COMMUNICATION_INIT      = 0,
 	PM_MAILBOX_COMMUNICATION_FINISH    = 1,
 }pm_mailbox_communication_state_e;
@@ -116,6 +133,23 @@ typedef enum
 	PM_CP1_PREPARE_CLOSE_MODULE_NAME_LVGL_CODE_RUN,// 13
 	PM_CP1_PREPARE_CLOSE_MODULE_NAME_MAX          ,// attention: MAX value can not exceed 31.
 }pm_cp1_prepare_close_module_name_e;
+
+/**
+ * @brief pm vote vdddig ctrl
+ *
+ * pm vote vdddig ctrl
+ *
+ * @attention
+ * - This API is used to used to pm vote vdddig ctrl
+ *
+ * @param
+ * -module:vdddig module name;state:vdddig hight;
+ * @return
+ * - BK_OK: succeed
+ * - others: other errors.
+ *
+ */
+bk_err_t bk_pm_module_vote_vdddig_ctrl(pm_vdddig_module_e module,pm_vdddig_high_state_e state);
 /**
  * @brief boot cpu1 ok response 
  *

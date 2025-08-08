@@ -450,6 +450,36 @@ typedef enum
 
 /*=====================CONFIG  SECTION  END=======================*/
 /**
+ * @brief get the video vote power state
+ *
+ * get the video vote power state
+ *
+ * @attention
+ * - This API is used to get the video vote power state
+ *
+ * @param
+ * -void
+ * @return
+ * - the video vote power state(refer to the enum:power_sub_module_name_vidp_e)
+ *
+ */
+uint32_t bk_pm_get_video_vote_pwr_state();
+/**
+ * @brief get the audio vote power state
+ *
+ * get the audio vote power state
+ *
+ * @attention
+ * - This API is used to get the audio vote power state
+ *
+ * @param
+ * -void
+ * @return
+ * - the audio vote power state(refer to the enum:power_sub_module_name_audp_e)
+ *
+ */
+uint32_t bk_pm_get_audio_vote_pwr_state();
+/**
  * @brief clear deep sleep module config
  *
  * clear deep sleep module config
