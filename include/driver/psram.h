@@ -340,7 +340,8 @@ bk_err_t bk_psram_memread(uint8_t *start_addr, uint8_t *data_buf, uint32_t len);
  *
  * @param clk:80/120/160
  *
- * @attation 1. current only support 80/120/160
+ * @attation 1. current only support 80/120/160;
+ * @attation 2. Recommended default PSRAM clock: 120 MHz
  *
  * @return
  *    - BK_OK: succeed
