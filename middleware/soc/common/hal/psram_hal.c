@@ -112,6 +112,16 @@ void psram_hal_set_clk(psram_clk_t clk)
 	}
 }
 
+
+void psram_hal_set_default_clk(void)
+{
+    /*
+     * Recommended default PSRAM clock: 120 MHz.
+     */
+
+	psram_hal_set_clk(PSRAM_120M);
+}
+
 void psram_hal_set_voltage(psram_voltage_t voltage)
 {
 #if (COINFG_SOC_BK7256XX)

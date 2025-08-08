@@ -127,6 +127,7 @@ void psram_hal_set_clk(psram_clk_t clk);
 psram_clk_t psram_hal_get_clk(void);
 
 void psram_hal_set_voltage(psram_voltage_t voltage);
+void psram_hal_set_default_clk(void);
 
 #if CFG_HAL_DEBUG_PSRAM
 void psram_struct_dump(void);
