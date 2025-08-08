@@ -879,17 +879,17 @@ static int ws_poll_connection_closed(int *sockfd, int timeout_ms)
 				// socket is readable, but reads zero bytes -- connection cleanly closed by FIN flag
 				return 1;
 			}
-			BK_LOGW(TAG, "ws_poll_connection_closed: unexpected data readable on socket=%d", *sockfd);
+			BK_LOGW(TAG, "ws_poll_connection_closed: unexpected data readable on socket=%d\r\n", *sockfd);
 		} else if (FD_ISSET(*sockfd, &errset)) {
 			int sock_errno = 0;
 			uint32_t optlen = sizeof(sock_errno);
 			getsockopt(*sockfd, SOL_SOCKET, SO_ERROR, &sock_errno, &optlen);
-			BK_LOGD(TAG, "ws_poll_connection_closed select error %d, errno = %s, fd = %d", sock_errno, strerror(sock_errno), *sockfd);
+			BK_LOGD(TAG, "ws_poll_connection_closed select error %d, errno = %s, fd = %d\r\n", sock_errno, strerror(sock_errno), *sockfd);
 			if (sock_errno == ENOTCONN || sock_errno == ECONNRESET || sock_errno == ECONNABORTED) {
-				BK_LOGI(TAG, "ws_poll_connection_closed recv reset error %d, errno = %s, fd = %d", sock_errno, strerror(sock_errno), *sockfd);
+				BK_LOGI(TAG, "ws_poll_connection_closed recv reset error %d, errno = %s, fd = %d\r\n", sock_errno, strerror(sock_errno), *sockfd);
 				return 1;
 			}
-			BK_LOGE(TAG, "ws_poll_connection_closed: unexpected errno=%d on socket=%d", sock_errno, *sockfd);
+			BK_LOGE(TAG, "ws_poll_connection_closed: unexpected errno=%d on socket=%d\r\n", sock_errno, *sockfd);
 		}
 		return BK_FAIL;
 	}
@@ -935,8 +935,8 @@ static int ws_client_recv(transport client)
 		BK_LOGE(TAG, "Received close frame\r\n");
 		client->state = WEBSOCKET_STATE_CLOSING;
 	} else if (client->last_opcode == WS_TRANSPORT_OPCODES_TEXT) {
-		BK_LOGE(TAG, "Received text frame: \r\n");
-		bk_hex_dump(client->rx_buffer, client->payload_len);
+		BK_LOGE(TAG, "Received text frame[len=%d]: \r\n", client->payload_len);
+		//bk_hex_dump(client->rx_buffer, client->payload_len);
 	}
 
 	return BK_OK;
@@ -978,7 +978,7 @@ static bk_err_t websocket_client_destroy_config(transport client)
 	return BK_OK;
 }
 
-static int websocket_client_send_with_opcode(transport client, ws_transport_opcodes_t opcode, const uint8_t *data, int len, int timeout)
+int websocket_client_send_with_opcode(transport client, ws_transport_opcodes_t opcode, const uint8_t *data, int len, int timeout)
 {
 	int need_write = len;
 	int wlen = 0, widx = 0;
@@ -1045,10 +1045,12 @@ static void free_client(transport client)
 {
 
 	if(client==NULL)
-		return ;
+		return;
 
-	rtos_deinit_mutex(&client->mutex);
+	if (client->mutex)
+		rtos_deinit_mutex(&client->mutex);
 	client->mutex = NULL;
+
 	client->ws_event_handler = NULL;
 
 	if (client->tx_buffer)
@@ -1207,7 +1209,7 @@ static void websocket_client_task(beken_thread_arg_t *thread_param)
 			}
 			client->run = false;
 			client->state = WEBSOCKET_STATE_UNKNOW;
-			bk_websocket_client_dispatch_event(client, WEBSOCKET_EVENT_CLOSED, NULL, 0, -1);
+			//bk_websocket_client_dispatch_event(client, WEBSOCKET_EVENT_CLOSED, NULL, 0, -1);
 			break;
 		}
 	}
@@ -1278,7 +1280,7 @@ static bk_err_t websocket_client_set_uri(transport client, const char *uri)
 	http_parser_url_init(&puri);
 	int parser_status = http_parser_parse_url(uri, os_strlen(uri), 0, &puri);
 	if (parser_status != 0) {
-		BK_LOGE(TAG, "Error parse uri = %s", uri);
+		BK_LOGE(TAG, "Error parse uri = %s\r\n", uri);
 		return BK_FAIL;
 	}
 	if (NULL == (client->config = (websocket_config_t *)os_malloc(sizeof(websocket_config_t)))) {
@@ -1469,7 +1471,12 @@ transport websocket_client_init(const websocket_client_input_t *input)
 	return client;
 
 _websocket_init_fail:
-	websocket_client_destroy(client);
+	//websocket_client_destroy(client);
+	if(websocket_client_destroy_config(client)) {
+		BK_LOGE(TAG, "client config already free\r\n");
+	}
+	free_client(client);
+
 	return NULL;
 }
 

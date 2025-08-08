@@ -1012,6 +1012,14 @@ bk_err_t bk_aon_rtc_driver_init(void)
 	return BK_OK;
 }
 
+uint8_t bk_aon_rtc_is_inited(void)
+{
+	if(s_aon_rtc[0].inited)
+		return 1;
+	else
+		return 0;
+}
+
 bk_err_t bk_aon_rtc_driver_deinit(void)
 {
 	aon_rtc_int_config_t int_cfg_table[] = AON_RTC_INT_CONFIG_TABLE;
