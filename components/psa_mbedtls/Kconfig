@@ -50,6 +50,10 @@ menu "PSA Mbedtls"
 			bool "Enable Full Mbedtls"
 			default n
 
+		config MBEDTLS_SSL_MFL_ENABLE
+			bool "Enable MBEDTLS_SSL_MFL_ENABLE"
+			default y
+
 		config MBEDTLS_LOG_LEVEL
 			string "Set Mbedtls Log Level"
 			default "INFO"

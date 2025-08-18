@@ -1733,7 +1733,9 @@ extern void tls_mbedtls_mem_free(void *ptr);
  *
  * Comment this macro to disable support for the max_fragment_length extension
  */
+#if CONFIG_MBEDTLS_SSL_MFL_ENABLE
 #define MBEDTLS_SSL_MAX_FRAGMENT_LENGTH
+#endif
 
 /**
  * \def MBEDTLS_SSL_RECORD_SIZE_LIMIT
@@ -4181,7 +4183,9 @@ extern void tls_mbedtls_mem_free(void *ptr);
 #define MBEDTLS_POLY1305_C
 #endif
 #define MBEDTLS_SSL_ALL_ALERT_MESSAGES
+#if CONFIG_MBEDTLS_SSL_MFL_ENABLE
 #define MBEDTLS_SSL_MAX_FRAGMENT_LENGTH
+#endif
 #define MBEDTLS_SSL_PROTO_TLS1_2
 #define MBEDTLS_SSL_PROTO_DTLS
 #define MBEDTLS_SSL_SERVER_NAME_INDICATION
