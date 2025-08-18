@@ -47,6 +47,7 @@ typedef struct {
 	char *buffer;
 	char *sub_protocol;
 	char *user_agent;
+	char *authorization;
 	char *headers;
 	bool propagate_control_frames;
 	ws_transport_frame_state_t frame_state;
@@ -97,6 +98,7 @@ typedef struct {
 	int							buffer_size;
 	const char					*subprotocol;
 	const char					*user_agent;
+	const char					*authorization;
 	const char					*headers;
 //	bool						disable_pingpong_discon;
 	bk_event_handler_t			ws_event_handler;

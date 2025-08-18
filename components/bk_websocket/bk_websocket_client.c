@@ -738,6 +738,7 @@ static bk_err_t ws_disconnect(transport client)
 static int ws_connect(transport client, const char *host, int port, int timeout_ms)
 {
 	transport_ws_t *ws = client->ws_transport;
+	int len = 0;
 
 	if(ws_tcp_connect(client, host, port, timeout_ms) < 0) {
 		return BK_FAIL;
@@ -753,7 +754,22 @@ static int ws_connect(transport client, const char *host, int port, int timeout_
 
 	mbedtls_base64_encode(client_key, sizeof(client_key), &outlen, random_key, sizeof(random_key));
 
-	int len = snprintf(ws->buffer, WS_BUFFER_SIZE,
+	if(ws->authorization) {
+		len = snprintf(ws->buffer, WS_BUFFER_SIZE,
+						"GET %s HTTP/1.1\r\n"
+						"Connection: Upgrade\r\n"
+						"Host: %s:%d\r\n"
+						"Authorization: %s\r\n"
+						"Origin: http://%s\r\n"
+						"User-Agent: %s\r\n"
+						"Upgrade: websocket\r\n"
+						"Sec-WebSocket-Version: 13\r\n"
+						"Sec-WebSocket-Key: %s\r\n",
+						ws->path, host,
+						port, ws->authorization, host, user_agent_ptr,
+						client_key);
+	} else {
+		len = snprintf(ws->buffer, WS_BUFFER_SIZE,
 						"GET %s HTTP/1.1\r\n"
 						"Connection: Upgrade\r\n"
 						"Host: %s:%d\r\n"
@@ -765,6 +781,7 @@ static int ws_connect(transport client, const char *host, int port, int timeout_
 						ws->path,
 						host, port, host, user_agent_ptr,
 						client_key);
+	}
 	os_printf("http request:\r\n");
 	bk_hex_dump(ws->buffer, 200);
 
@@ -1407,6 +1424,15 @@ transport websocket_client_init(const websocket_client_input_t *input)
 		free(client->ws_transport->path);
 		client->ws_transport->path = strdup("/");
 	}
+
+	if(input->authorization) {
+		if(client->ws_transport->authorization)
+		{
+			free(client->ws_transport->authorization);
+		}
+		client->ws_transport->authorization = strdup(input->authorization);
+	}
+
 	client->ws_transport->buffer = os_malloc(WS_BUFFER_SIZE + 1);
 	if (!client->ws_transport->buffer) {
 		BK_LOGE(TAG, "alloc ws_transport buffer fail\r\n");
