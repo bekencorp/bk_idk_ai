@@ -22,7 +22,7 @@ The modem modules and wiring methods that have been debuged with BK7258are shown
     :align: center
     :alt: fibocom module
     :figclass: align-center
-	
+
     FIBOCOM 4G module
 
 
@@ -30,7 +30,21 @@ The modem modules and wiring methods that have been debuged with BK7258are shown
     :align: center
     :alt: luat module
     :figclass: align-center
-	
+
     LUAT 4G module
 
 
+.. figure:: ../../../../common/_static/quectel.png
+    :align: center
+    :alt: quectel module
+    :figclass: align-center
+
+    QUELTEL 4G module
+
+
+.. figure:: ../../../../common/_static/tuya.png
+    :align: center
+    :alt: tuya module
+    :figclass: align-center
+
+    MobileTek 4G module
