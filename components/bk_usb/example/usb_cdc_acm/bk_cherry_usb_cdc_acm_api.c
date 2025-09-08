@@ -97,6 +97,12 @@ extern void ipc_cdc_send_cmd(u8 cmd, u8 *cmd_buf, u16 cmd_len, u8 * rsp_buf, u16
 
 static void bk_usb_cdc_send_ipc_cmd(IPC_CDC_SUBMSG_TYPE_T msg)
 {
+	if (g_ipc_cdc_data == NULL)
+	{
+		USB_CDC_LOGE("%s: g_ipc_cdc_data is freed, discard msg %d \n", __func__, msg);
+		return;
+	}
+
 	g_ipc_cdc_data->msg = msg;
 	ipc_cdc_send_cmd(IPC_USB_CDC_CP1_NOTIFY, (uint8_t *)g_ipc_cdc_data, g_ipc_cdc_data->cmd_len, NULL, 0);
 }

@@ -155,6 +155,12 @@ static bk_err_t cdc_send_txmsg(uint8_t type, uint32_t data_len, uint32_t* p)
 extern void ipc_cdc_send_cmd(u8 cmd, u8 *cmd_buf, u16 cmd_len, u8 * rsp_buf, u16 rsp_buf_len);
 static void bk_usb_cdc_send_ipc_cmd(IPC_CDC_SUBMSG_TYPE_T msg)
 {
+	if (g_cdc_ipc == NULL)
+	{
+		LOGW("%s: g_cdc_ipc is freed, discard msg %d \n", __func__, msg);
+		return;
+	}
+
 	g_cdc_ipc->msg = msg;
 	ipc_cdc_send_cmd(IPC_USB_CDC_CP0_NOTIFY, (uint8_t *)g_cdc_ipc, g_cdc_ipc->cmd_len, NULL, 0);
 }
