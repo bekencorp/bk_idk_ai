@@ -258,6 +258,8 @@ typedef struct {
 	void(*_tpc_change_pwr_by_media)(UINT8 rate, UINT8 *pwr_idx, UINT8 level);
 	void(*_tpc_set_media_pwr_level)(UINT8 level);
 	UINT8(*_tpc_get_media_pwr_level)(void);
+	void (*_bk_wifi_set_rf_en)(UINT8 flag);
+	void (*_bk_task_wdt_feed)(void);
 } wifi_os_funcs_t;
 extern wifi_os_funcs_t g_wifi_os_funcs;
 

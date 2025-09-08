@@ -1436,6 +1436,8 @@ __attribute__((section(".dtcm_sec_data "))) wifi_os_funcs_t g_wifi_os_funcs = {
 	._tpc_set_media_pwr_level = NULL,
 	._tpc_get_media_pwr_level = NULL,
 	#endif
+	._bk_wifi_set_rf_en = bk_wifi_set_rf_en,
+	._bk_task_wdt_feed = bk_task_wdt_feed,
 };
 
 __attribute__((section(".dtcm_sec_data "))) wifi_os_variable_t g_wifi_os_variable = {
