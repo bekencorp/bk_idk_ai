@@ -921,7 +921,11 @@ static int ws_client_recv(transport client)
 	transport_ws_t *ws = client->ws_transport;
 	do {
 		BK_LOGD(TAG, "----------begin receive--------------\r\n");
+#if CONFIG_WEBSOCKET_FULL_SIZE
+		rlen = ws_read(client, client->rx_buffer + client->payload_offset, client->buffer_size - client->payload_offset, WEBSOCKET_NETWORK_TIMEOUT_MS);
+#else
 		rlen = ws_read(client, client->rx_buffer, client->buffer_size, WEBSOCKET_NETWORK_TIMEOUT_MS);
+#endif
 		if (rlen < 0) {
 			BK_LOGE(TAG, "Error read data\r\n");
 			return BK_FAIL;
@@ -934,11 +938,22 @@ static int ws_client_recv(transport client)
 			BK_LOGE(TAG, "ws read timeouts\r\n");
 			return BK_OK;
 		}
-		bk_websocket_client_dispatch_event(client, WEBSOCKET_EVENT_DATA, client->rx_buffer, rlen, client->last_opcode);
 		client->payload_offset += rlen;
+#if CONFIG_WEBSOCKET_FULL_SIZE
+		if (client->payload_len >= client->buffer_size) {
+			if (client->payload_offset == client->buffer_size) { //If the size of the received packet exceeds the max length, the event shall be reported according to the max length.
+				bk_websocket_client_dispatch_event(client, WEBSOCKET_EVENT_DATA, client->rx_buffer, client->payload_offset, client->last_opcode);
+				client->payload_offset = 0;
+			}
+		}
+#else
+		bk_websocket_client_dispatch_event(client, WEBSOCKET_EVENT_DATA, client->rx_buffer, rlen, client->last_opcode);
+#endif
 	} while (client->payload_offset < client->payload_len);
-	//BK_LOGE(TAG, "%s, len:%d\r\n", __func__, client->payload_len);
-
+#if CONFIG_WEBSOCKET_FULL_SIZE
+	if (client->payload_len < client->buffer_size)
+		bk_websocket_client_dispatch_event(client, WEBSOCKET_EVENT_DATA, client->rx_buffer, client->payload_offset, client->last_opcode);
+#endif
 	if (client->last_opcode == WS_TRANSPORT_OPCODES_PING) {
 		const char *data = (client->payload_len == 0) ? NULL : client->rx_buffer;
 		BK_LOGE(TAG, "Received ping, Sending PONG with payload len=%d\r\n", client->payload_len);
