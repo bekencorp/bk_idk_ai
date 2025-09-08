@@ -136,6 +136,75 @@ static void bk_hex_dump(char *s, int length)
 		BK_RAW_LOGI(NULL, "\r\n");
 }
 
+static void parse_close_frame_payload(uint8_t *payload, int length) {
+
+    if (length < 2) {
+        BK_LOGE(TAG, "Invalid close frame payload length: %d\n", length);
+        return;
+    }
+
+    uint16_t status_code = (payload[0] << 8) | payload[1];
+    BK_LOGI(TAG, "Status Code: %d (0x%04X)\n", status_code, status_code);
+
+    switch (status_code) {
+        case 1000:
+            BK_LOGI(TAG, "Status Meaning: Normal closure\n");
+            break;
+        case 1001:
+            BK_LOGI(TAG, "Status Meaning: Going away\n");
+            break;
+        case 1002:
+            BK_LOGI(TAG, "Status Meaning: Protocol error\n");
+            break;
+        case 1003:
+            BK_LOGI(TAG, "Status Meaning: Unsupported data\n");
+            break;
+        case 1005:
+            BK_LOGI(TAG, "Status Meaning: No status received\n");
+            break;
+        case 1006:
+            BK_LOGI(TAG, "Status Meaning: Abnormal closure\n");
+            break;
+        case 1007:
+            BK_LOGI(TAG, "Status Meaning: Invalid frame payload data\n");
+            break;
+        case 1008:
+            BK_LOGI(TAG, "Status Meaning: Policy violation\n");
+            break;
+        case 1009:
+            BK_LOGI(TAG, "Status Meaning: Message too big\n");
+            break;
+        case 1010:
+            BK_LOGI(TAG, "Status Meaning: Mandatory extension\n");
+            break;
+        case 1011:
+            BK_LOGI(TAG, "Status Meaning: Internal server error\n");
+            break;
+        case 1015:
+            BK_LOGI(TAG, "Status Meaning: TLS handshake failure\n");
+            break;
+        default:
+            if (status_code >= 3000 && status_code <= 3999) {
+                BK_LOGI(TAG, "Status Meaning: Reserved for libraries and frameworks\n");
+            } else if (status_code >= 4000 && status_code <= 4999) {
+                BK_LOGI(TAG, "Status Meaning: Reserved for private use\n");
+            } else {
+                BK_LOGI(TAG, "Status Meaning: Unknown status code\n");
+            }
+            break;
+    }
+
+    if (length > 2) {
+        BK_LOGI(TAG, "Reason: ");
+        for (int i = 2; i < length; i++) {
+            BK_RAW_LOGI(NULL, "%c", payload[i]);
+        }
+        BK_RAW_LOGI(NULL, "\n");
+    } else {
+        BK_LOGI(TAG, "Reason: No reason provided\n");
+    }
+}
+
 static int _tcp_close(transport client)
 {
 	int ret = -1;
@@ -257,6 +326,15 @@ static int ws_read_payload(transport client, char *buffer, int len, int timeout_
 			buffer[i] = (buffer[i] ^ ws->frame_state.mask_key[i % 4]);
 		}
 	}
+	if (ws->frame_state.opcode == WS_TRANSPORT_OPCODES_CLOSE) {
+		// Print the payload when receiving a close frame
+		if (ws->frame_state.payload_len > 0 && ws->frame_state.payload_len <= len) {
+			parse_close_frame_payload((uint8_t*)buffer, ws->frame_state.payload_len);
+		} else {
+			BK_LOGI(TAG, "Received close frame without payload\r\n");
+		}
+	}
+
 	return rlen;
 }
 
@@ -958,8 +1036,19 @@ static int ws_client_recv(transport client)
 		const char *data = (client->payload_len == 0) ? NULL : client->rx_buffer;
 		BK_LOGE(TAG, "Received ping, Sending PONG with payload len=%d\r\n", client->payload_len);
 		BK_LOGE(TAG, "----------sending pong packet----------\r\n");
-		ws_write(client, WS_TRANSPORT_OPCODES_PONG | WS_TRANSPORT_OPCODES_FIN, WS_MASK, data, client->payload_len,
+		int retry_count = 0;
+retry:
+		rlen = ws_write(client, WS_TRANSPORT_OPCODES_PONG | WS_TRANSPORT_OPCODES_FIN, WS_MASK, data, client->payload_len,
 								WEBSOCKET_NETWORK_TIMEOUT_MS);
+		if (rlen <= 0 && retry_count < 3) {
+			if (rlen == 0 && errno == EINPROGRESS) {
+				retry_count++;
+				BK_LOGE(TAG, "sending pong fail, rlen:%d errno:%d retry_count:%d\r\n", rlen, errno, retry_count);
+				goto retry;
+			}
+			else
+				BK_LOGE(TAG, "sending pong fail, rlen:%d errno:%d\r\n", rlen, errno);
+		}
 	} else if (client->last_opcode == WS_TRANSPORT_OPCODES_PONG) {
 		BK_LOGE(TAG, "Received pong frame, send ping success\r\n");
 		client->wait_for_pong_resp = false;
