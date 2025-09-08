@@ -32,8 +32,7 @@ typedef enum {
     BRIGHTNESS_ADD,
     AI_AGENT_CONFIG,
     FACTORY_RESET,
-    AUDIO_BUF_APPEND,
-    AUDIO_BUF_COMMIT
+    AUDIO_BUF_APPEND
 } key_event_t;
 
 typedef enum{
