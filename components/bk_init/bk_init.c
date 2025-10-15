@@ -109,7 +109,7 @@ extern void bk_ota_confirm_update_partition(ota_confirm_flag ota_confirm_val);
 #include "atsvr_unite.h"
 #endif
 
-#if (CONFIG_DEBUG_FIRMWARE)
+#if (CONFIG_DEBUG_VERSION)
 extern bk_err_t bk_dbg_init(void);
 #endif
 
@@ -138,7 +138,7 @@ static int app_wifi_init(void)
 	BK_LOG_ON_ERR(bk_netif_init());
 	BK_LOG_ON_ERR(bk_wifi_init(&wifi_config));
 
-#if (CONFIG_DEBUG_FIRMWARE)
+#if (CONFIG_DEBUG_VERSION)
 	BK_LOG_ON_ERR(bk_dbg_init());
 #endif
 

@@ -27,7 +27,7 @@ typedef enum
 } BK_CpuLoadTime;
 
 /* In debug version, the corresponding debugging function is enabled by default */
-#if CONFIG_DEBUG_FIRMWARE
+#if CONFIG_DEBUG_VERSION
 
 #define FREERTOS_TASK_RECORDER 1
 #define FREERTOS_TASK_RECORDER_CNT 10

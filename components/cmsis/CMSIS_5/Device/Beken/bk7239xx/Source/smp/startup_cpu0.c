@@ -436,7 +436,7 @@ __STATIC_FORCEINLINE void dump_system_info(uint32_t rr, uint32_t lr, uint32_t sp
 
 void user_nmi_handler(uint32_t lr, uint32_t sp)
 {
-#if CONFIG_DEBUG_FIRMWARE || CONFIG_DUMP_ENABLE
+#if CONFIG_DEBUG_VERSION || CONFIG_DUMP_ENABLE
 
 	if(arch_is_enter_exception())
 	{
@@ -466,7 +466,7 @@ void user_nmi_handler(uint32_t lr, uint32_t sp)
 	aon_pmu_drv_wdt_rst_dev_enable();
 	while(1);
 
-#endif // CONFIG_DEBUG_FIRMWARE || CONFIG_DUMP_ENABLE
+#endif // CONFIG_DEBUG_VERSION || CONFIG_DUMP_ENABLE
 }
 
 /*----------------------------------------------------------------------------

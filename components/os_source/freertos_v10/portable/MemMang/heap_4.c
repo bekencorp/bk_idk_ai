@@ -679,7 +679,7 @@ void *psram_malloc( size_t xWantedSize )
 
 	#endif
 
-#if CONFIG_DEBUG_FIRMWARE
+#if CONFIG_DEBUG_VERSION
 	if (pvReturn == NULL)
 		BK_ASSERT(0);
 #endif

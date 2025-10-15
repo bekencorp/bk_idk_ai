@@ -294,7 +294,7 @@ int32_t vote_stop_cpu2_core(cpu2_user_id_t user_id)
 
 
 void bk_set_jtag_mode(uint32_t cpu_id, uint32_t group_id) {
-#if CONFIG_DEBUG_FIRMWARE
+#if CONFIG_DEBUG_VERSION
 
 	if (cpu_id == 0) {
 		(void)sys_drv_set_jtag_mode(0);

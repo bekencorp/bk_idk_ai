@@ -51,7 +51,7 @@ extern void trap_entry(void);
 
 #endif // #if CONFIG_SHELL_ASYNCLOG
 
-#if (CONFIG_DEBUG_FIRMWARE)
+#if (CONFIG_DEBUG_VERSION)
 
 #define BK_ASSERT(exp)                                       \
 do {                                                         \
@@ -111,7 +111,7 @@ do {                                                         \
 }while(0)
 
 
-#endif // #if (CONFIG_DEBUG_FIRMWARE)
+#endif // #if (CONFIG_DEBUG_VERSION)
 
 #define BK_ASSERT_HALT			BK_DUMP_OUT
 
