@@ -386,7 +386,7 @@ static void cli_pm_vote_cmd(char *pcWriteBuffer, int xWriteBufferLen, int argc, 
 	}
 	pm_printf_current_temperature();
 }
-#if CONFIG_DEBUG_FIRMWARE
+#if CONFIG_DEBUG_VERSION
 static void cli_pm_vol(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **argv)
 {
 	UINT32 pm_vol  = 0;
@@ -1046,7 +1046,7 @@ static void cli_pm_psram(char *pcWriteBuffer, int xWriteBufferLen, int argc, cha
 	bk_pm_module_vote_psram_ctrl(module_name,power_psram_state);
 #endif
 }
-#endif//CONFIG_DEBUG_FIRMWARE
+#endif//CONFIG_DEBUG_VERSION
 
 #endif//CONFIG_SYSTEM_CTRL
 
@@ -1361,7 +1361,7 @@ static const struct cli_command s_pwr_commands[] = {
 
 #if CONFIG_SYS_CPU0
 #if CONFIG_SYSTEM_CTRL
-#if CONFIG_DEBUG_FIRMWARE
+#if CONFIG_DEBUG_VERSION
 	{"pm", "pm [sleep_mode] [wake_source] [vote1] [vote2] [vote3] [param1] [param2] [param3]", cli_pm_cmd},
 	{"dvfs", "dvfs [cksel_core] [ckdiv_core] [ckdiv_bus] [ckdiv_cpu0] [ckdiv_cpu1]", cli_dvfs_cmd},
 	{"dvfs_auto_test", "dvfs_auto_test [period]", cli_dvfs_auto_test},
@@ -1400,7 +1400,7 @@ static const struct cli_command s_pwr_commands[] = {
 	{"pm", "pm [sleep_mode] [wake_source] [vote1] [vote2] [vote3] [param1] [param2] [param3]", cli_pm_cmd},
 	{"pm_vote", "pm_vote [pm_sleep_mode] [pm_vote] [pm_vote_value] [pm_sleep_time]", cli_pm_vote_cmd},
 	{"pm_debug", "pm_debug [debug_en_value]", cli_pm_debug},
-#endif //CONFIG_DEBUG_FIRMWARE
+#endif //CONFIG_DEBUG_VERSION
 #endif //CONFIG_SYSTEM_CTRL
 #endif //CONFIG_SYS_CPU0
 };

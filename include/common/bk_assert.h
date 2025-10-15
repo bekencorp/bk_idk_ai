@@ -26,7 +26,7 @@ extern "C" {
 
 void bk_reboot(void);
 
-#if (CONFIG_DEBUG_FIRMWARE || CONFIG_DUMP_ENABLE)
+#if (CONFIG_DEBUG_VERSION || CONFIG_DUMP_ENABLE)
 void bk_system_dump(void);
 #define BK_ASSERT_DUMP()   bk_system_dump()
 #else
@@ -51,7 +51,7 @@ void bk_system_dump(void);
 
 #endif // #if CONFIG_SHELL_ASYNCLOG
 
-#if (CONFIG_DEBUG_FIRMWARE || CONFIG_DUMP_ENABLE)
+#if (CONFIG_DEBUG_VERSION || CONFIG_DUMP_ENABLE)
 
 #define BK_ASSERT(exp)                                       \
 do {                                                         \
@@ -111,7 +111,7 @@ do {                                                         \
 }while(0)
 
 
-#endif // #if (CONFIG_DEBUG_FIRMWARE || CONFIG_DUMP_ENABLE)
+#endif // #if (CONFIG_DEBUG_VERSION || CONFIG_DUMP_ENABLE)
 
 #define BK_ASSERT_HALT			BK_DUMP_OUT
 

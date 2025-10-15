@@ -414,6 +414,21 @@ macro(project project_name)
                     PROJECT_VER "${project_ver}"
                     COMPONENTS "${components};${test_components}")
 
+    if(${CONFIG_BUILD_DEFAULT_VERSION})
+        if(EXISTS "${armino_path}/properties/modules")
+            set(compile_type "-DCONFIG_DEBUG_VERSION=1")
+            list(APPEND compile_type "-DCONFIG_DEBUG_FIRMWARE=1")
+        else()
+            set(compile_type "-DCONFIG_RELEASE_VERSION=1")
+        endif()
+        armino_build_set_property(COMPILE_DEFINITIONS "${compile_type}" APPEND)
+    endif()
+
+    if(${CONFIG_DEBUG_VERSION})
+        set(compile_type "-DCONFIG_DEBUG_FIRMWARE=1")
+        armino_build_set_property(COMPILE_DEFINITIONS "${compile_type}" APPEND)
+    endif()
+
     # Special treatment for 'main' component for standard projects (not part of core build system).
     # Have it depend on every other component in the build. This is
     # a convenience behavior for the standard project; thus is done outside of the core build system

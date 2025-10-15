@@ -22,7 +22,7 @@ static inline void wdt_hal_close_unused(wdt_unit_t id);
 bk_err_t wdt_hal_init(wdt_hal_t *hal)
 {
 #if (CONFIG_SOC_BK7256XX)
-#if CONFIG_DEBUG_FIRMWARE || CONFIG_NMI_WDT_EN
+#if CONFIG_DEBUG_VERSION || CONFIG_NMI_WDT_EN
         hal->id = NMI_WDT_ID;  //debug version use nmi_wdt to dump
 #else
 	if (aon_pmu_hal_is_chipid_later_than_version_C())
@@ -33,7 +33,7 @@ bk_err_t wdt_hal_init(wdt_hal_t *hal)
 #endif
 
 #if (CONFIG_SOC_BK7236XX)
-#if CONFIG_DEBUG_FIRMWARE || CONFIG_NMI_WDT_EN
+#if CONFIG_DEBUG_VERSION || CONFIG_NMI_WDT_EN
 		hal->id = NMI_WDT_ID;  //debug version use nmi_wdt to dump
 #else
 		hal->id = AON_WDT_ID;  //debug version use aon_wdt
@@ -97,7 +97,7 @@ static inline void wdt_hal_nmi_reboot() {
 
 void wdt_hal_force_reboot(void)
 {
-#if CONFIG_DEBUG_FIRMWARE || CONFIG_NMI_WDT_EN
+#if CONFIG_DEBUG_VERSION || CONFIG_NMI_WDT_EN
         wdt_hal_nmi_reboot();
 #else
         if (aon_pmu_hal_is_chipid_later_than_version_C())
@@ -107,7 +107,7 @@ void wdt_hal_force_reboot(void)
         } else {
                 wdt_hal_nmi_reboot();
         }
-#endif //#if CONFIG_DEBUG_FIRMWARE
+#endif //#if CONFIG_DEBUG_VERSION
 }
 
 #endif
@@ -160,7 +160,7 @@ static inline void wdt_hal_nmi_reboot() {
 void wdt_hal_force_reboot(void)
 {
     //disable AON WDT as the ROSC 32K need to be disabled
-#if CONFIG_DEBUG_FIRMWARE || CONFIG_NMI_WDT_EN
+#if CONFIG_DEBUG_VERSION || CONFIG_NMI_WDT_EN
     wdt_hal_nmi_reboot();
 #else
     REG_WRITE(SOC_AON_WDT_REG_BASE, 0x5A000A);

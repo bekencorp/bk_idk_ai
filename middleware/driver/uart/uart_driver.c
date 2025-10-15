@@ -183,7 +183,7 @@ static uart_sema_t s_uart_sema[SOC_UART_ID_NUM_PER_UNIT] = {0};
 #define UART_CHECK_SECURE(id)
 #endif
 
-#if (CONFIG_DEBUG_FIRMWARE)
+#if (CONFIG_DEBUG_VERSION)
 #define DEAD_WHILE() do{\
 		while(1);\
 	} while(0)

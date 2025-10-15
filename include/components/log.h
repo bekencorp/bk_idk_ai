@@ -34,11 +34,24 @@ extern "C" {
 #define BK_LOG_INFO    3 /*!< Information messages which describe normal flow of events */
 #define BK_LOG_DEBUG   4 /*!< Extra information which is not necessary for normal use (values, pointers, sizes, etc). */
 #define BK_LOG_VERBOSE 5 /*!< Extra information which is not necessary for normal use (values, pointers, sizes, etc). */
+#define BK_LOG_DEFAULT 6 /* default level, BK_LOG_INFO in release version, BK_LOG_DEBUG in debug version */
 
-#ifdef CFG_LOG_LEVEL
-#define LOG_LEVEL         CFG_LOG_LEVEL
+#if defined(MODULE_VERBOSE_LOG_ENABLE)
+    #define LOG_LEVEL         BK_LOG_VERBOSE
+#elif defined(MODULE_DEBUG_LOG_ENABLE)
+    #define LOG_LEVEL         BK_LOG_DEBUG
 #else
-#define LOG_LEVEL         BK_LOG_INFO
+    #if (CONFIG_LOG_LEVEL == BK_LOG_DEFAULT)
+        #if defined(CONFIG_DEBUG_VERSION)
+            #define LOG_LEVEL BK_LOG_INFO
+        #else
+            #define LOG_LEVEL BK_LOG_WARN
+        #endif
+    #elif defined(CONFIG_LOG_LEVEL)
+        #define LOG_LEVEL         CONFIG_LOG_LEVEL
+    #else
+        #define LOG_LEVEL         BK_LOG_INFO
+    #endif
 #endif
 
 #if (LOG_LEVEL >= BK_LOG_ERROR)

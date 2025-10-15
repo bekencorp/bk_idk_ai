@@ -20,6 +20,20 @@ menu "Bk_cli"
 			help
 				cli user configuration header directory
 
+		config LOG_LEVEL
+			int "Set LOG LEVEL"
+			range 0 6
+			default 6
+			help
+				set log compile and default print level, log level map:
+				0 BK_LOG_NONE, no log output.
+				1 BK_LOG_ERROR, output error level or above
+				2 BK_LOG_WARN, output warning level or above
+				3 BK_LOG_INFO, output info level or above
+				4 BK_LOG_DEBUG, output debug level or above
+				5 BK_LOG_VERBOSE, output verbose level or above
+				6 BK_LOG_DEFAULT, BK_LOG_WARN in release version, BK_LOG_INFO in debug version
+
 		config BKREG
 			depends on CLI
 			bool "Enable Bkreg"

@@ -747,7 +747,7 @@ static uint32_t test_frame_strip(uint8_t *src, uint32_t size)
 
 void cli_test_psram_cache_cmd(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **argv)
 {
-#if CONFIG_DEBUG_FIRMWARE
+#if CONFIG_DEBUG_VERSION
 	uint32_t address, size;
 	os_printf("cli_test_psram_cache_cmd\r\n");
 	if (argc >= 3)

@@ -103,7 +103,7 @@ void stack_mem_dump(uint32_t stack_top, uint32_t stack_bottom)
 		if ((cnt++ & 0x7) == 0) {
 			BK_DUMP_OUT("\r\n");
 		}
-#if CONFIG_DEBUG_FIRMWARE || CONFIG_DUMP_ENABLE 
+#if CONFIG_DEBUG_VERSION || CONFIG_DUMP_ENABLE 
 		if((cnt & 0xff) == 0) {
 #if (CONFIG_TASK_WDT)
 			bk_task_wdt_feed();
@@ -113,7 +113,7 @@ void stack_mem_dump(uint32_t stack_top, uint32_t stack_bottom)
 			bk_int_aon_wdt_feed();
 #endif
 		}
-#endif //#if CONFIG_DEBUG_FIRMWARE || CONFIG_DUMP_ENABLE
+#endif //#if CONFIG_DEBUG_VERSION || CONFIG_DUMP_ENABLE
 		BK_DUMP_OUT("%02x %02x %02x %02x ", data[0], data[1], data[2], data[3]);
 	}
 	BK_DUMP_OUT("\r\n");

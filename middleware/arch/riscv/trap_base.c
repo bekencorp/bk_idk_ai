@@ -278,7 +278,7 @@ extern volatile const uint8_t build_version[];
 extern void smem_dump_lastblock(void);
 void user_except_handler (unsigned long mcause, SAVED_CONTEXT *context)
 {
-#if CONFIG_DEBUG_FIRMWARE || CONFIG_DUMP_ENABLE
+#if CONFIG_DEBUG_VERSION || CONFIG_DUMP_ENABLE
 	BK_LOG_FLUSH();
 	bk_set_printf_sync(true);
 
@@ -334,7 +334,7 @@ void user_except_handler (unsigned long mcause, SAVED_CONTEXT *context)
 	BK_DUMP_OUT("***********************************************************************************************\r\n");
 	BK_DUMP_OUT("************************************user except handler end************************************\r\n");
 	BK_DUMP_OUT("***********************************************************************************************\r\n");
-#endif //CONFIG_DEBUG_FIRMWARE
+#endif //CONFIG_DEBUG_VERSION
 }
 
 void set_reboot_tag(uint32_t tag) {
@@ -351,7 +351,7 @@ void set_nmi_vector(void) {
 }
 
 void user_nmi_handler(unsigned long mcause, unsigned long ra) {
-#if CONFIG_DEBUG_FIRMWARE || CONFIG_DUMP_ENABLE
+#if CONFIG_DEBUG_VERSION || CONFIG_DUMP_ENABLE
 	if(g_enter_nmi_vector == 1)
 	{
 		//For nmi wdt reset

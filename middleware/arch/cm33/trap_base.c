@@ -383,7 +383,7 @@ static void dump_context(uint32_t lr, uint32_t msp)
 
 static void rtos_dump_system(void)
 {
-#if CONFIG_DEBUG_FIRMWARE || CONFIG_DUMP_ENABLE
+#if CONFIG_DEBUG_VERSION || CONFIG_DUMP_ENABLE
     BK_LOG_FLUSH();
     bk_set_printf_sync(true);
 
@@ -423,7 +423,7 @@ static void rtos_dump_system(void)
     BK_DUMP_OUT("***********************************************************************************************\r\n");
 
      dump_peri_regs();
-#endif //CONFIG_DEBUG_FIRMWARE || CONFIG_DUMP_ENABLE
+#endif //CONFIG_DEBUG_VERSION || CONFIG_DUMP_ENABLE
 }
 
 #define CHECK_TASK_WDT_INTERRUPT (0x13)

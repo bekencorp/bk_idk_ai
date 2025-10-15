@@ -43,7 +43,7 @@ void cli_memory_free_cmd(char *pcWriteBuffer, int xWriteBufferLen, int argc, cha
 
 void cli_memory_set_cmd(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **argv)
 {
-#if CONFIG_DEBUG_FIRMWARE
+#if CONFIG_DEBUG_VERSION
     uint32_t address, value;
     os_printf("cli_memory_set_cmd\r\n");
     if (argc >= 3) {
@@ -58,7 +58,7 @@ void cli_memory_set_cmd(char *pcWriteBuffer, int xWriteBufferLen, int argc, char
 #endif
 }
 
-#if CONFIG_DEBUG_FIRMWARE
+#if CONFIG_DEBUG_VERSION
 const static uint32_t s_test_data[20] = {
     0x00000000, 0x800102a0, 0x30021e44, 0x30034088,
     0x5f696c63, 0x61727370, 0x616d5f6d, 0x636f6c6c,
@@ -84,7 +84,7 @@ int32_t memtest_write_one_word(uint32_t addr, uint32_t count) {
 __attribute__ ((__optimize__ ("-fno-tree-loop-distribute-patterns"))) \
 int32_t memtest_wr(uint32_t addr, uint32_t count)
 {
-#if CONFIG_DEBUG_FIRMWARE
+#if CONFIG_DEBUG_VERSION
     int int_status = rtos_enter_critical();
     os_printf("memtest_wr begin!!\r\n");
     os_memcpy_word((uint32_t *)addr, &s_test_data[2], sizeof(s_test_data) - 8);
@@ -97,7 +97,7 @@ int32_t memtest_wr(uint32_t addr, uint32_t count)
 
     os_printf("memtest_wr done!!\r\n");
     rtos_exit_critical(int_status);
-#endif //#if CONFIG_DEBUG_FIRMWARE
+#endif //#if CONFIG_DEBUG_VERSION
 
     return 0;
 }
@@ -118,7 +118,7 @@ static void cli_memtest_wr_cmd(char *pcWriteBuffer, int xWriteBufferLen, int arg
     }
 }
 
-#endif //#if CONFIG_DEBUG_FIRMWARE
+#endif //#if CONFIG_DEBUG_VERSION
 
 void cli_memory_stack_cmd(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **argv)
 {
@@ -400,7 +400,7 @@ __maybe_unused volatile uint32_t data = 0;
 
 int32_t mem_read_test(uint32_t src, uint32_t dst, uint32_t size)
 {
-#if CONFIG_DEBUG_FIRMWARE
+#if CONFIG_DEBUG_VERSION
     uint32_t i;
     uint32_t test_count = size/sizeof(uint32_t);
 
@@ -642,7 +642,7 @@ static const struct cli_command s_mem_commands[] = {
 #if CONFIG_MEM_DEBUG && CONFIG_FREERTOS
     {"memleak", "[show memleak", cli_memory_leak_cmd},
 #endif
-#if CONFIG_DEBUG_FIRMWARE    
+#if CONFIG_DEBUG_VERSION    
     {"memtest", "<addr> <length>", cli_mem_test},
     {"memtest_r", "<src> <dest> <size>", cli_memread_test},
     {"memtest_wr", "<addr> <count>", cli_memtest_wr_cmd},
@@ -652,7 +652,7 @@ static const struct cli_command s_mem_commands[] = {
     {"mpuclr", "<rnr>", cli_mpuclr_cmd},
     {"mpudump", "dump mpu config", cli_mpudump_cmd},
 #endif //#if CONFIG_MPU
-#endif //#if CONFIG_DEBUG_FIRMWARE
+#endif //#if CONFIG_DEBUG_VERSION
 #if CONFIG_PSRAM_AS_SYS_MEMORY && CONFIG_FREERTOS
     {"psram_malloc", "psram_malloc <length>", cli_psram_malloc_cmd},
     {"psram_free", "psram_free <addr>", cli_psram_free_cmd},

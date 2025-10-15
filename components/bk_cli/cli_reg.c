@@ -238,7 +238,7 @@ static void cli_reg_dump_cmd(char *pcWriteBuffer, int xWriteBufferLen, int argc,
 		cli_reg_dump_help();
 		return;
 	}
-#if CONFIG_DEBUG_FIRMWARE
+#if CONFIG_DEBUG_VERSION
 	uint8_t index = 0;
 
 	if (argc > 1) {

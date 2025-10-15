@@ -23,7 +23,7 @@ extern "C" {
  **/
 
 //TODO disable all of them
-#if CONFIG_DEBUG_FIRMWARE
+#if CONFIG_DEBUG_VERSION
 #define CFG_HAL_DEBUG_ICU        1
 #define CFG_HAL_DEBUG_PWM        1
 #define CFG_HAL_DEBUG_GPIO       1

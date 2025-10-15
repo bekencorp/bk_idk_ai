@@ -103,7 +103,7 @@ static void cli_trace_cmd(char *pcWriteBuffer, int xWriteBufferLen, int argc, ch
 	stack_mem_dump(trace_addr, trace_addr + trace_size);
 }
 #endif
-#if CONFIG_DEBUG_FIRMWARE
+#if CONFIG_DEBUG_VERSION
 void os_test_stack_guard(uint32_t override_len)
 {
 	unsigned char test_buf[32] = {0};
@@ -121,7 +121,7 @@ void os_test_stack_guard(uint32_t override_len)
 
 static void cli_test_stack_guard_cmd(char *pcWriteBuffer, int xWriteBufferLen, int argc, char **argv)
 {
-#if CONFIG_DEBUG_FIRMWARE
+#if CONFIG_DEBUG_VERSION
     uint32_t override_len = 16;
     os_printf("Test stack guard beging.\r\n");
     if (argc >= 2) {

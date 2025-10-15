@@ -1472,7 +1472,7 @@ int bk_cli_init(void)
 	cli_event_init();
 #endif
 
-#if CONFIG_DEBUG_FIRMWARE
+#if CONFIG_DEBUG_VERSION
 #if (CLI_CFG_TEMP_DETECT == 1)
 	cli_temp_detect_init();
 #endif
@@ -1483,7 +1483,7 @@ int bk_cli_init(void)
 #if CONFIG_LWIP
 	cli_lwip_init();
 #endif
-#endif //CONFIG_DEBUG_FIRMWARE
+#endif //CONFIG_DEBUG_VERSION
 
 /*----------------WIFI cli command init end----------------------*/
 #if (CLI_CFG_SCR == 1)
@@ -1644,7 +1644,7 @@ int bk_cli_init(void)
 	cli_os_init();
 #endif
 
-#if CONFIG_DEBUG_FIRMWARE
+#if CONFIG_DEBUG_VERSION
 #if !CONFIG_CLI_CODE_SIZE_OPTIMIZE_ENABLE
 
 #if (CLI_CFG_FLASH == 1)
@@ -1877,7 +1877,7 @@ int bk_cli_init(void)
 	cli_modem_init();
 #endif
 
-#endif //CONFIG_DEBUG_FIRMWARE
+#endif //CONFIG_DEBUG_VERSION
 
 /*-----open the cli comand both at release and debug vertion begin-----*/
 #if (CLI_CFG_PWR == 1)

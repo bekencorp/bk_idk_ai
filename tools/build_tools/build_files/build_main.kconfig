@@ -23,6 +23,25 @@ mainmenu "Beken Development Configuration"
 				bool "whether Objdump -d elf to lst or not"
 				default y
 
+				choice BUILD_VERSION
+					prompt "Select Build version"
+					default BUILD_DEFAULT_VERSION
+
+					config BUILD_DEFAULT_VERSION
+						bool "Use default build version"
+						help
+							build version depend on sdk, it's DEBUG in developer environment, RELEASE in customer environment.
+
+					config DEBUG_VERSION
+						bool "Use debug build version"
+						help
+							set debug build version
+					
+					config RELEASE_VERSION
+						bool "Use release build version"
+						help
+							set release build version
+				endchoice
 			endmenu
 
 			menu "Debug"
