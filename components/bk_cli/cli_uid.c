@@ -24,7 +24,7 @@ static void cli_uid_ops_cmd(char* pcWriteBuffer, int xWriteBufferLen, int argc, 
 		{
 			CLI_LOGI("%x index:%d\r\n", data[j], j);
 		}
-	#if (CONFIG_WANSON_FL_LICENSE)
+	#if (CONFIG_WANSON_CN_LICENSE || CONFIG_WANSON_FL_LICENSE)
 		uint8_t chipid_buff[8] = { 0 };
 		int rets = bk_otp_apb_read(29, chipid_buff, 8);
 		if (rets != BK_OK) {
@@ -44,7 +44,7 @@ static void cli_uid_ops_cmd(char* pcWriteBuffer, int xWriteBufferLen, int argc, 
 	}
 }
 
-#if (CONFIG_WANSON_FL_LICENSE)
+#if (CONFIG_WANSON_CN_LICENSE || CONFIG_WANSON_FL_LICENSE)
 static void lic_ops_cmd(char* pcWriteBuffer, int xWriteBufferLen, int argc, char** argv)
 {
 	if (argc < 2) {
@@ -92,7 +92,7 @@ static void lic_ops_cmd(char* pcWriteBuffer, int xWriteBufferLen, int argc, char
 #define UID_CMD_CNT (sizeof(s_uid_commands) / sizeof(struct cli_command))
 static const struct cli_command s_uid_commands[] = {
 	{"uid", "uid [init/get]/", cli_uid_ops_cmd},
-#if (CONFIG_WANSON_FL_LICENSE)
+#if (CONFIG_WANSON_CN_LICENSE || CONFIG_WANSON_FL_LICENSE)
 	{"lic", "lic [init/get/fget]/", lic_ops_cmd},
 #endif
 };

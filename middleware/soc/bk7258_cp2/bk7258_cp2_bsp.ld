@@ -285,6 +285,12 @@ SECTIONS
         *(.video_cache_data)
         *(.video_cache_data*)
 
+    #if (CONFIG_WANSON_ASR && CONFIG_WANSON_CN_LICENSE)
+        *(.wanson_asr_data1)
+        *(.wanson_asr_data2)
+        *(.wanson_asr_rodata)
+    #endif
+
         . = ALIGN(4);
         __data2_end__ = .;
     } > PSRAM AT > FLASH
