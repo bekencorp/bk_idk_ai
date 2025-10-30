@@ -41,6 +41,7 @@ bk7258xx_supported_projects := $(bk7258xx_supported_projects) media/doorbell
 bk7258xx_supported_projects := $(bk7258xx_supported_projects) phy/cert_test
 bk7258xx_supported_projects := $(bk7258xx_supported_projects) wifi/repeater
 bk7258xx_supported_projects := $(bk7258xx_supported_projects) at
+bk7258xx_supported_projects := $(bk7258xx_supported_projects) customization/config_ab
 bk7258xx_supported_projects := $(bk7258xx_supported_projects) matter
 bk7258xx_supported_projects := $(bk7258xx_supported_projects) beken_genie beken_genie_ab ai_dashboard soundhub soundhub_wss rock_paper_scissors beken_wss_nopsram platform volc_rtc
 ############################################################

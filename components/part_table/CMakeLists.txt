@@ -96,6 +96,7 @@ list(APPEND bk7258xx_supported_projects
 	"media/doorbell"
 	"beken_genie"
 	"beken_genie_ab"
+	"customization/config_ab"
 	"soundhub"
 	"soundhub_wss"
 	"ai_dashboard"
