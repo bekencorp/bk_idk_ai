@@ -53,9 +53,9 @@ static void cli_flash_cmd(char *pcWriteBuffer, int xWriteBufferLen, int argc, ch
 		for (uint32_t addr = start_addr; addr < (start_addr + len); addr += FLASH_PAGE_SIZE) {
 			os_memset(buf, 0, FLASH_PAGE_SIZE);
 			bk_flash_read_bytes(addr, buf, FLASH_PAGE_SIZE);
-			CLI_LOGI("flash read addr:%x\r\n", addr);
+			BK_DUMP_OUT("flash read addr:%x\r\n", addr);
 
-			CLI_LOGI("dump read flash data:\r\n");
+			BK_DUMP_OUT("dump read flash data:\r\n");
 			for (uint32_t i = 0; i < 16; i++) {
 				for (uint32_t j = 0; j < 16; j++) {
 					os_printf("%02x ", buf[i * 16 + j]);
@@ -77,7 +77,7 @@ static void cli_flash_cmd(char *pcWriteBuffer, int xWriteBufferLen, int argc, ch
 		msg = CLI_CMD_RSP_SUCCEED;
 	} else if (os_strcmp(argv[1], "get_id") == 0) {
 		uint32_t flash_id = bk_flash_get_id();
-		CLI_LOGI("flash_id:%x\r\n", flash_id);
+		BK_DUMP_OUT("flash_id:%x\r\n", flash_id);
 		msg = CLI_CMD_RSP_SUCCEED;
 	} else if (os_strcmp(argv[1], "set_line") == 0) {
 		/*enable FLASH_QUAD_ENABLE first*/
@@ -121,9 +121,9 @@ static void cli_flash_cmd_s(char *pcWriteBuffer, int xWriteBufferLen, int argc, 
 		for (uint32_t addr = start_addr; addr < (start_addr + len); addr += FLASH_PAGE_SIZE) {
 			os_memset(buf, 0, FLASH_PAGE_SIZE);
 			psa_flash_read_bytes(addr, buf, FLASH_PAGE_SIZE);
-			CLI_LOGI("flash read addr:%x\r\n", addr);
+			BK_DUMP_OUT("flash read addr:%x\r\n", addr);
 
-			CLI_LOGI("dump read flash data:\r\n");
+			BK_DUMP_OUT("dump read flash data:\r\n");
 			for (uint32_t i = 0; i < 16; i++) {
 				for (uint32_t j = 0; j < 16; j++) {
 					os_printf("%02x ", buf[i * 16 + j]);
@@ -164,7 +164,7 @@ static void cli_flash_partition_cmd(char *pcWriteBuffer, int xWriteBufferLen, in
 			if (partition == NULL)
 				continue;
 
-			CLI_LOGI("%4d | %11s |  Dev:%d  | 0x%08lx | 0x%08lx |\r\n", par,
+			BK_DUMP_OUT("%4d | %11s |  Dev:%d  | 0x%08lx | 0x%08lx |\r\n", par,
 					partition->partition_description, partition->partition_owner,
 					partition->partition_start_addr, partition->partition_length);
 		}
@@ -221,9 +221,9 @@ static void cli_flash_erase_test_with_ble(char *pcWriteBuffer, int xWriteBufferL
 		for (uint32_t erase_addr = start_addr; erase_addr <= (start_addr + erase_len);) {
 			flash_erase_with_ble_sleep(erase_addr);
 			erase_addr += FLASH_SECTOR_SIZE;
-			CLI_LOGI("erase_addr:%x\r\n", erase_addr);
+			BK_DUMP_OUT("erase_addr:%x\r\n", erase_addr);
 		}
-		CLI_LOGI("cli_flash_erase_test_with_ble finish.\r\n");
+		BK_DUMP_OUT("cli_flash_erase_test_with_ble finish.\r\n");
 		msg = CLI_CMD_RSP_SUCCEED;
 	} else {
 		cli_flash_help();

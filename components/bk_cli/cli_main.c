@@ -230,8 +230,8 @@ int handle_shell_input(char *inbuf, int in_buf_size, char * outbuf, int out_buf_
                                     (beken_thread_function_t)handle_shell_input_proxy,
                                     1024*7,
                                     (beken_thread_arg_t)(&cmd_par));
-       
-        if (ret != kNoErr) 
+
+        if (ret != kNoErr)
         {
             os_printf("Error: Failed to create shell_handle_thread_handle thread: %d\r\n",ret);
     #if CONFIG_PSRAM_AS_SYS_MEMORY		//try again in PSRAM
@@ -243,21 +243,21 @@ int handle_shell_input(char *inbuf, int in_buf_size, char * outbuf, int out_buf_
                                     (beken_thread_arg_t)(&cmd_par));
     #endif
         }
-        if (ret == kNoErr) 
+        if (ret == kNoErr)
         {
             break;
-        } 
-        else 
-        {       
+        }
+        else
+        {
             shell_wait_cnt++;
-            if(shell_wait_cnt >= SHELL_TASK_CHECK_CNT) 
+            if(shell_wait_cnt >= SHELL_TASK_CHECK_CNT)
             {
                 BK_LOGD(NULL,"Error: Failed to create shell_handle_thread_handle thread: %d\r\n", ret);
                 BK_ASSERT(0);
             }
 
             rtos_delay_milliseconds(20);
-        }         		   
+        }
     }
 
 	err = rtos_get_semaphore(&wait_shell_handle_semaphore,BEKEN_WAIT_FOREVER);
@@ -1647,9 +1647,6 @@ int bk_cli_init(void)
 #if CONFIG_DEBUG_VERSION
 #if !CONFIG_CLI_CODE_SIZE_OPTIMIZE_ENABLE
 
-#if (CLI_CFG_FLASH == 1)
-	cli_flash_init();
-#endif
 
 #if ((CONFIG_SOC_BK7236XX) && (CLI_CFG_FPB == 1))
 	cli_fpb_init();
@@ -1683,9 +1680,6 @@ int bk_cli_init(void)
 	cli_gpio_init();
 #endif
 
-#if (CLI_CFG_FLASH == 1)
-	cli_flash_test_init();
-#endif
 
 #if (CLI_CFG_SDIO_HOST == 1)
 	cli_sdio_host_init();
@@ -1855,6 +1849,11 @@ int bk_cli_init(void)
 #endif
 #if (CLI_CFG_OTA == 1)
 	cli_ota_init();
+#endif
+
+#if (CLI_CFG_FLASH == 1)
+	cli_flash_init();
+	cli_flash_test_init();
 #endif
 
 #if (CLI_CFG_JPEG_SW_ENC == 1)
