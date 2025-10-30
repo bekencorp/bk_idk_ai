@@ -82,16 +82,6 @@ int bk_http_ota_download(const char *uri)
 #endif
 	ota_input_event_handler(EVT_OTA_START);
 
-#ifdef CONFIG_HTTP_AB_PARTITION
-#if CONFIG_OTA_EVADE_METHOD
-	if(ota_get_dest_id() == OTA_WR_TO_FLASH)
-	{
-		uint8_t	download_status_flag = DOWNLOAD_START_FLAG;
-		ota_write_flash(BK_PARTITION_OTA_FINA_EXECUTIVE, download_status_flag, DOWNLOAD_STATUS_POS);
-	}
-#endif
-#endif
-
 #if CONFIG_SYSTEM_CTRL
 	bk_wifi_ota_dtim(1);
 #endif

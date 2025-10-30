@@ -173,13 +173,6 @@ int bk_https_ota_download(const char *url)
 		}
 	}
 
-#if CONFIG_OTA_EVADE_METHOD
-	if(ota_get_dest_id() == OTA_WR_TO_FLASH)
-	{
-		uint8_t	download_status_flag = DOWNLOAD_START_FLAG;
-		ota_write_flash(BK_PARTITION_OTA_FINA_EXECUTIVE, download_status_flag, DOWNLOAD_STATUS_POS);
-	}
-#endif
 	bk_http_input_t config = {
 		.url = url,
 		.cert_pem = ca_crt_rsa,
@@ -201,6 +194,7 @@ int bk_https_ota_download(const char *url)
 
 #ifdef CONFIG_HTTP_AB_PARTITION
 	if(ota_get_dest_id() == OTA_WR_TO_FLASH)
+	{
 		int ret_val = 0;
 		#ifdef CONFIG_OTA_HASH_FUNCTION
 		ret_val= ota_do_hash_check();
@@ -211,7 +205,7 @@ int bk_https_ota_download(const char *url)
 			return  ret_val;
 		}
 		#endif
-		ret_val = bk_ota_update_partition_flag(ret);
+		ret_val = bk_ota_update_partition_flag(0);
 		if(ret_val != BK_OK)
 		{
 			ota_do_deinit_operation();

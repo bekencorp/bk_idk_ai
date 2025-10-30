@@ -253,18 +253,15 @@ int bk_ota_update_partition_flag(int input_val)
 	}
 
  	cust_confirm_flag= 0x1;  //represent do ota update.
-#if CONFIG_OTA_EVADE_METHOD
-	uint8_t download_status_flag = DOWNLOAD_SUCCESS_FLAG;
-#endif
-	OTA_LOGI("ota_exec_flag :0x%x, exec_temp_part :0x%x,cust_confirm_flag :0x%x ,download_status_flag :0x%x\r\n",\
-		ota_exec_flag ,exec_temp_part, cust_confirm_flag,download_status_flag);
+
+	OTA_LOGI("ota_exec_flag :0x%x, exec_temp_part :0x%x,cust_confirm_flag :0x%x \r\n",\
+		ota_exec_flag ,exec_temp_part, cust_confirm_flag);
 
 	uint8_t input_flag_buf[16]= {0};  //{ota_exec_flag,0xFF,0xFF,0xFF,exec_temp_part,0xFF,0xFF,0xFF,cust_confirm_flag,0,0,0,download_status_flag,0,0,0};
 	os_memset(&input_flag_buf[0], 0xFF, sizeof(input_flag_buf));
 	os_memcpy(&input_flag_buf[0], &ota_exec_flag, 1);
 	os_memcpy(&input_flag_buf[4], &exec_temp_part, 1);
 	os_memcpy(&input_flag_buf[8], &cust_confirm_flag, 1);
-	os_memcpy(&input_flag_buf[12], &download_status_flag, 1);
 	ota_write_flash_with_all_flag(BK_PARTITION_OTA_FINA_EXECUTIVE, input_flag_buf, 0, 16);
 
 	return BK_OK;
