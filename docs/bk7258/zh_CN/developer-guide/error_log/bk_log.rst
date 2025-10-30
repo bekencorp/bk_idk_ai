@@ -14,6 +14,13 @@
  - 通过串口输入log命令查看当前log配置
  - log 1 3 0 命令第一个参数为echo开关 (0/1)，第二个参数为log级别(0~6)，第三个参数为同步开关(0异步,1同步)
 
+.. note::
+    
+    当Log中带有前缀"INSRT:"前缀时，表示buffer缓存耗尽，直接从log设备输出log，并且可能会打断其他log，并造成这一条log顺序出错。
+    如果经常出现这样的情况，建议增加buffer静态缓存。
+    通过关闭 ``CONFIG_SHELL_ASYNCLOG`` 宏或使用log cli命令均可切换至同步log，同步log不使用缓存机制，直接将log内容输出到串口。
+    因此可能造成中断或临界区执行时间过长，影响实时调度，因此强烈不建议在非调试环境下使用同步log。
+
 BK7258 多CPU log机制
 ------------------------
 
@@ -47,6 +54,12 @@ API 中支持log等级，模块名字等参数。
     #define BK_LOG_VERBOSE    5      /*!< Extra information which is not necessary for normal use (values, pointers, sizes, etc). */
     #define LOG_LEVEL         BK_LOG_INFO    /* 配置系统的log输出等级 */
 
+Log默认编译等级在Debug版本下为BK_LOG_INFO，在Release版本下为BK_LOG_WARN，定义了CONFIG_DEBUG_VERSION宏为Debug版本，
+否则为Release版本。低于默认编译等级的log将不会被编译，以节省flash空间。
+默认Log打印等级和编译等级相同，可以在开机后通过log命令动态调整。
+可通过config可以配置log编译等级，如将log编译等级设置为WARNING可在config文件中添加：
+
+    CONFIG_LOG_LEVEL=2
 
 如下是经过封装后的Log 输出API：
     - Tag：表示输出log的模块名。

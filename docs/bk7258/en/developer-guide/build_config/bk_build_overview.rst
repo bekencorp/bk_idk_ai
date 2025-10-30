@@ -59,3 +59,8 @@ The make build is to indirectly call the armino tool through armino/Makefile to 
 It is recommended that you build in this way.
 
 
+The default compilation version is Release version. The compilation version can be configured in the config file. The macro ``CONFIG_RELEASE_VERSION`` is defined in Release version,
+and the macro ``CONFIG_DEBUG_VERSION`` is defined in Debug version. To set the compilation version to Debug version, add the following to the config file::
+    
+    CONFIG_DEBUG_VERSION=y
+    

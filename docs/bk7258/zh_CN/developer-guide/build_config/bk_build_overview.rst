@@ -58,4 +58,8 @@
 make 构建是通过 armino/Makefile 间接调用 armino 工具来进行构建，它省去了使用 armino 工具构建时要
 设置环境变量的麻烦，推荐您使用这种方式进行构建。
 
+默认编译版本为Release版本，可以通过config文件中配置编译版本，在Release版本下宏 ``CONFIG_RELEASE_VERSION`` 被定义，
+在Debug版本下宏 ``CONFIG_DEBUG_VERSION`` 被定义。如将编译版本设置为Debug版本，则在config文件中添加::
+    
+    CONFIG_DEBUG_VERSION=y
 

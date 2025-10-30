@@ -15,6 +15,13 @@ Here introduces the log output method for Armino platform, it also works for mul
  - To set the log work mode, send the command of 'log' with 1~4 params in the input device.
  - log [1 [3 [0 [0]]]], it is the default setting after reset, the first parameter is the input echo switch(0: disable, 1:enable echo), the 2nd param is the lowest log level that can be output(level 0~5, 5 is the lowest level), the 3rd param controls the log work mode(0:asynchronous,1:synchronous), the 4th param controls 'modlog' work mechnism, the module list is the whitelist or blacklist (0: blacklist, 1: whitelist). This command contains 1~4 params, if the param3 is provided, then param1~2 must be also provided, but param4 can be omitted(so no changes to this setting).
 
+.. note::
+    
+    When a log contains the "INSRT:" prefix, it indicates that the buffer cache is exhausted, and the log is output directly from the log device, which may interrupt other logs and cause this log to be out of order.
+    If this situation occurs frequently, it is recommended to increase the static buffer cache.
+    Synchronous log can be switched by disabling the ``CONFIG_SHELL_ASYNCLOG`` macro or using the log cli command. Synchronous log does not use the cache mechanism and directly outputs log content to the serial port.
+    This may cause interrupts or critical sections to execute for too long, affecting real-time scheduling, so it is strongly not recommended to use synchronous log in non-debugging environments.
+
 BK7258 Multi-CPU Log Work Flow
 ------------------------------------------
 
@@ -48,6 +55,12 @@ API therefore with 2 params for log level, log Tag(module produced the log).
     #define BK_LOG_VERBOSE    5      /*!< Extra information which is not necessary for normal use (values, pointers, sizes, etc). */
     #define LOG_LEVEL         BK_LOG_INFO    /* log level configure. */
 
+The default log compilation level is BK_LOG_INFO in Debug version and BK_LOG_WARN in Release version. The CONFIG_DEBUG_VERSION macro is defined as Debug version,
+otherwise it is Release version. Logs below the default compilation level will not be compiled to save flash space.
+The default log print level is the same as the compilation level, and can be dynamically adjusted through the log command after boot.
+The log compilation level can be configured through config. For example, to set the log compilation level to WARNING, add the following to the config file:
+
+    CONFIG_LOG_LEVEL=2
 
 Following is the Log APIs: the suffix of the API implies the level of this log.
     - Tag: point out the module which produced the log. Module list will control whether this log can be output.
