@@ -62,8 +62,7 @@ int mb_ipc_cpu_is_power_off(u32 cpu_id)
 
 #if defined(MASTER_HB_TASK)
 
-//#include <os/rtos_ext.h>
-#include "../../../components/bk_rtos/rtos_ext.h"
+
 
 #define MB_IPC_START_CORE_FLAG		0x01
 #define MB_IPC_STOP_CORE_FLAG		0x02
@@ -205,12 +204,13 @@ static void mb_ipc_task( void *para )
 					if(cpu_x_state == CORE_STARTING)
 					{
 						cpu_x_state = CORE_POWER_ON;
+						BK_LOGI(MOD_TAG, "IPC cpu%d power on\r\n", cpu_x_id);
 						break;  // cpu1 power on. 
 					}
 				}
 				else
 				{
-					if(retry_cnt > 0)
+					if(retry_cnt > 3)
 					{
 						BK_LOGE(MOD_TAG, "IPC retry to start core%d\r\n", cpu_x_id);
 						// restart_cpu_x();
@@ -218,7 +218,7 @@ static void mb_ipc_task( void *para )
 					}
 					else
 					{
-						events = rtos_wait_event_ex(&mb_ipc_heart_event, MB_IPC_POWER_UP_FLAG, true, 2000);
+						events = rtos_wait_event_ex(&mb_ipc_heart_event, MB_IPC_POWER_UP_FLAG, true, 2000);//2s
 					}
 				}
 
@@ -233,7 +233,7 @@ static void mb_ipc_task( void *para )
 			if(ipc_heartbeat_timeout())
 			{
 				BK_LOGE(MOD_TAG, "IPC heartbeat timeout%d\r\n", cpu_x_id);
-				/*when cpu1 heatbeat timerout, then system reboot*/
+				/*when cpu1 heartbeat timeout, then system reboot*/
 				BK_ASSERT(false);
 				// restart_cpu_x();
 			}
@@ -256,7 +256,7 @@ void mb_ipc_reset_notify(u32 cpu_id, u32 power_on)
 	{
 		return;
 	}
-	
+
 	if(power_on)
 	{
 		if(cpu_x_state != CORE_POWER_ON)
@@ -278,7 +278,7 @@ void mb_ipc_heartbeat_notify(u32 cpu_id)
 	{
 		return;
 	}
-	
+
 	rtos_set_event_ex(&mb_ipc_heart_event, MB_IPC_HEARTBEAT_FLAG);
 }
 
@@ -288,7 +288,7 @@ void mb_ipc_power_on_notify(u32 cpu_id)
 	{
 		return;
 	}
-	
+
 	rtos_set_event_ex(&mb_ipc_heart_event, MB_IPC_POWER_UP_FLAG);
 }
 
@@ -298,7 +298,7 @@ void mb_ipc_dump_notify(u32 cpu_id, u32 dump)
 	{
 		return;
 	}
-	
+
 	cpu_x_dump = (dump != 0);
 }
 
@@ -308,7 +308,7 @@ int mb_ipc_cpu_is_power_on(u32 cpu_id)
 	{
 		return 0;
 	}
-	
+
 	if(cpu_x_state == CORE_POWER_ON)
 	{
 		return 1;
@@ -323,7 +323,7 @@ int mb_ipc_cpu_is_power_off(u32 cpu_id)
 	{
 		return 1;
 	}
-	
+
 	if(cpu_x_state == CORE_POWER_OFF)
 	{
 		return 1;
