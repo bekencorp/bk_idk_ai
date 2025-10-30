@@ -26,3 +26,6 @@
 - 4.使用串口发送cli命令，例如：
   http_ota http://192.168.21.101/D%3A/E/build/app_pack.rbl
 
+.. important::
+  若http_ota或者http_new_ota这条命令找不到，报cmd not found ，需要确保cli_ota_init()是否被成功调用并打开, 因为该api在release分支可能被禁用,其次确认ota相关的宏是否已开启。
+
