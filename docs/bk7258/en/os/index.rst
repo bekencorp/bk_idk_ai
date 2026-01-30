@@ -7,5 +7,7 @@ Supported OS
    :maxdepth: 1
 
    FreeRTOS <bk_freertos>
+   OS Abstraction <bk_os_abstract>  
+   Memory Interface <bk_mem>
 
  
