@@ -9,7 +9,7 @@
 #define MFRC522_LOGI(...) BK_LOGI(MFRC522_TAG, ##__VA_ARGS__)
 #define MFRC522_LOGW(...) BK_LOGW(MFRC522_TAG, ##__VA_ARGS__)
 #define MFRC522_LOGE(...) BK_LOGE(MFRC522_TAG, ##__VA_ARGS__)
-#define MFRC522_LOGD(...) BK_LOGD(MFRC522_TAG, ##__VA_ARGS__)
+#define MFRC522_LOGD(...) BK_LOGI(MFRC522_TAG, ##__VA_ARGS__)
 
 #define MAXRLEN                  (64)// 18
 
@@ -144,6 +144,21 @@ typedef enum
     MI_STATUS_MIFARE_NACK = 0xff,
 }MI_status_code_t;
 
+typedef enum
+{
+    MFRC522_PICC_TYPE_UNKNOWN		,
+    MFRC522_PICC_TYPE_ISO_14443_4	,	// PICC compliant with ISO/IEC 14443-4 
+    MFRC522_PICC_TYPE_ISO_18092		, 	// PICC compliant with ISO/IEC 18092 (NFC)
+    MFRC522_PICC_TYPE_MIFARE_MINI	,	// MIFARE Classic protocol, 320 bytes
+    MFRC522_PICC_TYPE_MIFARE_1K		,	// MIFARE Classic protocol, 1KB
+    MFRC522_PICC_TYPE_MIFARE_4K		,	// MIFARE Classic protocol, 4KB
+    MFRC522_PICC_TYPE_MIFARE_UL		,	// MIFARE Ultralight or Ultralight C
+    MFRC522_PICC_TYPE_MIFARE_PLUS	,	// MIFARE Plus
+    MFRC522_PICC_TYPE_MIFARE_DESFIRE,	// MIFARE DESFire
+    MFRC522_PICC_TYPE_TNP3XXX		,	// Only mentioned in NXP AN 10833 MIFARE Type Identification Procedure
+    MFRC522_PICC_TYPE_NOT_COMPLETE	= 0xff	// SAK indicates UID is not complete.
+}MFRC522_PICC_Type_t;
+
 // The commands used by the PCD to manage communication with several PICCs (ISO 14443-3, Type A, section 6.4)
 typedef enum  {
     MFRC522_PICC_CMD_REQA           = 0x26,		// REQuest command, Type A. Invites PICCs in state IDLE to go to READY and prepare for anticollision or selection. 7 bit frame.
@@ -226,4 +241,6 @@ void bk_mfrc522_clear_bit_mask(uint8_t reg, uint8_t mask);
 void RC522_Config(unsigned char Card_Type);
 void mfrc522_init(void);
 char PcdHalt(void);
+void mfrc522_deinit(void);
+void mfrc522_uart_deinit(void);
 #endif /* _BOARD_MFRC522_H_ */

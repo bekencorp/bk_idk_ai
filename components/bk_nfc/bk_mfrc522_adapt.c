@@ -350,4 +350,26 @@ void bk_mfrc522_set_low_power(void)
 	bk_mfrc522_write_rawRc(0x13, rx_mode);
 }
 
+/**
+ * Translates the SAK (Select Acknowledge) to a PICC type.
+ *
+ * @return MFRC522_PICC_Type_t
+ */	
+MFRC522_PICC_Type_t bk_mfrc522_get_type(uint8_t sak) {		///< The SAK byte returned from PICC_Select().)
+
+	sak &= 0x7F;
+	switch (sak) {
+		case 0x04:	return MFRC522_PICC_TYPE_NOT_COMPLETE;	// UID not complete
+		case 0x09:	return MFRC522_PICC_TYPE_MIFARE_MINI;
+		case 0x08:	return MFRC522_PICC_TYPE_MIFARE_1K;
+		case 0x18:	return MFRC522_PICC_TYPE_MIFARE_4K;
+		case 0x00:	return MFRC522_PICC_TYPE_MIFARE_UL;
+		case 0x10:
+		case 0x11:	return MFRC522_PICC_TYPE_MIFARE_PLUS;
+		case 0x01:	return MFRC522_PICC_TYPE_TNP3XXX;
+		case 0x20:	return MFRC522_PICC_TYPE_ISO_14443_4;
+		case 0x40:	return MFRC522_PICC_TYPE_ISO_18092;
+		default:	return MFRC522_PICC_TYPE_UNKNOWN;
+	}
+} // End bk_mfrc522_get_type()
 /****************************************************END OF FILE****************************************************/
