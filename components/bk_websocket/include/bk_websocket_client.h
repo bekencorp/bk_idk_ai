@@ -105,7 +105,6 @@ typedef struct {
 } websocket_client_input_t;
 
 typedef websocket_transport_info_t *transport;
-typedef void (*websocket_event_cb)(int32_t event_id, char *event_data, int data_len);
 
 /**
  * @brief Websocket event data

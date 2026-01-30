@@ -26,6 +26,7 @@
 #include <mbedtls/sha1.h>
 #include "mbedtls/base64.h"
 #include <netdb.h>
+#define TAG "WEBSOCKET"
 
 #define WEBSOCKET_SSL_DEFAULT_PORT		443
 #define WEBSOCKET_TCP_DEFAULT_PORT		80
@@ -38,23 +39,12 @@
 #define WS_SIZE16					126
 
 #define WEBSOCKET_TASK_PRIORITY 		(4)
-#define WEBSOCKET_TASK_STACK			(4*1024)
+#define WEBSOCKET_TASK_STACK			(8*1024)
 #define WEBSOCKET_NETWORK_TIMEOUT_MS	(10*1000)
 #define WEBSOCKET_PINGPONG_TIMEOUT_SEC	(120)
 #define WEBSOCKET_PING_INTERVAL_SEC 	(10)
 #define WEBSOCKET_RECONNECT_TIMEOUT_MS	(5*1000)
 #define WEBSOCKET_RX_RETRY_COUNT		(10)
-
-websocket_event_cb websocket_cb = NULL;
-void bk_websocket_register_cb(websocket_event_cb cb)
-{
-	websocket_cb = cb;
-}
-void bk_websocket_push_cb(int32_t event_id, char *event_data, int data_len)
-{
-	if(websocket_cb)
-		(*websocket_cb)(event_id, event_data, data_len);
-}
 
 static void bk_websocket_client_dispatch_event(transport client,
         int32_t event,
@@ -62,21 +52,22 @@ static void bk_websocket_client_dispatch_event(transport client,
         int data_len,
         int opcode)
 {
-    bk_websocket_event_data_t event_data;
+	bk_websocket_event_data_t event_data;
 
-    event_data.client = client;
-    event_data.user_context = client->config->user_context;
-    event_data.data_ptr = data;
-    event_data.data_len = data_len;
-    event_data.op_code = opcode;
-    event_data.payload_len = client->payload_len;
-    event_data.payload_offset = client->payload_offset;
+	event_data.client = client;
+	event_data.user_context = client->config ? client->config->user_context : NULL;
+	event_data.data_ptr = data;
+	event_data.data_len = data_len;
+	event_data.op_code = opcode;
+	event_data.payload_len = client->payload_len;
+	event_data.payload_offset = client->payload_offset;
 
-    if(client->ws_event_handler)
-        (client->ws_event_handler)(client, NULL, event, (void *)&event_data);
+	if(client->ws_event_handler) {
+		(client->ws_event_handler)(client, 0, event, (void *)&event_data);
+	}
+	return;
 }
 
-#define TAG "WEBSOCKET"
 static uint64_t bk_tick_get_ms(void);
 struct timeval* utils_ms_to_timeval(int timeout_ms, struct timeval *tv);
 void fill_random(void *buf, size_t len);
@@ -456,7 +447,7 @@ static int ws_write(transport client, int opcode, int mask_flag, const char *b, 
 	}
 
 	if (len == 0) {
-		return 0;
+		return header_len;
 	}
 
 	BK_LOGD(TAG, "%s, payload buffer len:%d\r\n", __func__, len);
@@ -1116,7 +1107,10 @@ int websocket_client_send_with_opcode(transport client, ws_transport_opcodes_t o
 		return BK_FAIL;
 	}
 
-	rtos_lock_mutex(&client->mutex);
+	if (rtos_lock_recursive_mutex(&client->mutex) != kNoErr) {
+		BK_LOGE(TAG, "Failed to lock sending tasks\r\n");
+		return BK_FAIL;
+	}
 
 	uint32_t current_opcode = opcode;
 	while (widx < len || current_opcode) {
@@ -1148,8 +1142,12 @@ int websocket_client_send_with_opcode(transport client, ws_transport_opcodes_t o
 	ret = widx;
 
 unlock_and_return:
-	if (client->mutex)
-		rtos_unlock_mutex(&client->mutex);
+	if (client->mutex) {
+		if (rtos_unlock_recursive_mutex(&client->mutex) != kNoErr) {
+			BK_LOGE(TAG, "Failed to lock sending tasks\r\n");
+			return BK_FAIL;
+		}
+	}
 	else
 		BK_LOGE(TAG, "mutex already deinit\r\n");
 	return ret;
@@ -1169,7 +1167,7 @@ static void free_client(transport client)
 		return;
 
 	if (client->mutex)
-		rtos_deinit_mutex(&client->mutex);
+		rtos_deinit_recursive_mutex(&client->mutex);
 	client->mutex = NULL;
 
 	client->ws_event_handler = NULL;
@@ -1226,16 +1224,18 @@ static void websocket_client_task(beken_thread_arg_t *thread_param)
 	client->state = WEBSOCKET_STATE_INIT;
 	int read_select = 0;
 	while (client->run) {
+        if (rtos_lock_recursive_mutex(&client->mutex) != kNoErr) {
+            BK_LOGE(TAG, "Failed to lock ws-client tasks, exiting the task...\r\n");
+            break;
+        }
 		switch ((int)client->state) {
 			case WEBSOCKET_STATE_INIT:
 				BK_LOGE(TAG, "websocket connecting to %s://%s:%d\r\n", client->config->scheme, client->config->host, client->config->port);
 				if (ws_connect(client, client->config->host,
 										client->config->port,
 										WEBSOCKET_NETWORK_TIMEOUT_MS) < 0) {
-					rtos_lock_mutex(&client->mutex);
 					BK_LOGE(TAG, "Error websocket connect\r\n");
 					ws_disconnect(client);
-					rtos_unlock_mutex(&client->mutex);
 					break;
 				}
 				BK_LOGE(TAG, "websocket connected to %s://%s:%d\r\n", client->config->scheme, client->config->host, client->config->port);
@@ -1251,9 +1251,7 @@ static void websocket_client_task(beken_thread_arg_t *thread_param)
 
 						if (status_bits & PING_SENT_BIT) {
 							BK_LOGE(TAG, "----------Sending ping packet----------\r\n");
-							rtos_lock_mutex(&client->mutex);
 							ws_write(client, WS_TRANSPORT_OPCODES_PING | WS_TRANSPORT_OPCODES_FIN, WS_MASK, NULL, 0, WEBSOCKET_NETWORK_TIMEOUT_MS);
-							rtos_unlock_mutex(&client->mutex);
 						} else if(status_bits & TEXT_SENT_BIT) {
 							BK_LOGE(TAG, "----------Sending text packet----------\r\n");
 							test_case_text(client);
@@ -1276,10 +1274,8 @@ static void websocket_client_task(beken_thread_arg_t *thread_param)
 				 }
 				 client->ping_tick_ms = bk_tick_get_ms();
 				 if (ws_client_recv(client) == BK_FAIL) {
-					rtos_lock_mutex(&client->mutex);
 					BK_LOGE(TAG, "Error receive data\r\n");
 					ws_disconnect(client);
-					rtos_unlock_mutex(&client->mutex);
 					break;
 				 }
 				 break;
@@ -1305,14 +1301,18 @@ static void websocket_client_task(beken_thread_arg_t *thread_param)
 				BK_LOGE(TAG, "Client run iteration in a default state: %d\r\n", client->state);
 				break;
 		}
+        if (rtos_unlock_recursive_mutex(&client->mutex) != kNoErr) {
+            BK_LOGE(TAG, "Failed to unlock ws-client tasks, exiting the task...\r\n");
+            break;
+        }
 
 		if (WEBSOCKET_STATE_CONNECTED == client->state) {
 			read_select = ws_tcp_poll_read(client, 1000); //Poll every 1000ms
 			if (read_select < 0) {
 				BK_LOGE(TAG, "Network error: ws_tcp_poll_read() returned %d, errno=%d\r\n", read_select, errno);
-				rtos_lock_mutex(&client->mutex);
+				rtos_lock_recursive_mutex(&client->mutex);
 				ws_disconnect(client);
-				rtos_unlock_mutex(&client->mutex);
+				rtos_unlock_recursive_mutex(&client->mutex);
 			}
 		} else if (WEBSOCKET_STATE_WAIT_TIMEOUT == client->state) {
 			if(client->auto_reconnect)
@@ -1335,10 +1335,10 @@ static void websocket_client_task(beken_thread_arg_t *thread_param)
 		}
 	}
 	BK_LOGE(TAG, "close connection...\r\n");
-	rtos_lock_mutex(&client->mutex);
+	rtos_lock_recursive_mutex(&client->mutex);
 	ws_tcp_close(client);
-	rtos_unlock_mutex(&client->mutex);
-
+	rtos_unlock_recursive_mutex(&client->mutex);
+	client->run = false;
 	client->state = WEBSOCKET_STATE_UNKNOW;
 	bk_websocket_client_dispatch_event(client, WEBSOCKET_EVENT_CLOSED, NULL, 0, -1);
 
@@ -1361,9 +1361,9 @@ static bk_err_t websocket_client_stop(transport client)
 		return BK_FAIL;
 	}
 	BK_LOGE(TAG, "%s, sockfd :%d\r\n", __func__, client->sockfd);
-	rtos_lock_mutex(&client->mutex);
+	rtos_lock_recursive_mutex(&client->mutex);
 	ws_tcp_close(client);
-	rtos_unlock_mutex(&client->mutex);
+	rtos_unlock_recursive_mutex(&client->mutex);
 	BK_LOGI(TAG, "%s, sockfd :%d stop ws task\r\n", __func__, client->sockfd);
 	client->run = false;
 	client->state = WEBSOCKET_STATE_UNKNOW;
@@ -1507,7 +1507,7 @@ transport websocket_client_init(const websocket_client_input_t *input)
 	}
 
 	//init lock
-	rtos_init_mutex(&client->mutex);
+	rtos_init_recursive_mutex(&client->mutex);
 
 	//set ws_transport
 	client->ws_transport = (transport_ws_t *)os_malloc(sizeof(transport_ws_t));
