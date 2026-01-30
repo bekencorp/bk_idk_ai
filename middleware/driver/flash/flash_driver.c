@@ -677,12 +677,14 @@ static bk_err_t flash_erase_no_lock(uint32_t address, int cmd)
 
 	flash_line_mode_t old_line_mode = flash_set_line_mode(FLASH_LINE_MODE_TWO);
 
+#if CONFIG_FLASH_WRITE_STATUS_VOLATILE  //bk7258 default as protect none to improve erase/write performance
 	uint32_t  status_reg = s_flash.flash_status_reg_val;
 	#if CONFIG_FLASH_SUPPORT_MULTI_PE
 	status_reg = flash_read_status_reg();
 	#endif
 
     flash_protect_type_t partition_type = flash_get_protect_type(status_reg);
+#endif
 
 	if(bk_flash_partition_write_perm_check_by_addr(erase_addr, erase_size, FLASH_API_MAGIC_CODE) == BK_OK)
 	{
@@ -691,8 +693,9 @@ static bk_err_t flash_erase_no_lock(uint32_t address, int cmd)
 		if(bk_flash_partition_write_perm_check_by_addr(erase_addr, erase_size, FLASH_API_MAGIC_CODE) == BK_OK)
 			ret_val = flash_erase_block(address, cmd);
 	}
-
+#if CONFIG_FLASH_WRITE_STATUS_VOLATILE  //bk7258 default as protect none to improve erase/write performance
     flash_set_protect_type(partition_type);
+#endif
 	flash_set_line_mode(old_line_mode);
 
 	return ret_val;
@@ -778,14 +781,14 @@ static bk_err_t flash_write_no_lock(uint32_t address, const uint8_t *user_buf, u
 	bk_err_t    ret_val = BK_FAIL;
 
 	flash_line_mode_t old_line_mode = flash_set_line_mode(FLASH_LINE_MODE_TWO);
-
+#if CONFIG_FLASH_WRITE_STATUS_VOLATILE  //bk7258 default as protect none to improve erase/write performance
 	uint32_t  status_reg = s_flash.flash_status_reg_val;
 	#if CONFIG_FLASH_SUPPORT_MULTI_PE
 	status_reg = flash_read_status_reg();
 	#endif
 
     flash_protect_type_t partition_type = flash_get_protect_type(status_reg);
-
+#endif
 	if(bk_flash_partition_write_perm_check_by_addr(address, size, FLASH_API_MAGIC_CODE) == BK_OK)
 	{
     	flash_set_protect_type(FLASH_PROTECT_NONE);
@@ -793,8 +796,9 @@ static bk_err_t flash_write_no_lock(uint32_t address, const uint8_t *user_buf, u
 		if(bk_flash_partition_write_perm_check_by_addr(address, size, FLASH_API_MAGIC_CODE) == BK_OK)
 			ret_val = flash_write_common(user_buf, address, size);
 	}
-
+#if CONFIG_FLASH_WRITE_STATUS_VOLATILE  //bk7258 default as protect none to improve erase/write performance
     flash_set_protect_type(partition_type);
+#endif
 	flash_set_line_mode(old_line_mode);
 
 	return ret_val;
