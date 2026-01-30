@@ -23,7 +23,7 @@ The above figure shows I2C hardware connection, in which：
  - SCL：Clock signal, which provides the clock for data transmission to synchronize data transmission
  - SDA：Used to transfer data.
 
-Beken The chip usually has two I2C controllers, and BK7271 supports three I2Cs (I2C0, I2C1, and I2C2).
+Beken The chip usually has two I2C controllers, and BK7258 supports two I2Cs (I2C0 and I2C1).
 
 
 Use of I2C
@@ -31,10 +31,6 @@ Use of I2C
 
 Beken I2C It can work in both master mode and slave mode. Whether the host or slave, you need to call 'bk_i2c_init()' to configure I2C before reading and writing.
 bk_i2c_init() It mainly configures the clock frequency of I2C SCL. If it works in slave mode, it also needs to configure the device address of Beken I2C.
-
-.. note::
-
-  For bk7236/bk7231n/bk7251, I2C_ID_1 (corresponding to I2C2 on address_mapping) shares GPIO with UART2, so when I2C_ID_1 is enabled, UART2 cannot be used.
 
 
 Communication in I2C host mode
