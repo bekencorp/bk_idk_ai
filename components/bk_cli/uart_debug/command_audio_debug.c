@@ -22,6 +22,10 @@ extern int bk_get_printf_sync(void);
 #define APP_AEC_PARA_TX_HEADERLEN (0x4)
 #define APP_AEC_PARA_RX_DATALEN   (0x18)
 
+#define APP_LOAD_EQ_PARAMS  (0xF0)
+#define APP_LOAD_SYS_PARAMS (0xF1)
+#define APP_LOAD_AEC_PARAMS (0xF2)
+
 bk_aud_intf_update_sys_config_cb_t bk_aud_intf_update_sys_config_cb = NULL;
 bk_aud_intf_update_aec_config_cb_t bk_aud_intf_update_aec_config_cb = NULL;
 bk_aud_intf_update_ul_eq_para_cb_t bk_aud_intf_update_ul_eq_para_cb = NULL;
@@ -138,9 +142,10 @@ void app_eq_dbg(uint8_t* params)
 	uint8_t index;
 
 	AUD_DBG_TOOL_PRT("app_eq_dbg 0x%x\r\n", params[0]);
+
 	switch(params[0])
 	{
-		case 0xF0:
+		case APP_LOAD_EQ_PARAMS:
 			aud_eq_load_param();
 			break;
 		case 0xFA:
@@ -262,9 +267,10 @@ void app_eq_dbg(uint8_t* params)
 void app_sys_config_dbg(uint8_t* params)
 {
 	AUD_DBG_TOOL_PRT("app_sys_config_dbg 0x%x\r\n", params[0]);
+
 	switch(params[0])
 	{
-		case 0xF0:
+		case APP_LOAD_SYS_PARAMS:
 		{
 			uint32_t tx_len = APP_SYS_PARA_TX_TOTALLEN;
 			uint8_t tmp[APP_AUD_PARAS_TX_TMP_LEN] = {0};
@@ -352,9 +358,10 @@ void app_sys_config_dbg(uint8_t* params)
 void app_aec_para_dbg(uint8_t* params)
 {
 	AUD_DBG_TOOL_PRT("app_aec_para_dbg 0x%x\r\n", params[0]);
+
 	switch(params[0])
 	{
-		case 0xF0:
+		case APP_LOAD_AEC_PARAMS:
 		{
 			uint32_t tx_len = APP_AEC_PARA_TX_TOTALLEN;
 			uint8_t tmp[APP_AUD_PARAS_TX_TMP_LEN] = {0};
