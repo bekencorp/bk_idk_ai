@@ -1219,12 +1219,12 @@ bk_err_t bk_uart_set_stop_bits(uart_id_t id, uart_stop_bits_t stop_bits)
 	return BK_OK;
 }
 
-bk_err_t bk_uart_set_parity(uart_id_t id, uart_parity_t partiy)
+bk_err_t bk_uart_set_parity(uart_id_t id, uart_parity_t parity)
 {
 	UART_RETURN_ON_NOT_INIT();
 	UART_RETURN_ON_INVALID_ID(id);
 	UART_PM_CHECK_RESTORE(id);
-	uart_hal_set_parity(&s_uart[id].hal, id, partiy);
+	uart_hal_set_parity(&s_uart[id].hal, id, parity);
 	return BK_OK;
 }
 

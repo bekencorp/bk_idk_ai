@@ -154,7 +154,7 @@ bk_err_t bk_uart_set_stop_bits(uart_id_t id, uart_stop_bits_t stop_bits);
  *    - BK_OK: succeed
  *    - others: other errors.
  */
-bk_err_t bk_uart_set_parity(uart_id_t id, uart_parity_t partiy);
+bk_err_t bk_uart_set_parity(uart_id_t id, uart_parity_t parity);
 
 /**
  * @brief     Set the UART hardware flow control
