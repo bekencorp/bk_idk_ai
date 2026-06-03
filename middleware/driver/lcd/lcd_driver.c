@@ -862,11 +862,46 @@ bk_err_t bk_lcd_set_partical_display(bool en, uint16_t partial_clum_l, uint16_t 
 }
 
 #if CONFIG_FLASH
+extern void delay(INT32 num);
+uint32_t bk_lcd_rgb_ver_cnt_get(void)
+{
+    return lcd_hal_get_status_ver_cnt_status();
+}
+
 void lcd_flash_disable_int(uint32_t enable)
 {
-	lcd_hal_rgb_int_enable(0, enable);
+    if (lcd_hal_get_rbg_dispay_en() == 0)
+        return;
+
+    if(enable)
+    {
+        //check display flush status (vsync cnt) is flushing or not, when vsync_pulse_width timing cnt==0
+        if (bk_lcd_rgb_ver_cnt_get() == 0)
+        {
+            //if not flush, delay 90us (need bigger then vsync_pulse_width times),recheck
+            delay(20);
+            //recheck flush status ,display is also not workking, to reset display
+            if (bk_lcd_rgb_ver_cnt_get() == 0)
+            {
+                LOGW(" %s softreset display %d\n", __func__, bk_lcd_rgb_ver_cnt_get());
+                lcd_disp_ll_set_module_control_soft_reset(0);
+                delay(10);
+                lcd_disp_ll_set_module_control_soft_reset(1);
+            }
+            lcd_hal_rgb_int_enable(0, 1);
+        }
+        else
+        {
+            lcd_hal_rgb_int_enable(0, 1);
+        }
+    }
+    else
+    {
+        lcd_hal_rgb_int_enable(0, 0);
+    }
 }
 #endif
+
 
 bk_err_t bk_lcd_rgb_init(const lcd_device_t *device)
 {
