@@ -107,6 +107,11 @@ static const flash_config_t flash_config[] = {
 #else
 	{0xC86517,	 1, 			  FLASH_SIZE_8M, FLASH_LINE_MODE_TWO, 0,		2,			  0x1F, 		0x1F,		 0x00,		   0x0E,		 0x00E, 			   0,			 0, 		  0xA0, 						 0x01}, //gd_25Q32E
 #endif
+#if CONFIG_FLASH_QUAD_ENABLE
+    {0xCD6016,    2,               FLASH_SIZE_4M, FLASH_LINE_MODE_FOUR,   14,       2,            0x1F,         0x1F,        0x00,         0x0E,         0x00E,                9,            1,           0xA0,                     0x02}, //th_25q32ha
+#else
+	{0xCD6016,   1,               FLASH_SIZE_4M, FLASH_LINE_MODE_TWO,   0,        2,            0x1F,         0x1F,        0x00,      0x0E,         0x00E,                0,            0,           0xA0,                          0x01}, //th_25q32ha
+#endif
 	{0x000000,   2,               FLASH_SIZE_4M, FLASH_LINE_MODE_TWO, 0,        2,            0x1F,         0x00,        0x00,         0x00,         0x000,                0,            0,           0x00,                          0x01}, //default
 };
 

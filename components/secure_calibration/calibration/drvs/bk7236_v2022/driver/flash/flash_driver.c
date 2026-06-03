@@ -73,6 +73,11 @@ static const flash_config_t flash_config[] = {
 	{0x204016,   2,               FLASH_SIZE_4M, FLASH_LINE_MODE_TWO, 14,       2,            0x1F,         0x1F,        0x00,         0x0E,         0x101,                9,            1,           0xA0,                          0x01}, //xmc_25qh32b
 	{0xC22315,   1,               FLASH_SIZE_2M, FLASH_LINE_MODE_TWO, 0,        2,            0x0F,         0x0F,        0x00,         0x0A,         0x00E,                6,            1,           0xA5,                          0x01}, //mx_25v16b
 	{0xEB6015,   2,               FLASH_SIZE_2M, FLASH_LINE_MODE_TWO, 14,       2,            0x1F,         0x1F,        0x00,         0x0D,         0x101,                9,            1,           0xA0,                          0x01}, //zg_th25q16b
+#if CONFIG_FLASH_QUAD_ENABLE
+    {0xCD6016,    2,               FLASH_SIZE_4M, FLASH_LINE_MODE_FOUR,   14,       2,            0x1F,         0x1F,        0x00,         0x0E,         0x00E,                9,            1,           0xA0,                     0x02}, //th_25q32ha
+#else
+	{0xCD6016,   1,               FLASH_SIZE_4M, FLASH_LINE_MODE_TWO,   0,        2,            0x1F,         0x1F,        0x00,      0x0E,         0x00E,                0,            0,           0xA0,                          0x01}, //th_25q32ha
+#endif
 	{0x000000,   2,               FLASH_SIZE_4M, FLASH_LINE_MODE_TWO, 0,        2,            0x1F,         0x00,        0x00,         0x00,         0x000,                0,            0,           0x00,                          0x01}, //default
 };
 
