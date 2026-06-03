@@ -123,7 +123,7 @@ PSRAM Overview
 
 	According to the previous section, psram is divided into four modules, different modules store different types of data, as follows:
 
-	- UASER: allocated to users. The allocated size is defined by the macro CONFIG_PSRAM_MEM_SLAB_USER_SIZE.
+	- USER: allocated to users. The allocated size is defined by the macro CONFIG_PSRAM_MEM_SLAB_USER_SIZE.
 	- AUDIO: allocated to audio. The allocated size is defined by the macro CONFIG_PSRAM_MEM_SLAB_AUDIO_SIZE. It stores audio data;
 	- ENCODE: allocated to encoding, the allocated size is defined by the macro CONFIG_PSRAM_MEM_SLAB_ENCODE_SIZE, which stores complete JPEG images or H264 images;
 	- DISPLAY: allocated to the display. The allocated size is defined by the macro CONFIG_PSRAM_MEM_SLAB_DISPLAY_SIZE, which stores the displayed data type, such as YUV, RGB565, RGB888, etc.

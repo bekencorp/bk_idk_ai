@@ -118,7 +118,7 @@ PSRAM概述
 
 	根据上节所述，psram被划分为四个模块，不同的模块存储的数据类型不同，具体如下：
 
-	- UASER：分配给用户使用，分配的大小为宏CONFIG_PSRAM_MEM_SLAB_USER_SIZE定义；
+	- USER：分配给用户使用，分配的大小为宏CONFIG_PSRAM_MEM_SLAB_USER_SIZE定义；
 	- AUDIO：分配给audio使用，分配的大小为宏CONFIG_PSRAM_MEM_SLAB_AUDIO_SIZE定义；存储的是音频数据；
 	- ENCODE：分配给编码使用，分配的大小为宏CONFIG_PSRAM_MEM_SLAB_ENCODE_SIZE定义，存储的是完整的JPEG图像或者H264图像；
 	- DISPLAY：分配给显示使用，分配的大小为宏CONFIG_PSRAM_MEM_SLAB_DISPLAY_SIZE定义，存储的是显示的数据类型，如YUV、RGB565、RGB888等；
